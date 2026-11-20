@@ -1,0 +1,1289 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Olivero Fest Brick Edition</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500..700&family=Nunito:wght@500..900&display=swap" rel="stylesheet">
+<style>
+/* Layout idea: the festival guide rebuilt from toy bricks. Grey baseplate page, brick-tile title, lineup as stacked bricks, a site map whose stages build themselves brick by brick as you visit them, and a timetable made of long bricks. Single theme by choice. */
+:root{
+  --ink:#14161f;
+  --plate:#e3e5e9;
+  --plate-stud:#eceef1;
+  --white:#fbfbf7;
+  --red:#d62d20;
+  --yellow:#f6c21c;
+  --blue:#0d6fd1;
+  --green:#2f9e44;
+  --purple:#8e5bd8;
+  --orange:#f57c20;
+  --font-display:"Fredoka", "Arial Rounded MT Bold", Arial, sans-serif;
+  --font-body:"Nunito", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --line:2.5px solid var(--ink);
+  --bevel:inset 0 -6px 0 rgba(0,0,0,.16), inset 0 3px 0 rgba(255,255,255,.28);
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+html{overflow-x:hidden}
+body{background:var(--plate);background-image:radial-gradient(circle at 50% 50%, var(--plate-stud) 0 6px, rgba(0,0,0,.05) 6.5px 7.5px, transparent 8px);background-size:24px 24px;color:var(--ink);font-family:var(--font-body);font-size:17px;line-height:1.55;overflow-x:hidden}
+h1,h2,h3{font-family:var(--font-display);font-weight:700;line-height:1;margin:0;text-wrap:balance}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--blue);outline-offset:3px;border-radius:6px}
+a{color:inherit}
+
+/* the brick look: bevel plus a row of studs along the top edge */
+.brk-el{position:relative;border:var(--line);border-radius:8px;box-shadow:var(--bevel), 0 4px 0 rgba(0,0,0,.18)}
+.brk-el::before{content:"";position:absolute;left:10px;right:10px;top:-9px;height:9px;background:repeating-linear-gradient(90deg, var(--ink) 0 22px, transparent 22px 34px) top left/100% 2px no-repeat, repeating-linear-gradient(90deg, var(--ink) 0 2px, var(--c,var(--white)) 2px 20px, var(--ink) 20px 22px, transparent 22px 34px);border-radius:4px 4px 0 0}
+
+/* ---------- gate ---------- */
+#gate{position:fixed;inset:0;z-index:100;display:grid;place-items:center;padding:18px;overflow:hidden;background:var(--plate);background-image:radial-gradient(circle at 50% 50%, var(--plate-stud) 0 6px, rgba(0,0,0,.05) 6.5px 7.5px, transparent 8px);background-size:24px 24px;transition:opacity .5s ease .5s}
+.door{display:none}
+#gate.open{pointer-events:none;opacity:0}
+#gate.open .ticket{transition:transform .6s cubic-bezier(.5,-0.4,.7,1);transform:translateY(-120vh) rotate(-6deg)}
+#gate.gone{display:none}
+.ticket{--c:var(--white);position:relative;z-index:2;width:min(640px,100%);display:grid;grid-template-columns:1fr 150px;background:var(--white);margin-top:12px}
+.ticket .main{padding:26px 26px 22px;display:grid;gap:12px}
+.t-kicker{font-weight:900;font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:#5d6070}
+.t-name{font-family:var(--font-display);font-weight:700;font-size:clamp(44px,8.5vw,66px);line-height:.92}
+.t-name span{color:var(--red)}
+.t-sub{font-weight:800;font-size:15px}
+.t-choose{font-weight:900;font-size:14px}
+.t-langs{display:flex;gap:16px;flex-wrap:wrap;margin-top:10px}
+.t-btn{--c:var(--yellow);background:var(--yellow);border:var(--line);border-radius:8px;padding:11px 20px;font-family:var(--font-display);font-weight:700;font-size:18px;box-shadow:var(--bevel), 0 4px 0 rgba(0,0,0,.2);position:relative;transition:transform .15s}
+.t-btn::before{content:"";position:absolute;left:10px;right:10px;top:-9px;height:9px;background:repeating-linear-gradient(90deg, var(--ink) 0 22px, transparent 22px 34px) top left/100% 2px no-repeat, repeating-linear-gradient(90deg, var(--ink) 0 2px, var(--c,var(--white)) 2px 20px, var(--ink) 20px 22px, transparent 22px 34px);border-radius:4px 4px 0 0}
+.t-btn[data-pick="en"]{--c:var(--blue);background:var(--blue);color:#fff}
+.t-btn:hover{transform:translateY(-3px)}
+.t-btn:active{transform:translateY(2px)}
+.t-hint{font-size:13px;color:#5d6070;font-weight:700}
+.stub{border-left:3px dashed #14161f40;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:repeat(3,1fr);gap:8px;padding:16px 12px}
+.stub i{display:block;border:2px solid var(--ink);border-radius:5px;box-shadow:var(--bevel)}
+.stub .a{background:var(--red)}.stub .b{background:var(--yellow)}.stub .c{background:var(--blue)}.stub .d{background:var(--green)}
+.stub .e{grid-column:1/3;display:grid;place-items:center;font-family:var(--font-display);font-weight:700;font-size:16px;line-height:1.05;text-align:center}
+.stamp-mark{position:absolute;right:170px;top:24px;border:4px solid var(--red);color:var(--red);font-family:var(--font-display);font-weight:700;font-size:26px;padding:2px 14px;border-radius:8px;transform:rotate(-12deg) scale(2.2);opacity:0;pointer-events:none}
+#gate.stamped .stamp-mark{animation:stampIn .35s cubic-bezier(.2,1.4,.5,1) forwards}
+@keyframes stampIn{to{transform:rotate(-12deg) scale(1);opacity:.95}}
+
+/* ---------- top bar ---------- */
+.topbar{position:sticky;top:0;z-index:50;background:#fbfbf7ee;backdrop-filter:blur(8px);border-bottom:var(--line)}
+.topbar .in{max-width:1200px;margin:0 auto;padding:10px 18px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.brand{font-family:var(--font-display);font-weight:700;font-size:22px;margin-right:auto}
+.brand span{color:var(--red)}
+.wristband{display:flex;align-items:center;gap:8px;background:var(--green);color:#fff;border:2px solid var(--ink);border-radius:8px;padding:5px 12px 5px 9px;font-weight:900;font-size:14px;box-shadow:var(--bevel)}
+.wristband .holes{display:flex;gap:3px}
+.wristband .holes i{width:10px;height:10px;border-radius:50%;background:#ffffff40;border:1.5px solid #0003;transition:background .3s, transform .3s}
+.wristband .holes i.on{background:var(--yellow);transform:scale(1.15)}
+.chip{border:2px solid var(--ink);background:var(--white);border-radius:8px;padding:6px 12px;font-weight:900;font-size:14px;display:inline-flex;align-items:center;gap:6px;min-height:38px;box-shadow:var(--bevel)}
+.chip:hover{background:var(--yellow)}
+.chip.hot{background:var(--yellow)}
+.chip svg{width:17px;height:17px;flex:none}
+.chip[aria-pressed="true"].live{background:var(--red);color:#fff}
+
+main{max-width:1200px;margin:0 auto;padding:30px 18px 60px;display:grid;grid-template-columns:minmax(0,1fr);gap:60px}
+main > section{min-width:0}
+.sec-head{margin-bottom:22px}
+.sec-head h2{font-size:clamp(34px,5.5vw,56px)}
+.sec-head p{margin:8px 0 0;color:#3d4050;font-weight:700;max-width:62ch}
+
+/* ---------- poster ---------- */
+.poster{--c:var(--yellow);background:var(--yellow);padding:clamp(24px,3.6vw,44px);margin-top:12px}
+.tiles{display:none}
+.p-meta{display:flex;flex-wrap:wrap;gap:6px 22px;font-weight:900;font-size:13px;letter-spacing:.14em;text-transform:uppercase;border-bottom:3px solid var(--ink);padding-bottom:10px}
+.p-title{display:flex;flex-wrap:wrap;gap:16px 8px;margin-top:26px;font-size:clamp(34px,7.4vw,92px)}
+.p-title .word{display:flex;gap:6px;margin-right:.35em}
+.lb{--c:var(--red);display:inline-grid;place-items:center;width:1.05em;height:1.12em;background:var(--c);color:#fff;border:3px solid var(--ink);border-radius:8px;box-shadow:var(--bevel), 0 4px 0 rgba(0,0,0,.2);position:relative;line-height:1;margin-top:.2em;animation:lbIn .55s cubic-bezier(.3,1.5,.55,1) both;animation-play-state:paused}
+.lb::before{content:"";position:absolute;left:12%;right:12%;top:-.16em;height:.16em;background:var(--c);border:3px solid var(--ink);border-bottom:0;border-radius:4px 4px 0 0;-webkit-mask:linear-gradient(90deg,#000 0 38%,transparent 38% 62%,#000 62%);mask:linear-gradient(90deg,#000 0 38%,transparent 38% 62%,#000 62%)}
+.lb.y{color:var(--ink)}
+body.live .lb{animation-play-state:running}
+@keyframes lbIn{from{transform:translateY(-120px) rotate(-10deg);opacity:0}}
+.p-tag{margin:18px 0 0;font-weight:900;font-size:clamp(15px,1.8vw,19px)}
+.lineup{display:grid;gap:22px;margin-top:clamp(26px,3.5vw,40px);border-top:3px solid var(--ink);padding-top:26px}
+.p-label{font-weight:900;font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:#4a3e00;margin-bottom:-6px}
+.row{display:flex;flex-wrap:wrap;align-items:center;gap:22px 14px}
+.row .dot{display:none}
+.act{--c:var(--red);background:var(--c);color:#fff;font-family:var(--font-display);font-weight:700;line-height:1;text-align:left;padding:.28em .5em .32em;border:var(--line);border-radius:8px;box-shadow:var(--bevel), 0 4px 0 rgba(0,0,0,.2);position:relative;transition:transform .15s}
+.act::before{content:"";position:absolute;left:10px;right:10px;top:-9px;height:9px;background:repeating-linear-gradient(90deg, var(--ink) 0 22px, transparent 22px 34px) top left/100% 2px no-repeat, repeating-linear-gradient(90deg, var(--ink) 0 2px, var(--c,var(--white)) 2px 20px, var(--ink) 20px 22px, transparent 22px 34px);border-radius:4px 4px 0 0}
+.act:hover{transform:translateY(-4px)}
+.act.visited::after{content:"✓";position:absolute;right:-10px;bottom:-10px;width:26px;height:26px;border-radius:50%;background:var(--ink);color:var(--yellow);font-family:var(--font-body);font-weight:900;font-size:15px;display:grid;place-items:center}
+.r1 .act{font-size:clamp(28px,5.4vw,66px)}
+.r2 .act{font-size:clamp(22px,3.6vw,42px)}
+.r3 .act{font-size:clamp(18px,2.6vw,30px)}
+.r2 .act[data-open="founders"]{--c:var(--green)}
+.r2 .act[data-open="glow"]{--c:var(--purple)}
+.r3 .act[data-open="agency"]{--c:var(--orange)}
+.r3 .act[data-open="indie"]{--c:var(--blue)}
+.chips{display:flex;flex-wrap:wrap;gap:20px 12px}
+.chips .act{--c:var(--white);color:var(--ink);font-family:var(--font-body);font-weight:900;font-size:14px;padding:7px 13px 7px 10px;display:inline-flex;align-items:center;gap:7px}
+.chips .act i{width:12px;height:12px;border-radius:50%;border:2px solid var(--ink)}
+.chips .act.visited{--c:var(--ink);color:#fff}
+.chips .act.visited::after{display:none}
+.ticker{margin:30px calc(-1*clamp(24px,3.6vw,44px)) calc(-1*clamp(24px,3.6vw,44px));background:var(--ink);color:#fff;overflow:hidden;white-space:nowrap;padding:12px 0;font-family:var(--font-display);font-weight:600;font-size:16px;border-radius:0 0 6px 6px}
+.ticker .trk{display:inline-block;animation:tick 40s linear infinite}
+.ticker b{color:var(--yellow);margin:0 14px}
+@keyframes tick{to{transform:translateX(-50%)}}
+
+/* ---------- map ---------- */
+.map-card{--c:var(--white);background:var(--white);padding:12px;margin-top:12px}
+.map-wrap{border-radius:6px;overflow:hidden;border:2px solid var(--ink)}
+#map{display:block;width:100%;height:auto;margin:0 auto}
+.legend{display:flex;flex-wrap:wrap;gap:8px 18px;padding:12px 6px 4px;font-weight:800;font-size:14px;align-items:center}
+.legend span{display:inline-flex;align-items:center;gap:7px}
+.legend i{width:16px;height:12px;border-radius:3px;border:2px solid var(--ink)}
+.legend i.dash{width:24px;height:0;border-radius:0;border:0;border-top:5px dotted var(--red)}
+.spot{cursor:pointer;outline:none}
+.spot .hitbox{fill:transparent}
+.spot .body{transform-box:fill-box;transform-origin:50% 100%;transition:transform .35s cubic-bezier(.34,1.56,.64,1)}
+.spot:hover .body,.spot:focus-visible .body,.spot.active .body{transform:translateY(-5px)}
+.spot .mono{opacity:.42;transition:opacity .4s}
+.spot:hover .mono,.spot:focus-visible .mono{opacity:.75}
+.spot.visited .mono{opacity:0;transition:opacity .3s calc(var(--n,10) * 55ms)}
+.spot .colr{opacity:0}
+.spot.visited .colr{opacity:1}
+.spot .colr .brk{transform-box:fill-box}
+.spot.visited .colr .brk{animation:drop .42s cubic-bezier(.3,1.5,.55,1) both;animation-delay:calc(var(--i) * 55ms)}
+.spot.visited .colr .late{animation:fadeL .45s ease both;animation-delay:calc(var(--n,10) * 55ms)}
+.spot.built .colr .brk,.spot.built .colr .late{animation:none}
+@keyframes drop{0%{transform:translateY(-52px);opacity:0}45%{opacity:1}100%{transform:none;opacity:1}}
+@keyframes fadeL{from{opacity:0}}
+.spot .pill{fill:#d3d6dc;transition:fill .6s}
+.spot.visited .pill{fill:var(--c)}
+.spot .pill-t{fill:#5d6070;transition:fill .4s}
+.spot.visited .pill-t{fill:var(--ink)}
+.spot.visited.light .pill-t{fill:#fff}
+.spot:hover .pill,.spot:focus-visible .pill,.spot.active .pill{fill:var(--ink)}
+.spot:hover .pill-t,.spot:focus-visible .pill-t,.spot.active .pill-t{fill:#fff}
+.ping{fill:none;stroke-width:3;opacity:0;transform-box:fill-box;transform-origin:50% 50%;stroke:var(--c)}
+.spot.pinged .ping,.spot.reveal .ping{animation:ping .9s ease-out}
+@keyframes ping{0%{opacity:.8;transform:scale(.3)}100%{opacity:0;transform:scale(1.6)}}
+.eq{transform-box:fill-box;transform-origin:50% 100%;animation:eq .9s ease-in-out infinite alternate}
+@keyframes eq{0%{transform:scaleY(.25)}100%{transform:scaleY(1)}}
+.crowd > g{transform-box:fill-box;transform-origin:50% 100%;animation:jump .6s ease-in-out infinite alternate}
+.spot.active .crowd > g,.spot:hover .crowd > g{animation-duration:.28s}
+@keyframes jump{to{transform:translateY(-5px)}}
+.flag{transform-box:fill-box;transform-origin:0 50%;animation:flap 1.2s ease-in-out infinite alternate}
+@keyframes flap{to{transform:skewY(-9deg) scaleX(.88)}}
+.spin{transform-box:fill-box;transform-origin:50% 50%;animation:spinT 16s linear infinite}
+.spot:hover .spin{animation-duration:5s}
+@keyframes spinT{to{transform:rotate(360deg)}}
+.bob{transform-box:fill-box;transform-origin:50% 50%;animation:bob 2.2s ease-in-out infinite alternate}
+@keyframes bob{to{transform:translateY(-7px) rotate(-6deg)}}
+.blink{animation:blink 1.4s steps(2,end) infinite}
+@keyframes blink{50%{opacity:.15}}
+.eyes{transform-box:fill-box;transform-origin:50% 50%;animation:eyes 4s infinite}
+@keyframes eyes{0%,92%,100%{transform:scaleY(1)}95%{transform:scaleY(.1)}}
+.ring{fill:none;stroke-width:3;transform-box:fill-box;transform-origin:50% 50%;animation:ring 2.4s ease-out infinite}
+.ring.r2{animation-delay:-1.2s}
+@keyframes ring{0%{transform:scale(.3);opacity:.9}100%{transform:scale(1.7);opacity:0}}
+.puff{transform-box:fill-box;transform-origin:50% 50%;animation:puff 2.6s ease-out infinite;opacity:0}
+.puff.p2{animation-delay:-.9s}.puff.p3{animation-delay:-1.8s}
+@keyframes puff{0%{transform:translate(0,0) scale(.4);opacity:.85}100%{transform:translate(8px,-34px) scale(1.4);opacity:0}}
+.sway{transform-box:fill-box;transform-origin:50% 100%;animation:swayS 2.6s ease-in-out infinite alternate}
+@keyframes swayS{from{transform:rotate(-2.5deg)}to{transform:rotate(2.5deg)}}
+.bubble-a{animation:bubA 4s ease-in-out infinite}
+.bubble-b{animation:bubA 4s ease-in-out infinite;animation-delay:-2s}
+@keyframes bubA{0%,100%{opacity:0;transform:translateY(6px)}20%,60%{opacity:1;transform:translateY(0)}80%{opacity:0;transform:translateY(-6px)}}
+.truck{animation:idle .35s ease-in-out infinite alternate}
+.truck.t2{animation-delay:-.12s}.truck.t3{animation-delay:-.24s}
+@keyframes idle{to{transform:translateY(-1.5px)}}
+.check{opacity:0;transform-box:fill-box;transform-origin:50% 50%;transform:scale(0);transition:transform .4s cubic-bezier(.34,1.56,.64,1), opacity .2s}
+.spot.visited .check{opacity:1;transform:scale(1)}
+.fadein{transition:opacity 1.4s ease}
+.trail{animation:march 1s linear infinite}
+@keyframes march{to{stroke-dashoffset:-14}}
+.pinbob{animation:pinb .9s ease-in-out infinite alternate}
+@keyframes pinb{to{transform:translateY(-8px)}}
+.glowing .pill{animation:glow 1s ease-in-out infinite alternate}
+@keyframes glow{to{fill:var(--yellow)}}
+
+/* ---------- timetable ---------- */
+.tt{--c:var(--white);background:var(--white);padding:24px 20px 20px;overflow:hidden;margin-top:12px}
+.tt-grid{display:grid;grid-template-columns:190px 1fr;row-gap:18px;align-items:center}
+.tt-axis{position:relative;height:22px;font-weight:900;font-size:13px;color:#5d6070;font-variant-numeric:tabular-nums}
+.tt-axis span{position:absolute;transform:translateX(-50%)}
+.tt-lab{font-family:var(--font-display);font-weight:700;font-size:18px;line-height:1.1}
+.tt-lab small{display:none;font-family:var(--font-body);font-weight:800;font-size:13px;color:#5d6070;margin-left:8px}
+.tt-track{position:relative;height:46px;border-radius:6px;background:repeating-linear-gradient(90deg,#14161f14 0 2px,transparent 2px calc(100% / 16))}
+.tt-bar{--c:var(--red);position:absolute;top:8px;bottom:2px;border:2px solid var(--ink);border-radius:6px;color:var(--ink);font-weight:900;font-size:13px;text-align:left;padding:0 12px;white-space:nowrap;box-shadow:var(--bevel);transition:transform .2s}
+.tt-bar::before{content:"";position:absolute;left:6px;right:6px;top:-8px;height:7px;background:repeating-linear-gradient(90deg, var(--ink) 0 14px, transparent 14px 22px) top left/100% 2px no-repeat, repeating-linear-gradient(90deg, var(--ink) 0 2px, var(--c) 2px 12px, var(--ink) 12px 14px, transparent 14px 22px);border-radius:3px 3px 0 0}
+.tt-bar:hover{transform:translateY(-3px)}
+.tt-out{position:absolute;top:58%;transform:translateY(-50%);font-weight:900;font-size:13px;white-space:nowrap;pointer-events:none}
+
+/* ---------- info point ---------- */
+.info{display:grid;grid-template-columns:1.1fr 1fr;gap:26px;margin-top:12px}
+.info-card{--c:var(--white);background:var(--white);padding:24px;display:grid;gap:12px;align-content:start}
+.info-card h3{font-size:38px}
+.line{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;border-top:2px dashed #14161f30;padding-top:10px}
+.line .k{display:block;font-size:12px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:#5d6070}
+.line .v{font-weight:800;word-break:break-all}
+.mini{border:2px solid var(--ink);background:var(--yellow);color:var(--ink);border-radius:6px;padding:6px 14px;font-weight:900;font-size:13px;text-decoration:none;white-space:nowrap;box-shadow:var(--bevel)}
+.mini:hover{background:var(--orange)}
+.pass{--c:var(--blue);background:var(--blue);color:#fff}
+.pass .lock{font-family:var(--font-display);font-weight:700;font-size:72px;line-height:1}
+.pass.unlocked{--c:var(--red);background:var(--red)}
+.pass-meter{height:16px;border-radius:5px;background:#ffffff30;overflow:hidden;max-width:80%;border:2px solid var(--ink)}
+.pass-meter i{display:block;height:100%;width:0;background:var(--yellow);transition:width .5s cubic-bezier(.34,1.56,.64,1)}
+#encoreBtn{justify-self:start;font-size:15px;padding:10px 18px}
+footer{text-align:center;color:#4d5060;font-weight:700;font-size:14px;padding:6px 18px 40px}
+
+/* ---------- drawer ---------- */
+.scrim{position:fixed;inset:0;z-index:70;background:#14161f80;opacity:0;pointer-events:none;transition:opacity .3s}
+.scrim.on{opacity:1;pointer-events:auto}
+.drawer{position:fixed;z-index:80;top:0;right:0;bottom:0;width:min(520px,100%);background:var(--white);color:var(--ink);transform:translateX(105%);transition:transform .45s cubic-bezier(.2,.9,.3,1.03);display:flex;flex-direction:column;border-left:var(--line)}
+.drawer.on{transform:none}
+.d-head{position:relative;padding:24px 22px 20px;overflow:hidden;border-bottom:var(--line);box-shadow:var(--bevel)}
+.d-head .badge{display:inline-block;background:var(--ink);color:#fff;font-weight:900;font-size:12px;letter-spacing:.12em;text-transform:uppercase;padding:4px 11px;border-radius:5px;margin-bottom:10px}
+.d-head h3{font-size:clamp(32px,7vw,44px);padding-right:50px}
+.d-head .act-name{font-weight:900;font-size:18px;margin-top:8px}
+.d-head .meta{font-weight:700;font-size:15px;opacity:.92}
+.d-lights{display:none}
+.d-body{padding:22px;overflow:auto;display:grid;gap:22px;align-content:start;flex:1}
+.d-body h4{margin:0 0 8px;font-family:var(--font-display);font-weight:700;font-size:21px}
+.d-body p{margin:0}
+.hits{display:flex;flex-wrap:wrap;gap:12px}
+.hit-card{border:2px solid var(--ink);border-radius:8px;padding:10px 14px;min-width:110px;max-width:200px;box-shadow:var(--bevel);animation:popIn .5s cubic-bezier(.34,1.56,.64,1) both}
+.hit-card b{display:block;font-family:var(--font-display);font-weight:700;font-size:32px;line-height:1}
+.hit-card span{font-size:13px;font-weight:800;line-height:1.25;display:block;margin-top:2px}
+@keyframes popIn{from{transform:translateY(-30px);opacity:0}}
+.setlist{margin:0;padding:0;list-style:none;counter-reset:s;display:grid;gap:10px}
+.setlist li{counter-increment:s;display:grid;grid-template-columns:36px 1fr;gap:8px;animation:slide .45s ease both}
+.setlist li::before{content:counter(s);display:grid;place-items:center;width:28px;height:24px;border:2px solid var(--ink);border-radius:5px;background:var(--yellow);font-family:var(--font-display);font-weight:700;font-size:14px;box-shadow:var(--bevel)}
+@keyframes slide{from{opacity:0;transform:translateX(16px)}}
+.genres{display:flex;flex-wrap:wrap;gap:8px}
+.genres span{border:2px solid var(--ink);border-radius:5px;padding:2px 10px;font-size:13px;font-weight:800;background:#fff}
+.menu{display:grid;gap:10px}
+.menu .item{border:2px solid var(--ink);border-radius:8px;padding:12px 14px;background:#fff}
+.menu .item b{font-family:var(--font-display);font-weight:700;font-size:18px;display:block}
+.d-foot{display:flex;justify-content:space-between;gap:8px;padding:12px 22px 18px;border-top:2px dashed #14161f30;align-items:center}
+.btn{border:2px solid var(--ink);background:var(--yellow);color:var(--ink);border-radius:6px;padding:9px 16px;font-weight:900;font-size:14px;box-shadow:var(--bevel)}
+.btn:hover{background:var(--orange)}
+.btn[disabled]{opacity:.35;cursor:default}
+.x{position:absolute;top:14px;right:14px;z-index:2;width:42px;height:42px;border-radius:8px;border:2px solid var(--ink);background:var(--white);color:var(--ink);display:grid;place-items:center;box-shadow:var(--bevel)}
+.x:hover{background:var(--yellow)}
+.x svg{width:18px;height:18px}
+
+.toast{position:fixed;left:50%;bottom:22px;z-index:95;transform:translate(-50%,calc(100% + 40px));visibility:hidden;background:var(--yellow);color:var(--ink);border:var(--line);border-radius:8px;padding:12px 18px;font-weight:900;box-shadow:var(--bevel), 0 6px 0 rgba(0,0,0,.2);transition:transform .45s cubic-bezier(.34,1.56,.64,1);max-width:min(560px,92vw);text-align:center}
+.toast.show{transform:translate(-50%,0);visibility:visible}
+#confetti{position:fixed;inset:0;pointer-events:none;z-index:96}
+
+/* ---------- finale ---------- */
+.finale{position:fixed;inset:0;z-index:120;overflow:auto;background:#123a6e;background-image:radial-gradient(circle at 50% 50%, #1a4a86 0 6px, rgba(0,0,0,.12) 6.5px 7.5px, transparent 8px);background-size:24px 24px;display:flex;padding:64px 16px 30px}
+.finale[hidden]{display:none}
+#fw{position:fixed;inset:0;pointer-events:none;width:100%;height:100%}
+.f-x{position:fixed;top:16px;right:16px;z-index:3}
+.f-card{position:relative;z-index:2;margin:auto;width:min(940px,100%);display:grid;grid-template-columns:320px 1fr;gap:40px;align-items:center}
+.vip-col{display:grid;justify-items:center}
+.strap{width:30px;height:70px;background:repeating-linear-gradient(180deg,var(--red) 0 14px,var(--yellow) 14px 28px);border:2px solid var(--ink);border-radius:4px 4px 0 0;animation:swing 3s ease-in-out infinite alternate;transform-origin:50% 0}
+@keyframes swing{from{transform:rotate(-3deg)}to{transform:rotate(3deg)}}
+.vip{position:relative;width:300px;height:440px;margin-top:-4px;border-radius:12px;background:var(--white);color:var(--ink);overflow:hidden;border:3px solid var(--ink);box-shadow:var(--bevel), 0 30px 60px #0008;transition:transform .12s ease-out;animation:vipIn .9s cubic-bezier(.34,1.56,.64,1) both}
+@keyframes vipIn{from{transform:translateY(-120px) rotate(-8deg);opacity:0}}
+.vip::before{content:"";position:absolute;top:12px;left:50%;width:46px;height:9px;margin-left:-23px;border-radius:9px;background:var(--ink);z-index:2}
+.vip .band{position:relative;height:130px;background:var(--red);color:#fff;padding:34px 20px 0;display:flex;justify-content:space-between;align-items:flex-start;overflow:hidden;border-bottom:3px solid var(--ink)}
+.vip .aa{font-family:var(--font-display);font-weight:700;font-size:32px;line-height:.92;max-width:150px}
+.vip .yr{font-weight:900;font-size:13px;letter-spacing:.14em}
+.vip .mt{position:absolute;right:16px;bottom:12px;display:grid;grid-template-columns:repeat(4,16px);gap:6px}
+.vip .mt i{width:16px;height:16px;border-radius:50%;background:#ffffff55;border:2px solid #0004;display:block}
+.vip .vb{padding:18px 20px;display:grid;gap:4px}
+.vip .k{font-size:11px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;color:#5d6070}
+.vip .vn{font-family:var(--font-display);font-weight:700;font-size:36px;line-height:1;word-break:break-word;min-height:40px}
+.vip .vc{font-weight:800;font-size:16px;color:#3b3e52;min-height:22px}
+.vip .vs{margin-top:10px;font-weight:900;font-size:12px;letter-spacing:.12em;border-top:3px solid var(--ink);padding-top:10px}
+.vip .bars{height:40px;margin-top:10px}
+.vip .bars svg{width:100%;height:100%;display:block}
+.vip .vno{font-size:12px;font-weight:800;letter-spacing:.2em;font-variant-numeric:tabular-nums}
+.vip .holo{position:absolute;inset:0;pointer-events:none;background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.6) 44%,rgba(246,194,28,.35) 50%,rgba(13,111,209,.25) 56%,transparent 70%);background-size:260% 260%;background-position:var(--gx,30%) var(--gy,30%);mix-blend-mode:soft-light;animation:holo 6s ease-in-out infinite alternate}
+@keyframes holo{to{background-position:90% 90%}}
+.f-text{color:#fff;display:grid;gap:14px}
+.f-text .badge{justify-self:start;background:var(--yellow);color:var(--ink);font-weight:900;font-size:12px;letter-spacing:.14em;text-transform:uppercase;padding:5px 12px;border-radius:5px;border:2px solid var(--ink)}
+.f-text h2{font-size:clamp(34px,5vw,54px)}
+.f-text p{margin:0;color:#d9e6f7;font-weight:700;max-width:56ch}
+.vip-form{display:grid;grid-template-columns:1fr 1fr;gap:6px 12px}
+.vip-form .fld{display:grid;gap:4px}
+.vip-form .fld.wide{grid-column:1/3}
+.vip-form label{font-size:12px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:#bcd2ef}
+.vip-form input{font:inherit;font-size:16px;font-weight:700;color:var(--ink);background:var(--white);border:2px solid var(--ink);border-radius:6px;padding:10px 12px;outline:none;box-shadow:inset 0 3px 0 rgba(0,0,0,.08)}
+.vip-form input:focus{border-color:var(--yellow);box-shadow:0 0 0 3px var(--yellow)}
+.f-actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:4px}
+.btn-big{background:var(--yellow);color:var(--ink);border:2px solid var(--ink);border-radius:8px;padding:13px 20px;font-weight:900;text-decoration:none;display:inline-flex;align-items:center;gap:8px;box-shadow:var(--bevel), 0 4px 0 rgba(0,0,0,.25)}
+.btn-big:hover{background:var(--orange)}
+.btn-ghost{background:var(--white);color:var(--ink);border:2px solid var(--ink);border-radius:8px;padding:11px 18px;font-weight:900;text-decoration:none;font-size:15px;box-shadow:var(--bevel)}
+.btn-ghost:hover{background:var(--yellow)}
+.f-note{font-size:13px;color:#bcd2ef}
+
+/* ---------- responsive ---------- */
+@media (max-width:860px){
+  .info{grid-template-columns:1fr}
+  .drawer{top:auto;width:100%;height:86%;border-left:0;border-top:var(--line);border-radius:14px 14px 0 0;transform:translateY(105%)}
+  .drawer.on{transform:none}
+  .d-head{border-radius:12px 12px 0 0}
+}
+@media (max-width:760px){
+  .f-card{grid-template-columns:1fr;gap:24px}
+  .vip{width:270px;height:400px}
+  .vip-form{grid-template-columns:1fr}
+  .vip-form .fld.wide{grid-column:auto}
+}
+@media (max-width:700px){
+  #map{max-width:520px}
+  body{font-size:16px}
+  main{padding:20px 14px 50px;gap:48px}
+  .topbar .in{padding:8px 12px;gap:6px}
+  .brand{font-size:17px}
+  .brand .bx{display:none}
+  .wristband{padding:5px 9px 5px 7px;gap:5px}
+  .topbar .lbl{display:none}
+  .chip{padding:6px 8px;min-height:36px}
+  .wristband .holes{display:none}
+  .p-meta{font-size:11px;letter-spacing:.1em}
+  .p-title{font-size:clamp(26px,9.4vw,60px);gap:12px 0}
+  .p-title .word{gap:4px}
+  .tt{padding:18px 14px 14px}
+  .tt-grid{grid-template-columns:1fr;row-gap:6px}
+  .tt-axis{display:none}
+  .tt-lab{font-size:15px;margin-top:10px;display:block}
+  .tt-lab small{display:block;margin:2px 0 0}
+  .tt-out{display:none}
+  .tt-bar .in-name{display:none}
+  .ticket{grid-template-columns:1fr}
+  .stub{border-left:0;border-top:3px dashed #14161f40;grid-template-columns:repeat(5,1fr);grid-template-rows:48px}
+  .stub .e{grid-column:auto;font-size:12px}
+  .stamp-mark{right:20px;top:18px}
+  .pass .lock{font-size:56px}
+}
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;transition-delay:0s!important}
+}
+</style>
+</head>
+<body>
+
+<!-- ENTRY GATE -->
+<div id="gate">
+  <div class="door l"></div><div class="door r"></div>
+  <div class="ticket brk-el" role="dialog" aria-labelledby="tName">
+    <div class="main">
+      <div class="t-kicker">Edición 2011 – 2026 · Madrid</div>
+      <div class="t-name" id="tName">Olivero <span>Fest</span><br><span style="color:#0d6fd1;font-size:.5em">Brick Edition</span></div>
+      <div class="t-sub">Matías Julián Olivero · Digital Marketing Manager · AI Strategy</div>
+      <div class="t-choose">Elige tu idioma · Choose your language</div>
+      <div class="t-langs">
+        <button class="t-btn" type="button" data-pick="es" lang="es">Entrar en español →</button>
+        <button class="t-btn" type="button" data-pick="en" lang="en">Enter in English →</button>
+      </div>
+      <div class="t-hint">Mejor con sonido · Best with sound on</div>
+    </div>
+    <div class="stub" aria-hidden="true"><i class="a"></i><i class="b"></i><i class="c"></i><i class="d"></i><div class="e">Recruiter<br>pass</div></div>
+    <div class="stamp-mark" aria-hidden="true">OK!</div>
+  </div>
+</div>
+
+<!-- TOP BAR -->
+<header class="topbar">
+  <div class="in">
+    <div class="brand">Olivero <span>Fest</span> <span class="bx" style="color:#0d6fd1;font-size:.7em">Bricks</span></div>
+    <div class="wristband" id="wristband"><div class="holes" id="holes"></div><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9a3 3 0 0 0 0 6v3a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1v-3a3 3 0 0 0 0-6V6a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1z"/></svg><span id="stampTxt">0/13</span></div>
+    <button class="chip hot" type="button" id="quickBtn" aria-label="Guía de 30 segundos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h9l-1 8 10-12h-9z"/></svg><span class="lbl" data-i="quick">Guía de 30 segundos</span></button>
+    <button class="chip live" type="button" id="liveBtn" aria-pressed="false" aria-label="Música"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg><span class="lbl" data-i="live">Música</span></button>
+    <button class="chip" type="button" id="langBtn">EN</button>
+    <button class="chip" type="button" id="soundBtn" aria-pressed="true"><svg id="soundIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M19 5a10 10 0 0 1 0 14"/></svg></button>
+  </div>
+</header>
+
+<main>
+  <!-- POSTER -->
+  <section class="poster brk-el" aria-labelledby="pTitle">
+    <div class="tiles" aria-hidden="true"><i class="t1"></i><i class="t2"></i><i class="t3"></i><i class="t4"></i></div>
+    <div class="p-meta"><span data-i="pTop">Madrid · Buenos Aires · Online</span><span>2011 — 2026</span></div>
+    <h1 class="p-title" id="pTitle" aria-label="Olivero Fest"><span class="word"><span class="lb" style="--c:var(--red);animation-delay:0.15s" aria-hidden="true">O</span><span class="lb" style="--c:var(--blue);animation-delay:0.22s" aria-hidden="true">L</span><span class="lb" style="--c:var(--green);animation-delay:0.29s" aria-hidden="true">I</span><span class="lb" style="--c:var(--orange);animation-delay:0.36s" aria-hidden="true">V</span><span class="lb" style="--c:var(--purple);animation-delay:0.43s" aria-hidden="true">E</span><span class="lb" style="--c:var(--red);animation-delay:0.50s" aria-hidden="true">R</span><span class="lb" style="--c:var(--blue);animation-delay:0.57s" aria-hidden="true">O</span></span><span class="word"><span class="lb" style="--c:var(--blue);animation-delay:0.70s" aria-hidden="true">F</span><span class="lb" style="--c:var(--red);animation-delay:0.77s" aria-hidden="true">E</span><span class="lb" style="--c:var(--green);animation-delay:0.84s" aria-hidden="true">S</span><span class="lb" style="--c:var(--orange);animation-delay:0.91s" aria-hidden="true">T</span></span></h1>
+    <p class="p-tag" data-i="pTag">Más de 10 años de marketing digital, en directo · Digital Marketing Manager · AI Strategy</p>
+    <div class="lineup" id="lineup"></div>
+    <div class="ticker" aria-hidden="true"><div class="trk" id="ticker"></div></div>
+  </section>
+
+  <!-- MAP -->
+  <section aria-labelledby="mapTitle">
+    <div class="sec-head"><h2 id="mapTitle" data-i="mapTitle">Mapa del recinto</h2><p data-i="mapSub">Toca cualquier escenario o zona para ver qué pasa allí. Cada visita suma un sello a tu pulsera.</p></div>
+    <div class="map-card brk-el">
+      <div class="map-wrap"><svg id="map" role="group" aria-label="Mapa"></svg></div>
+      <div class="legend" id="legend"></div>
+    </div>
+  </section>
+
+  <!-- TIMETABLE -->
+  <section aria-labelledby="ttTitle">
+    <div class="sec-head"><h2 id="ttTitle" data-i="ttTitle">Horarios</h2><p data-i="ttSub">Cada actuación, en los años en que sonó. Toca una franja para abrir su escenario.</p></div>
+    <div class="tt brk-el"><div class="tt-grid" id="tt"></div></div>
+  </section>
+
+  <!-- INFO POINT -->
+  <section aria-labelledby="infoTitle" id="info">
+    <div class="sec-head"><h2 id="infoTitle" data-i="infoTitle">Punto de información</h2><p data-i="infoSub">¿Tienes un puesto en mente? Aquí está todo para contactar.</p></div>
+    <div class="info">
+      <div class="info-card brk-el">
+        <h3 data-i="letsTalk">Hablemos</h3>
+        <div class="line"><div><span class="k">Email</span><span class="v">matiasjulianolivero@gmail.com</span></div><button class="mini" type="button" data-copy="matiasjulianolivero@gmail.com" data-i="copy">Copiar</button></div>
+        <div class="line"><div><span class="k" data-i="phone">Teléfono</span><span class="v">+34 697 973 545</span></div><button class="mini" type="button" data-copy="+34 697 973 545" data-i="copy">Copiar</button></div>
+        <div class="line"><div><span class="k">LinkedIn</span><span class="v">linkedin.com/in/oliveromatias</span></div><a class="mini" href="https://www.linkedin.com/in/oliveromatias/" target="_blank" rel="noopener" data-i="open">Abrir</a></div>
+        <div class="line"><div><span class="k" data-i="base">Base</span><span class="v" data-i="baseV">Madrid, España</span></div></div>
+      </div>
+      <div class="info-card pass brk-el" id="pass">
+        <span style="font-weight:800;letter-spacing:.14em;font-size:12px;text-transform:uppercase" data-i="passK">El bis</span>
+        <div class="lock" id="passBig">0/13</div>
+        <p id="passTxt" style="margin:0;font-weight:600;max-width:34ch">Visita los cinco escenarios para desbloquear el pase backstage.</p>
+        <div class="pass-meter"><i id="passMeter"></i></div>
+        <button class="mini" type="button" id="encoreBtn" data-i="encoreBtn" hidden>Abrir el bis</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer data-i="footer">Olivero Fest Brick Edition es un festival inventado, construido pieza a pieza, para contar una carrera real. Todos los sonidos se generan en directo en tu navegador.</footer>
+
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="dTitle" aria-hidden="true"></aside>
+<div class="finale" id="finale" hidden role="dialog" aria-modal="true" aria-labelledby="fTitle">
+  <canvas id="fw"></canvas>
+  <button class="x f-x" type="button" id="fClose" aria-label="Cerrar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+  <div class="f-card">
+    <div class="vip-col">
+      <div class="strap" aria-hidden="true"></div>
+      <div class="vip" id="vip" aria-label="Pase backstage">
+        <div class="band"><span class="aa">All<br>Access</span><span class="yr">2026</span><div class="mt" aria-hidden="true"><i></i><i></i><i></i><i></i></div></div>
+        <div class="vb">
+          <span class="k" data-i="vipGuest">Invitado de Matías</span>
+          <div class="vn" id="vipNameOut">Tu nombre</div>
+          <div class="vc" id="vipCoOut">Tu empresa</div>
+          <div class="vs">BACKSTAGE · OLIVERO FEST</div>
+          <div class="bars" id="vipBars"></div>
+          <div class="vno" id="vipNo">Nº 00000</div>
+        </div>
+        <div class="holo" aria-hidden="true"></div>
+      </div>
+    </div>
+    <div class="f-text">
+      <span class="badge" data-i="fBadge">Bis · Encore</span>
+      <h2 id="fTitle" data-i="fTitle">¡Has recorrido todo el Olivero Fest!</h2>
+      <p data-i="fText"></p>
+      <form class="vip-form" id="vipForm" novalidate>
+        <div class="fld"><label for="vipName" data-i="fName">Tu nombre</label><input id="vipName" type="text" autocomplete="name" maxlength="40"></div>
+        <div class="fld"><label for="vipCompany" data-i="fCompany">Empresa</label><input id="vipCompany" type="text" autocomplete="organization" maxlength="40"></div>
+        <div class="fld wide"><label for="vipRole" data-i="fRole">Puesto (opcional)</label><input id="vipRole" type="text" maxlength="60"></div>
+      </form>
+      <div class="f-actions">
+        <a class="btn-big" id="vipMail" href="mailto:matiasjulianolivero@gmail.com"><span data-i="fMail">Enviar mi pase a Matías</span> →</a>
+        <button class="btn-ghost" type="button" id="vipCopy" data-i="fCopy">Copiar mensaje</button>
+        <a class="btn-ghost" href="https://www.linkedin.com/in/oliveromatias/" target="_blank" rel="noopener">LinkedIn</a>
+      </div>
+      <p class="f-note" data-i="fNote"></p>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast" role="status"></div>
+<canvas id="confetti"></canvas>
+
+<script>
+(function(){
+"use strict";
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+const INK = "#14161f", PAPER = "#f3efe6";
+const C = { coral:"#d62d20", sun:"#f6c21c", mint:"#2f9e44", lilac:"#8e5bd8", cobalt:"#0d6fd1", pink:"#f28dc2", green:"#7cc242" };
+
+/* ================= CONTENT ================= */
+const SPOTS = [
+ { id:"main", kind:"stage", color:C.coral, sound:"main", act:"Saffron Brand Consultants", start:2024.42, end:2026.8,
+   en:{ stage:"Main Stage", sub:"Saffron Brand Consultants", badge:"Headliner", role:"Digital Marketing Manager", when:"Jun 2024 – Oct 2026 · 2 yrs 5 mos", where:"Madrid, Spain",
+     intro:"Led digital marketing for an international brand consultancy, aligning campaigns, content and digital channels with brand visibility and new-business priorities.",
+     set:["Segmented B2B acquisition campaigns across AI, cybersecurity, aviation, energy and financial services, adapted for the US, UK, Spain, KSA and Japan.",
+          "Interactive dashboards that turn GA4, Search Console, Semrush and campaign data into recommendations for senior stakeholders.",
+          "Stronger marketing operations with CRM segmentation, email marketing, attribution and UTM practices.",
+          "ChatGPT and Claude built into research, competitive intelligence, campaign planning and content development.",
+          "Led the City Brand Barometer (111 cities) from methodology to digital delivery, plus the Japanese edition's framework and a 10-brand semiconductor study."],
+     hits:[["111","cities in the City Brand Barometer"],["5","markets: US · UK · ES · KSA · JP"],["5","B2B sectors"]] },
+   es:{ stage:"Escenario principal", sub:"Saffron Brand Consultants", badge:"Cabeza de cartel", role:"Digital Marketing Manager", when:"jun 2024 – oct 2026 · 2 años 5 meses", where:"Madrid, España",
+     intro:"Lideré el marketing digital de una consultora de marca internacional, alineando campañas, contenidos y canales digitales con la visibilidad de marca y las prioridades de negocio.",
+     set:["Campañas B2B de captación segmentadas en IA, ciberseguridad, aviación, energía y servicios financieros, adaptadas a EE. UU., Reino Unido, España, Arabia Saudí y Japón.",
+          "Dashboards interactivos que convierten datos de GA4, Search Console, Semrush y campañas en recomendaciones para la dirección.",
+          "Operaciones de marketing más sólidas con segmentación CRM, email marketing, atribución y buenas prácticas de UTM.",
+          "ChatGPT y Claude integrados en investigación, inteligencia competitiva, planificación de campañas y contenidos.",
+          "Lideré el City Brand Barometer (111 ciudades) de la metodología a la entrega digital, además del marco de la edición japonesa y un estudio de 10 marcas de semiconductores."],
+     hits:[["111","ciudades en el City Brand Barometer"],["5","mercados: EE. UU. · UK · ES · KSA · JP"],["5","sectores B2B"]] },
+   genres:["B2B","GA4","Semrush","CRM","Email","Dashboards","Generative AI"] },
+
+ { id:"founders", kind:"stage", color:C.sun, sound:"founders", act:"Sandía", start:2011.75, end:2020.0,
+   en:{ stage:"Founders Stage", sub:"Sandía", badge:"Longest set · 8 years", role:"Founder & Head of Marketing", when:"Oct 2011 – Jan 2020 · 8 yrs 4 mos", where:"Argentina",
+     intro:"Founded and led a marketing business delivering strategy, digital marketing, advertising and project management across industries.",
+     set:["Managed multichannel campaigns, budgets, clients and suppliers.","Led acquisition through Google Ads, Meta Ads and inbound marketing.","Implemented CRM and marketing automation workflows, coordinating design, content and delivery from strategy to execution."],
+     hits:[["8+","years as founder"],["360°","strategy, ads, CRM and automation"]] },
+   es:{ stage:"Escenario Fundadores", sub:"Sandía", badge:"El set más largo · 8 años", role:"Fundador y Head of Marketing", when:"oct 2011 – ene 2020 · 8 años 4 meses", where:"Argentina",
+     intro:"Fundé y dirigí un negocio de marketing que ofrecía estrategia, marketing digital, publicidad y gestión de proyectos en distintos sectores.",
+     set:["Gestión de campañas multicanal, presupuestos, clientes y proveedores.","Captación con Google Ads, Meta Ads e inbound marketing.","Implementación de CRM y flujos de automatización, coordinando diseño, contenidos y entrega de la estrategia a la ejecución."],
+     hits:[["8+","años como fundador"],["360°","estrategia, anuncios, CRM y automatización"]] },
+   genres:["Entrepreneurship","Inbound","Google Ads","Meta Ads","Automation","Budgets"] },
+
+ { id:"glow", kind:"stage", color:C.lilac, sound:"glow", act:"Wild Magic Spain", start:2020.83, end:2023.3,
+   en:{ stage:"Glow Stage", sub:"Wild Magic Spain", badge:"Beauty & cosmetics", role:"Digital Marketing Manager", when:"Nov 2020 – Apr 2023 · 2 yrs 6 mos", where:"Spain",
+     intro:"Led digital marketing and customer acquisition for beauty and cosmetics brands, including Adore Cosmetics and Kristal Cosmetics.",
+     set:["Managed Google Ads and Meta Ads campaigns for lead generation and acquisition.","Used campaign, audience and sales data to improve performance.","Ran digital content and social media, aligning brand communication with acquisition goals."],
+     hits:[["2","cosmetics brands"],["2","ad platforms: Google & Meta"]] },
+   es:{ stage:"Escenario Glow", sub:"Wild Magic Spain", badge:"Belleza y cosmética", role:"Digital Marketing Manager", when:"nov 2020 – abr 2023 · 2 años 6 meses", where:"España",
+     intro:"Lideré el marketing digital y la captación de clientes para marcas de belleza y cosmética como Adore Cosmetics y Kristal Cosmetics.",
+     set:["Gestión de campañas en Google Ads y Meta Ads para generación de leads y captación.","Optimización con datos de campaña, audiencia y ventas.","Gestión de contenidos digitales y redes sociales, alineando la comunicación de marca con los objetivos de captación."],
+     hits:[["2","marcas de cosmética"],["2","plataformas: Google y Meta"]] },
+   genres:["Beauty","Google Ads","Meta Ads","Lead gen","Social media"] },
+
+ { id:"agency", kind:"stage", color:C.mint, sound:"agency", act:"Rockin Media", start:2020.0, end:2021.0,
+   en:{ stage:"Agency Arena", sub:"Rockin Media", badge:"Client brands", role:"Account Manager", when:"Jan 2020 – Dec 2020 · 1 yr", where:"Madrid, Spain",
+     intro:"Advised Miniso, Pernod Ricard, The Glowfilter, Aster District and Micampus on digital strategy and campaign development.",
+     set:["Translated business objectives into marketing plans.","Coordinated client relationships and campaign delivery.","Analysed performance to find improvements."],
+     hits:[["5","client brands, Miniso and Pernod Ricard among them"]] },
+   es:{ stage:"Arena Agencia", sub:"Rockin Media", badge:"Marcas cliente", role:"Account Manager", when:"ene 2020 – dic 2020 · 1 año", where:"Madrid, España",
+     intro:"Asesoré a Miniso, Pernod Ricard, The Glowfilter, Aster District y Micampus en estrategia digital y desarrollo de campañas.",
+     set:["Convertí objetivos de negocio en planes de marketing.","Coordiné la relación con clientes y la ejecución de campañas.","Analicé resultados para detectar mejoras."],
+     hits:[["5","marcas cliente, entre ellas Miniso y Pernod Ricard"]] },
+   genres:["Agency","Account management","Digital strategy","Campaigns"] },
+
+ { id:"indie", kind:"stage", color:C.cobalt, light:true, sound:"indie", act:"Independent Consultant", start:2023.0, end:2024.45,
+   en:{ stage:"Indie Stage", sub:"Independent Consultant", badge:"Solo set", role:"Digital Marketing Consultant · Self-employed", when:"Jan 2023 – Jun 2024 · 1 yr 6 mos", where:"Madrid, Spain",
+     intro:"Advised companies on digital marketing strategy, turning business objectives and audience needs into practical action plans.",
+     set:["Supported acquisition, paid media, lead generation, content, CRM and performance measurement.","Implemented and optimised campaigns hands-on in selected engagements."],
+     hits:[["6","areas, from acquisition to analytics"]] },
+   es:{ stage:"Escenario Indie", sub:"Consultor independiente", badge:"Set en solitario", role:"Consultor de marketing digital · Autónomo", when:"ene 2023 – jun 2024 · 1 año 6 meses", where:"Madrid, España",
+     intro:"Asesoré a empresas en estrategia de marketing digital, convirtiendo objetivos de negocio y necesidades de la audiencia en planes de acción prácticos.",
+     set:["Apoyo en captación, medios pagados, generación de leads, contenidos, CRM y medición de resultados.","Implementación y optimización de campañas en proyectos seleccionados."],
+     hits:[["6","áreas, de la captación a la analítica"]] },
+   genres:["Strategy","Paid media","Lead gen","Content","CRM","Analytics"] },
+
+ { id:"ai", kind:"area", color:C.green, sound:"ai",
+   en:{ stage:"AI Lab", sub:"ChatGPT · Claude", badge:"Special activity", intro:"Generative AI is part of my daily marketing workflow, from the first research to the final content.",
+     set:["Research and competitive intelligence with ChatGPT and Claude.","Campaign planning and content development with AI assistance.","Data and AI used together to guide decisions.","Currently in the AI & Innovation Programme at Founderz (2026)."],
+     hits:[["2026","Founderz AI & Innovation Programme"]] },
+   es:{ stage:"Laboratorio IA", sub:"ChatGPT · Claude", badge:"Actividad especial", intro:"La IA generativa forma parte de mi día a día en marketing, desde la primera investigación hasta el contenido final.",
+     set:["Investigación e inteligencia competitiva con ChatGPT y Claude.","Planificación de campañas y desarrollo de contenidos con apoyo de IA.","Datos e IA combinados para tomar decisiones.","Ahora cursando el Programa de IA e Innovación de Founderz (2026)."],
+     hits:[["2026","Programa de IA e Innovación, Founderz"]] },
+   genres:["ChatGPT","Claude","AI strategy","Competitive intelligence"] },
+
+ { id:"wheel", kind:"area", color:C.sun, sound:"wheel",
+   en:{ stage:"City Brand Wheel", sub:"111 cities", badge:"Special activity", intro:"A ride around the world: the City Brand Barometer, which I led from methodology through insights and digital delivery at Saffron.",
+     set:["111 cities analysed and ranked.","Analytical framework for the Japanese edition.","A study comparing 10 semiconductor brands."],
+     hits:[["111","cities"],["10","semiconductor brands"],["1","Japanese edition"]] },
+   es:{ stage:"Noria City Brand", sub:"111 ciudades", badge:"Actividad especial", intro:"Una vuelta al mundo: el City Brand Barometer, que lideré en Saffron desde la metodología hasta los insights y la entrega digital.",
+     set:["111 ciudades analizadas y clasificadas.","Marco analítico para la edición japonesa.","Un estudio comparativo de 10 marcas de semiconductores."],
+     hits:[["111","ciudades"],["10","marcas de semiconductores"],["1","edición japonesa"]] },
+   genres:["Research","Brand strategy","Insights","Digital delivery"] },
+
+ { id:"data", kind:"area", color:C.cobalt, light:true, sound:"data",
+   en:{ stage:"Data Dome", sub:"GA4 · Semrush", badge:"Analytics", intro:"Where numbers turn into decisions for senior stakeholders.",
+     set:["Interactive dashboards on acquisition, content performance and user journeys.","GA4, Search Console, Semrush and campaign data.","Attribution and UTM practices for consistent measurement.","CRM segmentation for better targeting."],
+     hits:[["4","core data sources"]] },
+   es:{ stage:"Cúpula de Datos", sub:"GA4 · Semrush", badge:"Analítica", intro:"Donde los números se convierten en decisiones para la dirección.",
+     set:["Dashboards interactivos de captación, rendimiento de contenidos y recorridos de usuario.","Datos de GA4, Search Console, Semrush y campañas.","Atribución y buenas prácticas de UTM para medir con coherencia.","Segmentación CRM para afinar el targeting."],
+     hits:[["4","fuentes de datos principales"]] },
+   genres:["GA4","Search Console","Semrush","Attribution","UTM"] },
+
+ { id:"trucks", kind:"area", color:C.coral, sound:"trucks",
+   en:{ stage:"Tool Trucks", sub:"Tools", badge:"Food trucks", intro:"Every truck serves a different kind of tool. Here's today's menu.",
+     menu:[["AI","ChatGPT · Claude"],["Analytics","GA4 · Google Search Console · Semrush · Brand24 · Metricool"],["Ads & social","Google Ads · Meta Ads · LinkedIn"],["CRM & sales","RD Station · Apollo"]] },
+   es:{ stage:"Food Trucks", sub:"Herramientas", badge:"Herramientas", intro:"Cada food truck sirve un tipo de herramienta. Este es el menú de hoy.",
+     menu:[["IA","ChatGPT · Claude"],["Analítica","GA4 · Google Search Console · Semrush · Brand24 · Metricool"],["Anuncios y redes","Google Ads · Meta Ads · LinkedIn"],["CRM y ventas","RD Station · Apollo"]] } },
+
+ { id:"market", kind:"area", color:C.pink, sound:"market",
+   en:{ stage:"Skills Market", sub:"AI · Data · Strategy", badge:"Strategy & delivery", intro:"The stalls with the skills I bring to every project. The busiest ones are up front.",
+     set:["AI strategy for marketing: where and how AI creates value across the funnel","Data-driven decision-making for leadership and campaigns","Agile data analysis: fast insights from GA4, Search Console, Semrush and CRM data","Marketing planning","B2B acquisition","Paid media","Content and social media","Email marketing","CRM and marketing automation","Performance analysis","Budget management","Stakeholder coordination"] },
+   es:{ stage:"Mercado de Skills", sub:"IA · Datos · Estrategia", badge:"Estrategia y ejecución", intro:"Los puestos con las habilidades que llevo a cada proyecto. Los más concurridos, delante.",
+     set:["Estrategia de IA aplicada al marketing: dónde y cómo la IA aporta valor en todo el funnel","Toma de decisiones basada en datos, para dirección y campañas","Análisis de datos ágil: insights rápidos a partir de GA4, Search Console, Semrush y CRM","Planificación de marketing","Captación B2B","Medios pagados","Contenidos y redes sociales","Email marketing","CRM y automatización de marketing","Análisis de resultados","Gestión de presupuestos","Coordinación de stakeholders"] } },
+
+ { id:"academy", kind:"area", color:C.mint, sound:"academy",
+   en:{ stage:"Academy Tent", sub:"Education", badge:"Education", intro:"Workshops and masterclasses along the way.",
+     edu:[["2026","AI & Innovation Programme","Founderz · in progress"],["2020–21","ThePowerMBA, Digital Marketing specialisation","thePower"],["2018","Scrum Master Certification","International Scrum Institute"],["2013","Executive Programme in Online Marketing","Universidad de Buenos Aires"],["2005–12","Licenciatura in Marketing","UCES"]] },
+   es:{ stage:"Carpa Academia", sub:"Formación", badge:"Formación", intro:"Talleres y masterclasses a lo largo del camino.",
+     edu:[["2026","Programa de IA e Innovación","Founderz · en curso"],["2020–21","ThePowerMBA, especialización en Marketing Digital","thePower"],["2018","Certificación Scrum Master","International Scrum Institute"],["2013","Programa Ejecutivo en Marketing Online","Universidad de Buenos Aires"],["2005–12","Licenciatura en Marketing","UCES"]] } },
+
+ { id:"lounge", kind:"area", color:C.lilac, sound:"lounge",
+   en:{ stage:"Language Lounge", sub:"ES · EN", badge:"Chill-out", intro:"Take a seat. Conversations here happen in two languages.",
+     set:["Spanish: native","English: professional working proficiency"], hits:[["2","working languages"]] },
+   es:{ stage:"Lounge de Idiomas", sub:"ES · EN", badge:"Chill-out", intro:"Siéntate. Aquí las conversaciones son en dos idiomas.",
+     set:["Español: nativo","Inglés: nivel profesional"], hits:[["2","idiomas de trabajo"]] } },
+
+ { id:"info", kind:"area", color:C.sun, sound:"info",
+   en:{ stage:"Info Point", sub:"Contact", badge:"Contact", intro:"Lost? Looking for the artist? Here's how to reach Matías.", contact:true },
+   es:{ stage:"Punto de Info", sub:"Contacto", badge:"Contacto", intro:"¿Perdido? ¿Buscas al artista? Así puedes contactar con Matías.", contact:true } }
+];
+const STAGES = SPOTS.filter(s=>s.kind==="stage");
+const ORDER = ["main","founders","glow","agency","indie","ai","wheel","data","trucks","market","academy","lounge","info"];
+const SKILL_TICKER = ["AI strategy for marketing","Data-driven decisions","Agile data analysis","B2B acquisition","Paid media","GA4","Semrush","CRM","Marketing automation","ChatGPT","Claude","Google Ads","Meta Ads","LinkedIn","Email marketing","Dashboards","Budget management"];
+
+const T = {
+ es:{ quick:"Guía de 30 segundos", live:"Música", pTop:"Madrid · Buenos Aires · Online", pTag:"Más de 10 años de marketing digital, en directo · Digital Marketing Manager · AI Strategy",
+   mapTitle:"Mapa del recinto", mapSub:"Cada escenario empieza como un plano gris. Al visitarlo y cerrar su ficha, se construye pieza a pieza, recibe el número de tu visita y la base se llena de color.", legGrey:"Gris: plano por construir", legColor:"Color: ya construido", legTrail:"Tu último paso", here:"Estás aquí", encoreBtn:"Abrir el bis", vipYou:"Tu nombre", vipCoPh:"Tu empresa", vipGuest:"Invitado de Matías", fBadge:"Bis · Encore", fTitle:"¡Has recorrido todo el Olivero Fest!", fText:"Este es el bis. Matías prepara su gira 2027 y tiene la agenda abierta para nuevos proyectos de marketing digital y estrategia de IA. Rellena tu pase backstage y envíaselo: el mensaje ya va escrito.", fName:"Tu nombre", fCompany:"Empresa", fRole:"Puesto (opcional)", fMail:"Enviar mi pase a Matías", fCopy:"Copiar mensaje", fNote:"Si tu correo no se abre, copia el mensaje y escribe a matiasjulianolivero@gmail.com", phName:"Ana García", phCompany:"Nombre de la empresa", phRole:"Head of Growth", msgCopied:"Mensaje copiado",
+   ttTitle:"Horarios", ttSub:"Cada actuación, en los años en que sonó. Toca una franja para abrir su escenario.",
+   infoTitle:"Punto de información", infoSub:"¿Tienes un puesto en mente? Aquí está todo para contactar.", letsTalk:"Hablemos", copy:"Copiar", copied:"¡Copiado!", copyFail:"Selecciona el texto", phone:"Teléfono", open:"Abrir", base:"Base", baseV:"Madrid, España",
+   passK:"El bis", passLocked:"Recorre los 13 rincones del festival para desbloquear el bis final.", passOpen:"¡Bis desbloqueado! Te espera un pase backstage personalizado.",
+   footer:"Olivero Fest Brick Edition es un festival inventado, construido pieza a pieza, para contar una carrera real. Todos los sonidos se generan en directo en tu navegador.",
+   headliner:"Cabeza de cartel", specials:"Actividades especiales", stagesL:"Escenarios", areasL:"Zonas especiales", walkers:"Público paseando",
+   setlist:"Setlist", hits:"Grandes éxitos", genres:"Géneros", menu:"Menú", stalls:"Puestos", program:"Programa",
+   prev:"Anterior", next:"Siguiente", close:"Cerrar", nowPlaying:"Ahora suena", stamps:"sellos",
+   allStages:"¡Pase backstage desbloqueado! Ya has visto los cinco escenarios.", allSpots:"¡Has recorrido todo el festival! El artista te espera en el punto de información.",
+   soundOn:"Sonido activado", soundOff:"Sonido desactivado", liveOn:"Música en directo activada", liveOff:"Música pausada",
+   qTitle:"Matías en 30 segundos", qBadge:"Guía rápida",
+   qRows:[["Quién","Digital Marketing Manager especializado en estrategia de IA, con más de 10 años en consultoría, agencia y negocio propio. Vive en Madrid."],
+          ["Último puesto","Saffron Brand Consultants (2024–2026): captación B2B en 5 mercados, dashboards de analítica para la dirección, IA en el día a día y el City Brand Barometer de 111 ciudades."],
+          ["Puntos fuertes","Estrategia de IA para marketing · Toma de decisiones basada en datos y análisis ágil · Captación B2B y medios pagados · Analítica (GA4, Search Console, Semrush) · CRM, email y automatización · IA generativa aplicada al marketing"],
+          ["Idiomas","Español (nativo) · Inglés (profesional)"]],
+   toInfo:"Ir al punto de información", indieName:"Consultor independiente" },
+ en:{ quick:"30-second guide", live:"Music", pTop:"Madrid · Buenos Aires · Online", pTag:"10+ years of digital marketing, live · Digital Marketing Manager · AI Strategy",
+   mapTitle:"Site map", mapSub:"Every stage starts as a grey plan. Visit it, close its card and watch it build itself brick by brick, numbered in the order you saw it, while the baseplate fills with colour.", legGrey:"Grey: plans still to build", legColor:"Colour: built", legTrail:"Your last move", here:"You are here", encoreBtn:"Open the encore", vipYou:"Your name", vipCoPh:"Your company", vipGuest:"Guest of Matías", fBadge:"Encore", fTitle:"You've explored all of Olivero Fest!", fText:"This is the encore. Matías is planning his 2027 tour and is open to new digital marketing and AI strategy projects. Fill in your backstage pass and send it to him: the message is already written.", fName:"Your name", fCompany:"Company", fRole:"Role (optional)", fMail:"Send my pass to Matías", fCopy:"Copy message", fNote:"If your email app doesn't open, copy the message and write to matiasjulianolivero@gmail.com", phName:"Alex Smith", phCompany:"Company name", phRole:"Head of Growth", msgCopied:"Message copied",
+   ttTitle:"Timetable", ttSub:"Every set, in the years it played. Tap a slot to open its stage.",
+   infoTitle:"Info point", infoSub:"Have a role in mind? Everything you need to get in touch.", letsTalk:"Let's talk", copy:"Copy", copied:"Copied!", copyFail:"Select the text", phone:"Phone", open:"Open", base:"Base", baseV:"Madrid, Spain",
+   passK:"The encore", passLocked:"Explore all 13 corners of the festival to unlock the final encore.", passOpen:"Encore unlocked! A personalised backstage pass is waiting for you.",
+   footer:"Olivero Fest Brick Edition is an invented festival, built brick by brick, telling a real career. Every sound is synthesised live in your browser.",
+   headliner:"Headliner", specials:"Special activities", stagesL:"Stages", areasL:"Special areas", walkers:"Festival-goers",
+   setlist:"Setlist", hits:"Greatest hits", genres:"Genres", menu:"Menu", stalls:"Stalls", program:"Programme",
+   prev:"Previous", next:"Next", close:"Close", nowPlaying:"Now playing", stamps:"stamps",
+   allStages:"Backstage pass unlocked! You've seen all five stages.", allSpots:"You've explored the whole festival! The artist is waiting at the info point.",
+   soundOn:"Sound on", soundOff:"Sound off", liveOn:"Live music on", liveOff:"Music paused",
+   qTitle:"Matías in 30 seconds", qBadge:"Quick guide",
+   qRows:[["Who","Digital Marketing Manager focused on AI strategy, with 10+ years across consultancy, agency and his own business. Based in Madrid."],
+          ["Latest role","Saffron Brand Consultants (2024–2026): B2B acquisition in 5 markets, analytics dashboards for leadership, AI in daily workflows, and the City Brand Barometer of 111 cities."],
+          ["Strengths","AI strategy for marketing · Data-driven decision-making and agile analysis · B2B acquisition and paid media · Analytics (GA4, Search Console, Semrush) · CRM, email and automation · Generative AI applied to marketing"],
+          ["Languages","Spanish (native) · English (professional)"]],
+   toInfo:"Go to the info point", indieName:"Independent Consultant" }
+};
+let lang = "es";
+try{ const s = localStorage.getItem("mo-fest-lang"); if(s==="es"||s==="en") lang = s; else if(!(navigator.language||"es").toLowerCase().startsWith("es")) lang="en"; }catch(e){}
+const t = k => T[lang][k];
+const L = s => s[lang];
+const actName = s => s.id==="indie" ? t("indieName") : s.act;
+
+/* ================= SOUND ================= */
+let ctx = null, soundOn = true, master = null;
+function ac(){
+  if(!soundOn) return null;
+  try{
+    if(!ctx){ ctx = new (window.AudioContext||window.webkitAudioContext)(); master = ctx.createGain(); master.gain.value = .8; master.connect(ctx.destination); }
+    if(ctx.state === "suspended") ctx.resume();
+  }catch(e){ ctx = null; }
+  return ctx;
+}
+function tone(o){
+  const c = ac(); if(!c) return;
+  const tt = c.currentTime + (o.delay||0), d = o.d||.2;
+  const osc = c.createOscillator(), g = c.createGain();
+  osc.type = o.type||"sine"; osc.frequency.setValueAtTime(o.f, tt);
+  if(o.f2) osc.frequency.exponentialRampToValueAtTime(o.f2, tt+d);
+  g.gain.setValueAtTime(.0001, tt); g.gain.exponentialRampToValueAtTime(o.v||.2, tt+(o.a||.01)); g.gain.exponentialRampToValueAtTime(.0001, tt+d);
+  let node = osc;
+  if(o.lp){ const f = c.createBiquadFilter(); f.type="lowpass"; f.frequency.value=o.lp; osc.connect(f); node=f; }
+  node.connect(g).connect(master); osc.start(tt); osc.stop(tt+d+.05);
+}
+let nb = null;
+function noise(o){
+  const c = ac(); if(!c) return;
+  if(!nb){ nb = c.createBuffer(1, c.sampleRate*2, c.sampleRate); const d = nb.getChannelData(0); for(let i=0;i<d.length;i++) d[i]=Math.random()*2-1; }
+  const tt = c.currentTime+(o.delay||0), d = o.d||.3;
+  const s = c.createBufferSource(); s.buffer = nb;
+  const f = c.createBiquadFilter(); f.type = o.ft||"bandpass"; f.Q.value = o.q||1; f.frequency.setValueAtTime(o.f1||1000, tt); if(o.f2) f.frequency.exponentialRampToValueAtTime(o.f2, tt+d);
+  const g = c.createGain(); g.gain.setValueAtTime(.0001, tt); g.gain.exponentialRampToValueAtTime(o.v||.2, tt+(o.a||d*.3)); g.gain.exponentialRampToValueAtTime(.0001, tt+d);
+  s.connect(f).connect(g).connect(master); s.start(tt, Math.random()); s.stop(tt+d+.05);
+}
+const N = n => 440*Math.pow(2,(n-69)/12);
+const sfx = {
+  kick(delay,v){ tone({f:150,f2:42,d:.28,v:v||.7,delay}); },
+  crowd(v){ noise({d:2.2,v:v||.16,f1:900,f2:1500,q:.4,a:.5}); noise({d:1.8,v:(v||.16)*.6,f1:2600,f2:2000,q:.6,a:.4,delay:.1}); },
+  tick(){ tone({f:1600,d:.03,v:.035,type:"square"}); },
+  stamp(){ tone({f:120,f2:50,d:.15,v:.5}); noise({d:.06,v:.25,f1:1800,q:.7,a:.005}); },
+  chime(){ [72,76,79,84].forEach((n,i)=>tone({f:N(n),d:.6,v:.13,delay:i*.08})); },
+  horn(){ [0,.22,.44].forEach((d,i)=>tone({f:i<2?233:311,d:i<2?.16:.5,v:.12,type:"sawtooth",lp:1600,delay:d,a:.02})); },
+  gate(){ noise({d:1,v:.12,f1:300,f2:1200,q:.5,a:.2}); },
+  snap(){ tone({f:1900+Math.random()*500,d:.025,v:.07,type:"square"}); noise({d:.035,v:.16,f1:3200,ft:"highpass",a:.002}); },
+  riff(style){
+    const R = {
+      main:()=>{ sfx.kick(0,.8); [45,52,57].forEach(n=>tone({f:N(n),d:.9,v:.1,type:"sawtooth",lp:1400,delay:.02})); [57,64,69].forEach((n,i)=>tone({f:N(n),d:.5,v:.07,type:"sawtooth",lp:2200,delay:.35+i*.09})); sfx.kick(.5,.6); sfx.crowd(.2); },
+      founders:()=>{ [60,64,67,72].forEach((n,i)=>tone({f:N(n),d:1.1,v:.09,type:"triangle",delay:i*.05})); sfx.kick(0,.5); sfx.crowd(.12); },
+      glow:()=>{ [76,79,83,88,91].forEach((n,i)=>tone({f:N(n),d:.35,v:.08,type:"sine",delay:i*.07})); noise({d:.6,v:.05,f1:6000,ft:"highpass",a:.2}); sfx.crowd(.1); },
+      agency:()=>{ [57,60,64,67,64,60].forEach((n,i)=>tone({f:N(n),d:.14,v:.07,type:"square",lp:2500,delay:i*.09})); sfx.kick(0,.5); sfx.kick(.36,.5); sfx.crowd(.1); },
+      indie:()=>{ [64,67,69,71,69].forEach((n,i)=>tone({f:N(n),d:.3,v:.11,type:"triangle",delay:i*.13,a:.003})); sfx.crowd(.09); },
+      ai:()=>{ [84,91,88,96].forEach((n,i)=>tone({f:N(n),d:.12,v:.06,type:"square",lp:4000,delay:i*.06})); tone({f:200,f2:900,d:.4,v:.05,type:"sine",delay:.25}); },
+      wheel:()=>{ [72,76,79,76,72].forEach((n,i)=>tone({f:N(n),d:.3,v:.08,type:"sine",delay:i*.12})); },
+      data:()=>{ [60,67,72,79].forEach((n,i)=>tone({f:N(n),d:.1,v:.06,type:"square",lp:3000,delay:i*.05})); },
+      trucks:()=>{ tone({f:N(76),d:.25,v:.1,type:"triangle"}); tone({f:N(72),d:.4,v:.1,type:"triangle",delay:.2}); },
+      market:()=>{ [67,71,74].forEach((n,i)=>tone({f:N(n),d:.25,v:.08,type:"triangle",delay:i*.06})); },
+      academy:()=>{ tone({f:N(79),d:.8,v:.1}); tone({f:N(84),d:.9,v:.06,delay:.05}); },
+      lounge:()=>{ [55,59,62,66].forEach((n,i)=>tone({f:N(n),d:1.4,v:.06,type:"sine",delay:i*.03,a:.15})); },
+      info:()=>{ tone({f:N(77),d:.25,v:.1}); tone({f:N(72),d:.4,v:.1,delay:.18}); }
+    };
+    (R[style]||R.info)();
+  }
+};
+let liveTimer = null, beat = 0;
+function liveStart(){
+  if(!ac()) return; beat = 0; const bass = [45,45,48,43];
+  liveTimer = setInterval(()=>{
+    const b = beat % 16;
+    if(b%4===0) tone({f:140,f2:45,d:.22,v:.28,lp:400});
+    if(b%4===2) noise({d:.04,v:.03,f1:7000,ft:"highpass",a:.003});
+    if(b%8===4) noise({d:.12,v:.05,f1:1800,q:.8,a:.005});
+    if(b%2===0) tone({f:N(bass[Math.floor(beat/16)%4]),d:.2,v:.06,type:"sawtooth",lp:500});
+    beat++;
+  }, 125);
+}
+function liveStop(){ clearInterval(liveTimer); liveTimer = null; }
+
+/* ================= STATE ================= */
+const visited = new Set();
+const visitOrder = [];
+const pendingBuild = new Set();
+function flushBuild(){
+  let delay = 120;
+  pendingBuild.forEach(id=>{
+    const el = document.querySelector(`#map .spot[data-spot="${id}"]`);
+    if(!el) return;
+    const nb = +el.dataset.n || 0;
+    setTimeout(()=>{
+      el.classList.remove("built","reveal"); el.classList.add("visited"); void el.getBoundingClientRect(); el.classList.add("reveal");
+      const o = el.querySelector(".ord"); if(o) o.textContent = visitOrder.indexOf(id)+1;
+      for(let k=0;k<Math.min(nb,18);k++) setTimeout(()=>sfx.snap(), 200 + k*55);
+    }, delay);
+    delay += 350;
+  });
+  pendingBuild.clear();
+}
+function stampHoles(){
+  $("#holes").innerHTML = ORDER.map(id=>`<i class="${visited.has(id)?"on":""}"></i>`).join("");
+  $("#stampTxt").textContent = `${visited.size}/${ORDER.length}`;
+  $("#wristband").title = `${visited.size}/${ORDER.length} ${t("stamps")}`;
+  const n = visited.size, done = n === ORDER.length;
+  $("#passBig").textContent = done ? "VIP" : `${n}/${ORDER.length}`;
+  $("#passTxt").textContent = done ? t("passOpen") : t("passLocked");
+  $("#passMeter").style.width = (n/ORDER.length*100)+"%";
+  $("#pass").classList.toggle("unlocked", done);
+  $("#encoreBtn").hidden = !done;
+}
+function visit(id){
+  if(visited.has(id)) return;
+  visited.add(id); visitOrder.push(id); sfx.stamp();
+  document.querySelectorAll(`#lineup [data-spot="${id}"]`).forEach(el=>el.classList.add("visited"));
+  pendingBuild.add(id);
+  updateProgress(); stampHoles();
+  const sv = STAGES.filter(s=>visited.has(s.id)).length;
+  if(STAGES.some(s=>s.id===id) && sv === 5 && visited.size < ORDER.length){
+    setTimeout(()=>{ sfx.horn(); toast(t("allStages")); }, 900);
+  }
+  if(visited.size === ORDER.length){ setTimeout(()=>{ closeDrawer(); openFinale(); }, 1500); }
+}
+
+/* ================= POSTER ================= */
+function renderPoster(){
+  const S = id => SPOTS.find(s=>s.id===id);
+  const act = (id, label) => `<button class="act${visited.has(id)?" visited":""}" type="button" data-open="${id}" data-spot="${id}">${esc(label)}</button>`;
+  const dot = c => `<span class="dot" style="background:${c}" aria-hidden="true"></span>`;
+  $("#lineup").innerHTML = `
+    <div class="p-label">${esc(t("headliner"))}</div>
+    <div class="row r1">${act("main","Saffron Brand Consultants")}</div>
+    <div class="row r2">${act("founders","Sandía")}${dot(C.coral)}${act("glow","Wild Magic Spain")}</div>
+    <div class="row r3">${act("agency","Rockin Media")}${dot(C.cobalt)}${act("indie", t("indieName"))}</div>
+    <div class="p-label" style="margin-top:14px">${esc(t("specials"))}</div>
+    <div class="chips">${["ai","wheel","data","trucks","market","academy","lounge","info"].map(id=>{ const s = S(id); return `<button class="act${visited.has(id)?" visited":""}" type="button" data-open="${id}" data-spot="${id}"><i style="background:${s.color}"></i>${esc(L(s).stage)}</button>`; }).join("")}</div>`;
+  document.querySelectorAll("#lineup [data-open]").forEach(b=>b.addEventListener("click", ()=>openSpot(b.dataset.open)));
+  const items = SKILL_TICKER.map(x=>`${esc(x)}<b>✦</b>`).join("");
+  $("#ticker").innerHTML = items + items;
+}
+
+/* ================= MAP ================= */
+function mobileLayout(){
+  const rowsY = [530,810,1090,1370,1650,1930];
+  const pairs = [["academy","lounge"],["agency","glow"],["market","data"],["founders","indie"],["wheel","ai"],["trucks","info"]];
+  const pos = { main:[210,220] };
+  pairs.forEach((p,i)=>{ pos[p[0]] = [105,rowsY[i]]; pos[p[1]] = [315,rowsY[i]]; });
+  const roads = ["M210 2090 L210 260"].concat(rowsY.map(y=>`M14 ${y+28} C 120 ${y+12}, 300 ${y+46}, 406 ${y+28}`));
+  const trees = [[22,90],[398,90],[22,395],[398,395]];
+  rowsY.slice(0,5).forEach(y=>{ trees.push([22,y+168],[398,y+172]); });
+  return { w:420, h:2090, s:.74, label:17, sub:13, split:true, pos, roads, trees, lake:null, hub:null, entry:[210,2085] };
+}
+const LAYOUT = {
+  d:{ w:1200, h:1310, s:1, label:17, sub:13,
+      pos:{ academy:[180,225], main:[600,255], lounge:[1020,225], agency:[170,555], market:[430,555], data:[770,555], glow:[1030,555], founders:[180,875], wheel:[450,875], ai:[750,875], indie:[1030,875], trucks:[330,1185], info:[600,1185] },
+      roads:[ "M600 1310 L600 300", "M40 268 C 300 246, 900 290, 1160 268", "M40 595 C 320 570, 880 625, 1160 595", "M40 915 C 320 890, 880 945, 1160 915", "M110 1225 C 300 1205, 900 1245, 1090 1225" ],
+      trees:[[50,70],[1150,70],[340,80],[860,80],[60,395],[330,400],[870,400],[1140,395],[60,720],[310,725],[900,725],[1140,720],[60,1040],[920,1045],[1140,1040],[90,1275],[1120,1275],[470,1285]],
+      lake:[900,1190,110,40], hub:[600,560], entry:[600,1300] },
+  m: mobileLayout()
+};
+const mq = window.matchMedia("(max-width: 700px)");
+let layoutKey = mq.matches ? "m" : "d";
+const lay = () => LAYOUT[layoutKey];
+
+function splitName(n){
+  if(n.length <= 11 || n.indexOf(" ")<0) return [n];
+  const mid = n.length/2; let best = -1, bd = 99;
+  for(let i=0;i<n.length;i++) if(n[i]===" " && Math.abs(i-mid) < bd){ bd = Math.abs(i-mid); best = i; }
+  return [n.slice(0,best), n.slice(best+1)];
+}
+/* turn every colour in an SVG string into a soft grey, keeping the ink */
+function monoize(str){
+  return str.replace(/#([0-9a-fA-F]{6})\b/g, (m,h)=>{
+    if(h.toLowerCase()==="14161f") return m;
+    const r = parseInt(h.slice(0,2),16), g = parseInt(h.slice(2,4),16), b = parseInt(h.slice(4,6),16);
+    const l = .299*r + .587*g + .114*b, v = Math.round(168 + (l/255)*78).toString(16).padStart(2,"0");
+    return "#"+v+v+v;
+  });
+}
+/* ---------- brick primitives ---------- */
+const BU = 12, BH = 13;
+const BR = { dark:"#2b2e36", grey:"#8d939b", lgrey:"#c9ced4", white:"#f7f7f2", screen:"#1a1f33", brown:"#7a4b2a", leaf:"#2f9e44", leaf2:"#4cb85a" };
+function shadeHex(hex, amt){
+  const n = parseInt(hex.slice(1),16); const f = v=>Math.max(0,Math.min(255,Math.round(v+amt*255)));
+  return "#"+[f(n>>16),f((n>>8)&255),f(n&255)].map(v=>v.toString(16).padStart(2,"0")).join("");
+}
+let BI = 0;
+function brickSVG(x, y, n, color, o){
+  o = o||{}; const w = n*BU, i = BI++;
+  let s = `<g class="brk" style="--i:${i}"><rect x="${x}" y="${y}" width="${w}" height="${BH}" rx="2" fill="${color}" stroke="${INK}" stroke-width="1.5"/><rect x="${x+1.5}" y="${y+BH-4.5}" width="${w-3}" height="3" fill="${shadeHex(color,-.17)}"/><rect x="${x+2}" y="${y+2}" width="${w-4}" height="2" fill="${shadeHex(color,.2)}"/>`;
+  if(!o.flat) for(let k=0;k<Math.floor(n);k++) s += `<rect x="${x+k*BU+2.5}" y="${y-4.5}" width="7" height="5" rx="1.6" fill="${color}" stroke="${INK}" stroke-width="1.2"/>`;
+  return s + `</g>`;
+}
+/* plan: rows from the ground up; each row is a list of [col, studs, colour, opts] */
+function build(plan, width){
+  const x0 = -width*BU/2; let s = "";
+  plan.forEach((row,r)=>row.forEach(([c,n,col,o])=>{ s += brickSVG(x0 + c*BU, -(r+1)*BH, n, col, o); }));
+  return s;
+}
+function roundPiece(cx, cy, r, color){ return `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${color}" stroke="${INK}" stroke-width="1.5"/><circle cx="${cx}" cy="${cy}" r="${(r*.48).toFixed(1)}" fill="${shadeHex(color,.14)}" stroke="${INK}" stroke-width="1"/>`; }
+
+function labelSVG(s, ly, L0){
+  const D = L(s), size = L0.label;
+  const lines = L0.split ? splitName(D.stage.toUpperCase()) : [D.stage.toUpperCase()];
+  const maxLen = Math.max(...lines.map(x=>x.length));
+  const w = Math.ceil((maxLen*size*.64 + 28)/BU)*BU, lh = size*1.12, h = lines.length*lh + 12;
+  const tx = lines.map((ln,i)=>`<text class="pill-t" x="0" y="${ly + 6 + lh*(i+1) - size*.25}" text-anchor="middle" font-family="Fredoka, Arial, sans-serif" font-weight="700" font-size="${size}">${esc(ln)}</text>`).join("");
+  const sub = `<text x="0" y="${ly + h + L0.sub + 6}" text-anchor="middle" font-family="Nunito, system-ui, sans-serif" font-weight="800" font-size="${L0.sub}" fill="${INK}" opacity=".75">${esc(D.sub)}</text>`;
+  let studs = ""; const ns = Math.floor(w/BU);
+  for(let k=0;k<ns;k++) studs += `<rect class="pill" x="${-w/2 + k*BU + 2.5}" y="${ly-4.5}" width="7" height="5.5" rx="1.6" stroke="${INK}" stroke-width="1.2"/>`;
+  const cx = w/2 - 2, cy = ly + 1, n = visitOrder.indexOf(s.id)+1;
+  const chk = `<g class="check"><circle cx="${cx}" cy="${cy}" r="12.5" fill="${INK}" stroke="#fff" stroke-width="2"/><text class="ord" x="${cx}" y="${cy+4.6}" text-anchor="middle" font-family="Fredoka, Arial, sans-serif" font-weight="700" font-size="13" fill="${C.sun}">${n||""}</text></g>`;
+  return `${studs}<rect class="pill" x="${-w/2}" y="${ly}" width="${w}" height="${h}" rx="4" stroke="${INK}" stroke-width="2.5"/><rect x="${-w/2+2}" y="${ly+h-5}" width="${w-4}" height="3" fill="#00000022"/>${tx}${sub}${chk}`;
+}
+function crowdSVG(w, n){
+  const cols=[C.coral,C.sun,C.mint,C.lilac,C.cobalt,C.pink,"#f7f7f2"];
+  let out = `<g class="crowd">`; const per = Math.ceil(n/2);
+  for(let i=0;i<n;i++){
+    const row = i<per ? 0 : 1, k = row ? i-per : i, x = -w/2 + (k+.5+row*.5)*(w/per);
+    out += `<g style="animation-delay:${(-(i*137)%600)/1000}s">${roundPiece(x.toFixed(1), 22+row*13, 6, cols[i%cols.length])}</g>`;
+  }
+  return out + `</g>`;
+}
+function stageBody(W_, color, n){
+  const plan = [
+    [[0,W_,BR.dark]],
+    [[0,2,BR.grey],[2,W_-4,color],[W_-2,2,BR.grey]],
+    [[0,2,BR.grey],[2,1,color],[3,W_-6,BR.screen,{flat:true}],[W_-3,1,color],[W_-2,2,BR.grey]],
+    [[0,2,BR.grey],[2,1,color],[3,W_-6,BR.screen,{flat:true}],[W_-3,1,color],[W_-2,2,BR.grey]],
+    [[0,2,BR.grey],[2,W_-4,color],[W_-2,2,BR.grey]],
+    [[1,W_-2,BR.dark]],
+    [[W_/2-1,2,color]]
+  ];
+  const s = build(plan, W_);
+  const x0 = -W_*BU/2 + 3*BU, top = -4*BH, h = 2*BH; let eq = "";
+  for(let i=0;i<W_-6;i++){ const bh = (h-4)*(.45+((i*37)%50)/100); eq += `<rect class="eq" x="${x0+i*BU+2.5}" y="${top+h-bh-2}" width="${BU-5}" height="${bh}" rx="1.5" fill="${[C.sun,C.coral,C.cobalt,C.mint,"#f7f7f2"][i%5]}" style="animation-delay:${-(i*.17).toFixed(2)}s;animation-duration:${(.6+((i*13)%7)/10).toFixed(2)}s"/>`; }
+  const fy = -7*BH - 4;
+  const flag = `<line x1="0" y1="${fy}" x2="0" y2="${fy-26}" stroke="${INK}" stroke-width="3"/><path class="flag" d="M0 ${fy-26} h22 l-5 6 l5 6 h-22z" fill="${color}" stroke="${INK}" stroke-width="1.8"/>`;
+  return s + `<g class="late">${eq}${flag}${crowdSVG(W_*BU+20, n)}</g>`;
+}
+const AREAS = {
+  academy:()=>{
+    const s = build([[[0,10,C.mint]],[[1,3,C.mint],[4,2,BR.white],[6,3,C.mint]],[[2,2,C.mint],[4,2,BR.white],[6,2,C.mint]],[[3,4,C.mint]],[[4,2,C.mint]]], 10);
+    return s + `<g class="late"><g class="bob"><path d="M-22 -100 l22 -11 l22 11 l-22 11 z" fill="${INK}"/><rect x="-12" y="-96" width="24" height="9" fill="${INK}"/><line x1="18" y1="-100" x2="22" y2="-84" stroke="${C.sun}" stroke-width="2.5"/></g></g>`; },
+  lounge:()=>{
+    const s = build([[[0,12,C.lilac]],[[0,1,C.lilac],[1,5,C.sun],[6,5,C.coral],[11,1,C.lilac]],[[0,1,C.lilac],[11,1,C.lilac]]], 12);
+    return s + `<g class="late"><text x="-36" y="-16.5" text-anchor="middle" font-family="Fredoka, Arial, sans-serif" font-weight="700" font-size="12" fill="${INK}">ES</text><text x="30" y="-16.5" text-anchor="middle" font-family="Fredoka, Arial, sans-serif" font-weight="700" font-size="12" fill="${INK}">EN</text>
+      <g class="bubble-a"><rect x="-74" y="-92" width="64" height="30" rx="6" fill="#fff" stroke="${INK}" stroke-width="2.5"/><path d="M-50 -63 l-4 10 l12 -10" fill="#fff" stroke="${INK}" stroke-width="2.5" stroke-linejoin="round"/><text x="-42" y="-71" text-anchor="middle" font-family="Nunito, sans-serif" font-weight="900" font-size="14" fill="${INK}">¡Hola!</text></g>
+      <g class="bubble-b"><rect x="12" y="-92" width="58" height="30" rx="6" fill="#fff" stroke="${INK}" stroke-width="2.5"/><path d="M36 -63 l4 10 l-12 -10" fill="#fff" stroke="${INK}" stroke-width="2.5" stroke-linejoin="round"/><text x="41" y="-71" text-anchor="middle" font-family="Nunito, sans-serif" font-weight="900" font-size="14" fill="${INK}">Hi!</text></g></g>`; },
+  market:()=>{
+    const cols = [C.pink, C.sun, C.mint], plan = [[],[],[]];
+    [0,5,10].forEach((c,k)=>{ plan[0].push([c,4,BR.white]); plan[1].push([c,1,cols[k]],[c+1,2,BR.white,{flat:true}],[c+3,1,cols[k]]); plan[2].push([c,4,cols[k]]); });
+    let late = `<g class="late">`;
+    [0,5,10].forEach((c,k)=>{ const x = -14*BU/2 + c*BU; late += `<g class="sway" style="animation-delay:${-k*.7}s"><polygon points="${x-3},${-3*BH-4} ${x+4*BU+3},${-3*BH-4} ${x+4*BU-6},${-3*BH-18} ${x+6},${-3*BH-18}" fill="${cols[k]}" stroke="${INK}" stroke-width="2" stroke-linejoin="round"/></g>`; late += roundPiece(x+BU*1.5, -BH*1.5, 4.5, [C.coral,C.cobalt,C.lilac][k]) + roundPiece(x+BU*2.5, -BH*1.5, 4.5, [C.sun,C.mint,C.pink][k]); });
+    return build(plan, 14) + late + `</g>`; },
+  data:()=>{
+    const hts = [2,3,4,5,6], cols = [C.sun, C.coral, C.cobalt, C.mint, BR.white];
+    const plan = [[[0,10,BR.grey]]];
+    for(let r=1;r<=6;r++){ const row = []; hts.forEach((h,k)=>{ if(r<=h) row.push([k*2,2,cols[k]]); }); plan.push(row); }
+    return build(plan, 10) + `<g class="late"><line x1="58" y1="-20" x2="72" y2="-44" stroke="${INK}" stroke-width="3"/><path d="M62 -52 a14 14 0 0 1 22 14" fill="none" stroke="${INK}" stroke-width="3"/><circle class="blink" cx="72" cy="-46" r="4" fill="${C.coral}"/></g>`; },
+  ai:()=>{
+    const plan = [[[0,10,C.green]],[[1,8,C.green]],[[2,6,BR.screen,{flat:true}]],[[2,6,C.green]],[[3,4,C.green]],[[4,2,C.green]]];
+    const ey = -3*BH + 6.5;
+    return build(plan, 10) + `<g class="late"><g class="eyes"><rect x="-17" y="${ey-4}" width="10" height="8" rx="2" fill="${C.mint}"/><rect x="7" y="${ey-4}" width="10" height="8" rx="2" fill="${C.mint}"/></g>
+      <line x1="0" y1="${-6*BH-4}" x2="0" y2="${-6*BH-26}" stroke="${INK}" stroke-width="3"/><circle class="blink" cx="0" cy="${-6*BH-30}" r="6" fill="${C.coral}" stroke="${INK}" stroke-width="2"/>
+      <circle class="ring" cx="0" cy="${-6*BH-30}" r="14" stroke="${C.coral}"/><circle class="ring r2" cx="0" cy="${-6*BH-30}" r="14" stroke="${C.coral}"/></g>`; },
+  wheel:()=>{
+    const r = 48, cy = -4*BH - 44; let spokes = "", cabs = "";
+    for(let k=0;k<8;k++){ const a = k*Math.PI/4, x = r*Math.cos(a), y = cy + r*Math.sin(a); spokes += `<line x1="0" y1="${cy}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}" stroke="${INK}" stroke-width="2"/>`; cabs += roundPiece(x.toFixed(1), y.toFixed(1), 8, [C.coral,C.sun,C.mint,C.lilac][k%4]); }
+    const wheel = `<g class="late"><g class="spin"><circle cx="0" cy="${cy}" r="${r}" fill="none" stroke="${BR.dark}" stroke-width="5"/>${spokes}${cabs}</g>${roundPiece(0, cy, 8, BR.grey)}</g>`;
+    const stand = build([[[2,6,BR.grey]],[[2.5,1,BR.grey],[6.5,1,BR.grey]],[[3,1,BR.grey],[6,1,BR.grey]],[[3.5,1,BR.grey],[5.5,1,BR.grey]]], 10);
+    return wheel + stand; },
+  trucks:()=>{
+    const cols = [C.coral, C.mint, C.sun], plan = [[],[],[]];
+    [0,6,12].forEach((c,k)=>{ plan[0].push([c,5,cols[k]]); plan[1].push([c,3,cols[k]],[c+3,1,BR.white,{flat:true}],[c+4,1,cols[k]]); plan[2].push([c,3,BR.white]); });
+    let late = `<g class="late">`;
+    [0,6,12].forEach((c,k)=>{ const x = -17*BU/2 + c*BU; late += `<g class="truck t${k+1}">${roundPiece(x+12, 2, 7, BR.dark)}${roundPiece(x+48, 2, 7, BR.dark)}<rect x="${x+8}" y="${-3*BH-14}" width="6" height="10" fill="${BR.grey}" stroke="${INK}" stroke-width="1.5"/><circle class="puff" cx="${x+11}" cy="${-3*BH-20}" r="5" fill="#fff"/><circle class="puff p2" cx="${x+11}" cy="${-3*BH-20}" r="5" fill="#fff"/><circle class="puff p3" cx="${x+11}" cy="${-3*BH-20}" r="5" fill="#fff"/></g>`; });
+    return build(plan, 17) + late + `</g>`; },
+  info:()=>{
+    const plan = [];
+    for(let r=0;r<5;r++) plan.push([[0,2,BR.grey],[14,2,BR.grey]]);
+    plan.push([[0,16,C.sun]]);
+    return build(plan, 16) + `<g class="late"><text x="0" y="${-6*BH+9.5}" text-anchor="middle" font-family="Fredoka, Arial, sans-serif" font-weight="700" font-size="10.5" fill="${INK}" style="letter-spacing:.08em">ENTRADA · ENTRANCE</text>
+      ${[-48,-24,0,24,48].map((x,i)=>`<polygon class="flag" points="${x-8},${-5*BH} ${x+8},${-5*BH} ${x},${-5*BH+13}" fill="${[C.coral,C.mint,C.cobalt,C.lilac,C.coral][i]}" stroke="${INK}" stroke-width="1.2" style="animation-delay:${-i*.2}s"/>`).join("")}
+      <circle class="ring" cx="0" cy="-30" r="20" stroke="${INK}"/>${roundPiece(0,-30,18,"#ffffff")}<text x="0" y="-23" text-anchor="middle" font-family="Fredoka, Arial, sans-serif" font-weight="700" font-size="20" fill="${INK}">i</text></g>`; }
+};
+function bodyFor(s){
+  BI = 0;
+  if(s.kind === "stage"){ const big = s.id==="main"; return stageBody(big?20:12, s.color, big?24:12); }
+  return AREAS[s.id]();
+}
+function treeSVG(x, y, sc){
+  BI = 0;
+  return `<g transform="translate(${x} ${y+8}) scale(${sc})">${build([[[1,1,BR.brown]],[[1,1,BR.brown]],[[0,3,BR.leaf]],[[0,3,BR.leaf2]],[[1,1,BR.leaf]]], 3)}</g>`;
+}
+
+function renderMap(){
+  const Lc = lay(), svg = $("#map"), D = layoutKey==="d";
+  svg.setAttribute("viewBox", `0 0 ${Lc.w} ${Lc.h}`);
+  svg.setAttribute("aria-label", t("mapTitle"));
+  let g = `<defs>
+    <pattern id="plateM" width="16" height="16" patternUnits="userSpaceOnUse"><rect width="16" height="16" fill="#d9dce1"/><circle cx="8" cy="8" r="4.6" fill="#c6cad1"/><circle cx="8" cy="7.2" r="4.2" fill="#e6e8ec"/></pattern>
+    <pattern id="plateG" width="16" height="16" patternUnits="userSpaceOnUse"><rect width="16" height="16" fill="#4fa64a"/><circle cx="8" cy="8" r="4.6" fill="#3f8e3b"/><circle cx="8" cy="7.2" r="4.2" fill="#62b95b"/></pattern>
+  </defs>
+  <rect width="${Lc.w}" height="${Lc.h}" fill="url(#plateM)"/>
+  <rect id="grassColor" class="fadein" width="${Lc.w}" height="${Lc.h}" fill="url(#plateG)" style="opacity:0"/>`;
+  const rw = D ? 40 : 32;
+  g += Lc.roads.map((d,i)=>`<path id="road${i}" d="${d}" fill="none" stroke="${INK}" stroke-width="${rw+4}" stroke-linecap="round" opacity=".55"/>`).join("");
+  g += Lc.roads.map(d=>`<path d="${d}" fill="none" stroke="#efe6d2" stroke-width="${rw}" stroke-linecap="round"/>`).join("");
+  g += Lc.roads.map(d=>`<path d="${d}" fill="none" stroke="#d9cba9" stroke-width="2" stroke-dasharray="2 14" stroke-linecap="round"/>`).join("");
+  let deco = "";
+  if(Lc.lake){ const [x,y,rx,ry] = Lc.lake; deco += `<rect x="${x-rx}" y="${y-ry}" width="${rx*2}" height="${ry*2}" rx="${ry}" fill="#3fa9f5" stroke="${INK}" stroke-width="3"/><path d="M${x-50} ${y-4} q12 -7 24 0 t24 0" stroke="#ffffff" stroke-width="3" fill="none" stroke-linecap="round"><animateTransform attributeName="transform" type="translate" values="0 0; 12 0; 0 0" dur="4s" repeatCount="indefinite"/></path><path d="M${x+4} ${y+12} q12 -7 24 0 t24 0" stroke="#ffffff" stroke-width="3" fill="none" stroke-linecap="round"><animateTransform attributeName="transform" type="translate" values="0 0; -12 0; 0 0" dur="5s" repeatCount="indefinite"/></path>`; }
+  if(Lc.hub){ const [x,y] = Lc.hub; deco += `<rect x="${x-5}" y="${y-64}" width="10" height="68" fill="${BR.grey}" stroke="${INK}" stroke-width="2"/><g class="sway"><rect x="${x-56}" y="${y-62}" width="108" height="22" rx="3" fill="${C.coral}" stroke="${INK}" stroke-width="2.2"/><rect x="${x-52}" y="${y-36}" width="108" height="22" rx="3" fill="${C.mint}" stroke="${INK}" stroke-width="2.2"/><text x="${x-2}" y="${y-46}" text-anchor="middle" font-family="Fredoka, Arial, sans-serif" font-weight="700" font-size="12" fill="${INK}">MAIN STAGE ↑</text><text x="${x+4}" y="${y-20}" text-anchor="middle" font-family="Fredoka, Arial, sans-serif" font-weight="700" font-size="12" fill="${INK}">← FOOD · AI · DATA →</text></g>`; }
+  deco += Lc.trees.map(([x,y],i)=>treeSVG(x, y, i%3 ? .8 : 1)).join("");
+  g += `<g aria-hidden="true">${monoize(deco)}</g><g id="decoColor" class="fadein" aria-hidden="true" style="opacity:0">${deco}</g>`;
+  g += `<path id="trail" class="trail" d="" fill="none" stroke="${C.coral}" stroke-width="${D?6:5}" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="1 13"/>`;
+  if(!reduce){
+    let w = ""; const wc = [C.coral,C.sun,C.cobalt,C.mint,C.lilac];
+    Lc.roads.forEach((_,ri)=>{
+      const n = ri===0 ? 4 : 2;
+      for(let k=0;k<n;k++){
+        const dur = 16 + ((ri*7+k*5)%9), rev = (k+ri)%2===1, begin = -((k*dur)/n).toFixed(1);
+        w += `<g aria-hidden="true">${roundPiece(0,0,6.5,wc[(ri+k)%wc.length])}<animateMotion dur="${dur}s" begin="${begin}s" repeatCount="indefinite" ${rev?'keyPoints="1;0" keyTimes="0;1" calcMode="linear"':""}><mpath href="#road${ri}"/></animateMotion></g>`;
+      }
+    });
+    g += w;
+  }
+  ORDER.forEach(id=>{
+    const s = SPOTS.find(x=>x.id===id), [x,y] = Lc.pos[id];
+    const ly = 66*Lc.s + (s.kind==="stage" ? 18*Lc.s : 8);
+    const body = bodyFor(s), nb = BI;
+    const vis = visited.has(id);
+    g += `<g class="spot${vis?" visited built":""}${current===id?" active":""}${s.light?" light":""}" data-spot="${id}" data-n="${nb}" tabindex="0" role="button" aria-label="${esc(L(s).stage+" · "+L(s).sub)}" transform="translate(${x} ${y})" style="--c:${s.color};--n:${nb}">
+      <rect class="hitbox" x="-110" y="-${s.id==="main"?190:150}" width="220" height="${s.id==="main"?300:260}"/>
+      <g class="body"><g transform="scale(${Lc.s})"><g class="mono">${monoize(body)}</g><g class="colr">${body}</g></g></g>
+      <circle class="ping" cx="0" cy="${-40*Lc.s}" r="60"/>
+      ${labelSVG(s, ly, Lc)}
+    </g>`;
+  });
+  g += `<g id="herePin" style="display:none;pointer-events:none" aria-hidden="true"><g class="pinbob"><path d="M0 0 C -14 -16, -16 -24, -16 -30 A16 16 0 0 1 16 -30 C 16 -24, 14 -16, 0 0z" fill="${C.coral}" stroke="${INK}" stroke-width="2.5"/><circle cx="0" cy="-30" r="6" fill="#fff" stroke="${INK}" stroke-width="2"/><g transform="translate(22 -44)"><rect x="0" y="-13" width="${t("here").length*7.8+16}" height="24" rx="5" fill="${INK}"/><text x="8" y="4" font-family="Nunito, sans-serif" font-weight="900" font-size="13" fill="#fff">${esc(t("here"))}</text></g></g></g>`;
+  if(!reduce){
+    const cl = (y, dur, begin, sc) => `<g aria-hidden="true" opacity=".7" style="pointer-events:none"><g transform="scale(${sc})"><rect x="-46" y="-12" width="92" height="22" rx="11" fill="#fff"/><rect x="-20" y="-28" width="52" height="22" rx="11" fill="#fff"/></g><animateTransform attributeName="transform" type="translate" from="-140 ${y}" to="${Lc.w+140} ${y}" dur="${dur}s" begin="${begin}s" repeatCount="indefinite"/></g>`;
+    g += cl(D?120:320, 70, -10, 1) + cl(D?720:1200, 90, -55, .8);
+  }
+  svg.innerHTML = g;
+  svg.querySelectorAll(".spot").forEach(el=>{
+    el.addEventListener("click", ()=>openSpot(el.dataset.spot));
+    el.addEventListener("keydown", e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); openSpot(el.dataset.spot); } });
+    el.addEventListener("mouseenter", ()=>sfx.tick());
+  });
+  $("#legend").innerHTML = `<span><i style="background:#d3d6dc"></i>${esc(t("legGrey"))}</span><span><i style="background:${C.coral}"></i>${esc(t("legColor"))}</span><span><i class="dash"></i>${esc(t("legTrail"))}</span>`;
+  updateProgress();
+}
+
+function updateProgress(){
+  const Lc = lay(), p = visitOrder.length/ORDER.length;
+  const gc = $("#grassColor"); if(gc) gc.style.opacity = p;
+  const dc = $("#decoColor"); if(dc) dc.style.opacity = p;
+  const tr = $("#trail");
+  if(tr){
+    const pts = [Lc.entry].concat(visitOrder.map(id=>{ const [x,y] = Lc.pos[id]; return [x, y+ (layoutKey==="d"?22:16)]; }));
+    const last2 = pts.slice(-2);
+    tr.setAttribute("d", pts.length > 1 ? "M"+last2.map(p=>p.join(" ")).join(" L") : "");
+  }
+  const pin = $("#herePin");
+  if(pin){
+    const lastId = visitOrder[visitOrder.length-1];
+    if(lastId){
+      const PT = {main:138, wheel:168, ai:140, academy:126, lounge:108, data:104, market:76, trucks:80, info:100}; const [x,y] = Lc.pos[lastId], top = (PT[lastId] || 138)*Lc.s;
+      pin.setAttribute("transform", `translate(${x} ${y-top})`); pin.style.display = "";
+    } else pin.style.display = "none";
+  }
+  document.querySelectorAll("#map .spot").forEach(el=>{
+    const n = visitOrder.indexOf(el.dataset.spot)+1;
+    const pend = pendingBuild.has(el.dataset.spot);
+    el.classList.toggle("visited", n>0 && !pend);
+    const o = el.querySelector(".ord"); if(o) o.textContent = (n && !pend) ? n : "";
+  });
+}
+mq.addEventListener ? mq.addEventListener("change", e=>{ layoutKey = e.matches ? "m" : "d"; renderMap(); }) : mq.addListener(e=>{ layoutKey = e.matches ? "m" : "d"; renderMap(); });
+
+/* ================= FINALE (encore) ================= */
+let fwRaf = null, fwParts = [], fwRockets = [], fwLast = 0, fwStart = 0;
+const fwc = () => $("#fw");
+function openFinale(){
+  const f = $("#finale"); if(!f.hidden) return;
+  lastFocusF = document.activeElement;
+  f.hidden = false; document.body.style.overflow = "hidden";
+  renderVip(); sfx.chime(); sfx.crowd(.3); sfx.kick(.1,.7); sfx.kick(.6,.7);
+  if(!reduce){ const c = fwc(); c.width = innerWidth; c.height = innerHeight; fwStart = performance.now(); fwLast = 0; if(!fwRaf) fwLoop(performance.now()); }
+  setTimeout(()=>{ const n = $("#vipName"); if(n) n.focus({preventScroll:true}); }, 500);
+}
+let lastFocusF = null;
+function closeFinale(){
+  const f = $("#finale"); if(f.hidden) return;
+  f.hidden = true; document.body.style.overflow = "";
+  cancelAnimationFrame(fwRaf); fwRaf = null; fwParts = []; fwRockets = [];
+  if(lastFocusF && lastFocusF.focus) lastFocusF.focus({preventScroll:true});
+}
+function boom(x,y){
+  const cols = [C.coral,C.sun,C.mint,C.lilac,C.pink,"#ffffff",C.cobalt];
+  const col = cols[Math.floor(Math.random()*cols.length)], col2 = cols[Math.floor(Math.random()*cols.length)];
+  const n = 70 + Math.floor(Math.random()*40);
+  for(let i=0;i<n;i++){ const a = Math.PI*2*i/n, sp = 2 + Math.random()*4.5; fwParts.push({x,y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,life:1,c:i%3?col:col2,s:2+Math.random()*1.6}); }
+  const elapsed = performance.now()-fwStart;
+  if(elapsed < 9000){ noise({d:.6,v:.22,f1:500,f2:90,ft:"lowpass",a:.01}); for(let k=0;k<5;k++) noise({d:.04,v:.05,f1:5000+Math.random()*3000,ft:"highpass",a:.003,delay:.15+Math.random()*.5}); }
+}
+function fwLoop(now){
+  const c = fwc(), x = c.getContext("2d");
+  const rate = (now - fwStart) < 6000 ? 450 : 1300;
+  if(now - fwLast > rate){ fwLast = now; fwRockets.push({x:c.width*(.15+Math.random()*.7), y:c.height, ty:c.height*(.12+Math.random()*.3), vy:-(9+Math.random()*3)}); if((now-fwStart)<9000) noise({d:.5,v:.05,f1:800,f2:3000,a:.3}); }
+  x.globalCompositeOperation = "destination-out"; x.fillStyle = "rgba(0,0,0,.22)"; x.fillRect(0,0,c.width,c.height);
+  x.globalCompositeOperation = "lighter";
+  fwRockets.forEach(r=>{ r.y += r.vy; r.vy *= .985; x.fillStyle = "#ffe9a8"; x.beginPath(); x.arc(r.x,r.y,2.5,0,7); x.fill(); if(r.y <= r.ty || r.vy > -2){ r.done = true; boom(r.x, r.y); } });
+  fwRockets = fwRockets.filter(r=>!r.done);
+  fwParts.forEach(p=>{ p.vx *= .985; p.vy = p.vy*.985 + .045; p.x += p.vx; p.y += p.vy; p.life -= .012; x.globalAlpha = Math.max(p.life,0); x.fillStyle = p.c; x.beginPath(); x.arc(p.x,p.y,p.s,0,7); x.fill(); });
+  x.globalAlpha = 1;
+  fwParts = fwParts.filter(p=>p.life > 0);
+  fwRaf = requestAnimationFrame(fwLoop);
+}
+function hashBars(str){
+  let h = 2166136261; for(const ch of (str||"olivero")){ h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619); }
+  let out = "", x = 0;
+  for(let i=0;i<38 && x < 236;i++){ h ^= h << 13; h ^= h >>> 17; h ^= h << 5; const w = 1 + (Math.abs(h)%4); if(i%2===0) out += `<rect x="${x}" y="0" width="${w}" height="38" fill="${INK}"/>`; x += w + 1 + (Math.abs(h>>3)%2); }
+  return `<svg viewBox="0 0 240 38" preserveAspectRatio="none" aria-hidden="true">${out}</svg>`;
+}
+function msg(){
+  const n = $("#vipName").value.trim(), co = $("#vipCompany").value.trim(), ro = $("#vipRole").value.trim();
+  if(lang==="es"){
+    const subject = "Pase backstage · Olivero Fest: hablemos";
+    const body = `Hola Matías:\n\nSoy ${n||"[tu nombre]"}${co?` de ${co}`:""}. Acabo de recorrer tu Olivero Fest y me gustaría hablar contigo${ro?` sobre el puesto de ${ro}`:""}.\n\n¿Cuándo te viene bien una llamada?\n\n${n||""}`;
+    return {subject, body};
+  }
+  const subject = "Backstage pass · Olivero Fest: let's talk";
+  const body = `Hi Matías,\n\nI'm ${n||"[your name]"}${co?` from ${co}`:""}. I've just explored your Olivero Fest and I'd love to talk${ro?` about the ${ro} role`:""}.\n\nWhen would suit you for a call?\n\n${n||""}`;
+  return {subject, body};
+}
+function renderVip(){
+  const n = $("#vipName").value.trim(), co = $("#vipCompany").value.trim();
+  $("#vipNameOut").textContent = n || t("vipYou");
+  $("#vipNameOut").style.fontSize = (n.length > 16 ? 24 : n.length > 11 ? 30 : 36) + "px";
+  $("#vipCoOut").textContent = co || t("vipCoPh");
+  $("#vipBars").innerHTML = hashBars(n+co);
+  $("#vipNo").textContent = "Nº " + String(Math.abs([...(n+co||"x")].reduce((a,c)=>a*31+c.charCodeAt(0)|0,7))%100000).padStart(5,"0");
+  const m = msg();
+  $("#vipMail").href = `mailto:matiasjulianolivero@gmail.com?subject=${encodeURIComponent(m.subject)}&body=${encodeURIComponent(m.body)}`;
+}
+function vipTilt(e){
+  if(reduce) return;
+  const card = $("#vip"), r = card.getBoundingClientRect();
+  const px = (e.clientX - r.left)/r.width - .5, py = (e.clientY - r.top)/r.height - .5;
+  card.style.transform = `perspective(900px) rotateY(${px*16}deg) rotateX(${-py*12}deg)`;
+  card.style.setProperty("--gx", (px+.5)*100+"%"); card.style.setProperty("--gy", (py+.5)*100+"%");
+}
+
+/* ================= TIMETABLE ================= */
+function renderTT(){
+  const y0 = 2011, y1 = 2027, pct = y => ((y-y0)/(y1-y0)*100);
+  let html = `<div class="tt-axis-sp"></div><div class="tt-axis">${[2011,2013,2015,2017,2019,2021,2023,2025].map(y=>`<span style="left:${pct(y)}%">${y}</span>`).join("")}</div>`;
+  ["main","indie","glow","agency","founders"].forEach(id=>{
+    const s = SPOTS.find(x=>x.id===id), name = actName(s);
+    const w = pct(s.end)-pct(s.start), short = w < 30;
+    const lab = short ? `<span class="tt-out" style="${s.start>2022?`right:${100-pct(s.start)+1.5}%;text-align:right`:`left:${pct(s.end)+1.5}%`}">${esc(name)} · ${Math.floor(s.start)}–${Math.floor(s.end===2026.8?2026:s.end)}</span>` : "";
+    html += `<div class="tt-lab">${esc(L(s).stage)}<small>${esc(name)} · ${Math.floor(s.start)}–${Math.floor(s.end===2026.8?2026:s.end)}</small></div><div class="tt-track"><button class="tt-bar" type="button" data-open="${id}" style="left:${pct(s.start)}%;width:${w}%;background:${s.color};--c:${s.color};${s.light?"color:#fff":""}" aria-label="${esc(name+" · "+L(s).when)}" title="${esc(name+" · "+L(s).when)}">${short?"":`<span class=\"in-name\">${esc(name)} · 2011–2020</span>`}</button>${lab}</div>`;
+  });
+  $("#tt").innerHTML = html;
+  document.querySelectorAll("#tt [data-open]").forEach(b=>b.addEventListener("click", ()=>openSpot(b.dataset.open)));
+}
+
+/* ================= DRAWER ================= */
+let lastFocus = null, current = null;
+const XBTN = () => `<button class="x" type="button" data-close aria-label="${esc(t("close"))}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>`;
+function openDrawer(html){
+  const d = $("#drawer");
+  if(!d.classList.contains("on")) lastFocus = document.activeElement;
+  d.innerHTML = html; d.classList.add("on"); d.setAttribute("aria-hidden","false");
+  $("#scrim").classList.add("on"); document.body.style.overflow = "hidden";
+  d.querySelectorAll("[data-close]").forEach(b=>b.addEventListener("click", closeDrawer));
+  const x = d.querySelector(".x"); if(x) x.focus({preventScroll:true});
+}
+function closeDrawer(){
+  const d = $("#drawer"); if(!d.classList.contains("on")) return;
+  d.classList.remove("on"); d.setAttribute("aria-hidden","true"); $("#scrim").classList.remove("on"); document.body.style.overflow = "";
+  document.querySelectorAll("#map .spot.active").forEach(s=>s.classList.remove("active"));
+  current = null; if(lastFocus && lastFocus.focus) lastFocus.focus({preventScroll:true});
+  flushBuild();
+}
+function openSpot(id){
+  const s = SPOTS.find(x=>x.id===id); if(!s) return;
+  current = id; const D = L(s);
+  document.querySelectorAll("#map .spot.active").forEach(g=>g.classList.remove("active"));
+  const g = document.querySelector(`#map .spot[data-spot="${id}"]`);
+  if(g){ g.classList.add("active"); g.classList.remove("pinged"); void g.getBoundingClientRect(); g.classList.add("pinged"); }
+  const hc = ["#ffc21a","#2ec4a0","#ff7ac6","#b18cff"];
+  const hits = (D.hits||[]).map((h,i)=>`<div class="hit-card" style="background:${hc[i%4]};animation-delay:${.15+i*.1}s"><b>${esc(h[0])}</b><span>${esc(h[1])}</span></div>`).join("");
+  let body = `<p style="font-size:18px;font-weight:500">${esc(D.intro)}</p>`;
+  if(hits) body += `<div><h4>${esc(t("hits"))}</h4><div class="hits">${hits}</div></div>`;
+  if(D.set) body += `<div><h4>${esc(s.kind==="stage"?t("setlist"):(id==="market"?t("stalls"):t("program")))}</h4><ol class="setlist">${D.set.map((x,i)=>`<li style="animation-delay:${.2+i*.06}s"><span>${esc(x)}</span></li>`).join("")}</ol></div>`;
+  if(D.menu) body += `<div><h4>${esc(t("menu"))}</h4><div class="menu">${D.menu.map(m=>`<div class="item"><b>${esc(m[0])}</b><div>${esc(m[1])}</div></div>`).join("")}</div></div>`;
+  if(D.edu) body += `<div><h4>${esc(t("program"))}</h4><ol class="setlist">${D.edu.map((e,i)=>`<li style="animation-delay:${.2+i*.06}s"><span><b>${esc(e[1])}</b><br>${esc(e[2])} · ${esc(e[0])}</span></li>`).join("")}</ol></div>`;
+  if(D.contact) body += `<div class="menu">
+      <div class="item"><b>Email</b><div class="line" style="border:0;padding:0"><span class="v">matiasjulianolivero@gmail.com</span><button class="mini" type="button" data-copy="matiasjulianolivero@gmail.com">${esc(t("copy"))}</button></div></div>
+      <div class="item"><b>${esc(t("phone"))}</b><div class="line" style="border:0;padding:0"><span class="v">+34 697 973 545</span><button class="mini" type="button" data-copy="+34 697 973 545">${esc(t("copy"))}</button></div></div>
+      <div class="item"><b>LinkedIn</b><div class="line" style="border:0;padding:0"><span class="v">linkedin.com/in/oliveromatias</span><a class="mini" href="https://www.linkedin.com/in/oliveromatias/" target="_blank" rel="noopener">${esc(t("open"))}</a></div></div></div>`;
+  if(s.genres) body += `<div><h4>${esc(t("genres"))}</h4><div class="genres">${s.genres.map(x=>`<span>${esc(x)}</span>`).join("")}</div></div>`;
+  const idx = ORDER.indexOf(id);
+  const head = s.kind==="stage"
+    ? `<span class="badge">${esc(D.badge)}</span><h3 id="dTitle">${esc(D.stage)}</h3><div class="act-name">${esc(t("nowPlaying"))}: ${esc(actName(s))}</div><div class="meta">${esc(D.role)}<br>${esc(D.when)} · ${esc(D.where)}</div>`
+    : `<span class="badge">${esc(D.badge)}</span><h3 id="dTitle">${esc(D.stage)}</h3>`;
+  openDrawer(`<div class="d-head" style="background:${s.color};color:${s.light?"#fff":INK}">${s.kind==="stage"?'<div class="d-lights"></div>':""}${XBTN()}<div style="position:relative">${head}</div></div>
+    <div class="d-body">${body}</div>
+    <div class="d-foot"><button class="btn" type="button" id="dPrev" ${idx<=0?"disabled":""}>← ${esc(t("prev"))}</button><span style="font-weight:800">${idx+1}/${ORDER.length}</span><button class="btn" type="button" id="dNext" ${idx>=ORDER.length-1?"disabled":""}>${esc(t("next"))} →</button></div>`);
+  $("#dPrev").addEventListener("click", ()=>{ if(idx>0) openSpot(ORDER[idx-1]); });
+  $("#dNext").addEventListener("click", ()=>{ if(idx<ORDER.length-1) openSpot(ORDER[idx+1]); });
+  bindCopy($("#drawer"));
+  sfx.riff(s.sound);
+  setTimeout(()=>visit(id), 450);
+}
+function openQuick(){
+  current = null;
+  const rows = t("qRows").map(r=>`<div class="item"><b>${esc(r[0])}</b><div>${esc(r[1])}</div></div>`).join("");
+  openDrawer(`<div class="d-head" style="background:${C.sun};color:${INK}">${XBTN()}<div style="position:relative"><span class="badge">${esc(t("qBadge"))}</span><h3 id="dTitle">${esc(t("qTitle"))}</h3><div class="meta">Digital Marketing Manager · AI Strategy · Madrid</div></div></div>
+    <div class="d-body"><div class="menu">${rows}</div></div>
+    <div class="d-foot"><span></span><button class="btn" type="button" id="goInfo">${esc(t("toInfo"))} ↓</button></div>`);
+  sfx.riff("info");
+  $("#goInfo").addEventListener("click", ()=>{ closeDrawer(); $("#info").scrollIntoView({behavior:reduce?"auto":"smooth"}); });
+}
+$("#scrim").addEventListener("click", closeDrawer);
+document.addEventListener("keydown", e=>{
+  const d = $("#drawer"); if(!d.classList.contains("on")) return;
+  if(e.key === "Escape") closeDrawer();
+  if(current && e.key === "ArrowRight"){ const i = ORDER.indexOf(current); if(i<ORDER.length-1) openSpot(ORDER[i+1]); }
+  if(current && e.key === "ArrowLeft"){ const i = ORDER.indexOf(current); if(i>0) openSpot(ORDER[i-1]); }
+  if(e.key === "Tab"){
+    const f = [...d.querySelectorAll("button:not([disabled]),a[href]")]; if(!f.length) return;
+    if(e.shiftKey && document.activeElement === f[0]){ e.preventDefault(); f[f.length-1].focus(); }
+    else if(!e.shiftKey && document.activeElement === f[f.length-1]){ e.preventDefault(); f[0].focus(); }
+  }
+});
+
+/* ================= MISC ================= */
+function bindCopy(root){
+  root.querySelectorAll("[data-copy]").forEach(btn=>{
+    if(btn._b) return; btn._b = true;
+    btn.addEventListener("click", async ()=>{
+      try{ await navigator.clipboard.writeText(btn.dataset.copy); btn.textContent = t("copied"); tone({f:880,d:.08,v:.1}); tone({f:1320,d:.12,v:.08,delay:.07}); }
+      catch(e){ btn.textContent = t("copyFail"); }
+      setTimeout(()=>{ btn.textContent = t("copy"); }, 1800);
+    });
+  });
+}
+let tTimer;
+function toast(m){ const el = $("#toast"); el.textContent = m; el.classList.add("show"); clearTimeout(tTimer); tTimer = setTimeout(()=>el.classList.remove("show"), 4500); }
+const cv = $("#confetti"), cx = cv.getContext("2d"); let parts = [], raf = null;
+function confetti(){
+  if(reduce) return; cv.width = innerWidth; cv.height = innerHeight;
+  const cols = [C.coral,C.sun,C.mint,C.lilac,C.cobalt,PAPER];
+  for(let i=0;i<180;i++) parts.push({x:Math.random()*innerWidth,y:-20-Math.random()*200,vx:(Math.random()-.5)*3,vy:2+Math.random()*4,w:6+Math.random()*7,h:10+Math.random()*10,r:Math.random()*6,vr:(Math.random()-.5)*.3,c:cols[i%cols.length],round:i%4===0});
+  if(!raf) loop();
+}
+function loop(){
+  cx.clearRect(0,0,cv.width,cv.height);
+  parts.forEach(p=>{ p.x+=p.vx+Math.sin(p.y/40); p.y+=p.vy; p.r+=p.vr; cx.save(); cx.translate(p.x,p.y); cx.rotate(p.r); cx.fillStyle=p.c; if(p.round){ cx.beginPath(); cx.arc(0,0,p.w/2,0,Math.PI*2); cx.fill(); } else cx.fillRect(-p.w/2,-p.h/2,p.w,p.h); cx.restore(); });
+  parts = parts.filter(p=>p.y < cv.height+30);
+  if(parts.length) raf = requestAnimationFrame(loop); else { raf = null; cx.clearRect(0,0,cv.width,cv.height); }
+}
+function applyStatic(){
+  document.documentElement.lang = lang;
+  document.querySelectorAll("[data-i]").forEach(el=>{ const v = T[lang][el.dataset.i]; if(typeof v==="string") el.textContent = v; });
+  $("#langBtn").textContent = lang==="es" ? "EN" : "ES";
+  $("#langBtn").setAttribute("aria-label", lang==="es" ? "Switch to English" : "Cambiar a español");
+  $("#quickBtn").setAttribute("aria-label", t("quick"));
+  $("#liveBtn").setAttribute("aria-label", t("live"));
+  $("#soundBtn").setAttribute("aria-label", soundOn ? t("soundOn") : t("soundOff"));
+  $("#vipName").placeholder = t("phName"); $("#vipCompany").placeholder = t("phCompany"); $("#vipRole").placeholder = t("phRole");
+  $("#fClose").setAttribute("aria-label", t("close"));
+  renderVip();
+}
+function renderAll(){ applyStatic(); renderPoster(); renderMap(); renderTT(); stampHoles(); if(current) openSpot(current); }
+
+/* ================= CONTROLS ================= */
+document.querySelectorAll("[data-pick]").forEach(btn=>btn.addEventListener("click", ()=>{
+  lang = btn.dataset.pick; try{ localStorage.setItem("mo-fest-lang", lang); }catch(e){}
+  renderAll(); ac();
+  const gate = $("#gate"); gate.classList.add("stamped"); sfx.stamp();
+  setTimeout(()=>{ gate.classList.add("open"); document.body.classList.add("live"); sfx.gate(); sfx.crowd(.22); sfx.kick(.3,.7); sfx.kick(.8,.6); }, reduce?0:450);
+  setTimeout(()=>{ gate.classList.add("gone"); const q = $("#quickBtn"); if(q) q.focus({preventScroll:true}); }, reduce?0:1500);
+}));
+$("#langBtn").addEventListener("click", ()=>{ lang = lang==="es"?"en":"es"; try{ localStorage.setItem("mo-fest-lang", lang); }catch(e){} renderAll(); sfx.tick(); });
+$("#soundBtn").addEventListener("click", ()=>{
+  soundOn = !soundOn;
+  const b = $("#soundBtn"); b.setAttribute("aria-pressed", soundOn?"true":"false"); b.setAttribute("aria-label", soundOn?t("soundOn"):t("soundOff"));
+  $("#soundIcon").innerHTML = soundOn ? '<path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M19 5a10 10 0 0 1 0 14"/>' : '<path d="M11 5 6 9H2v6h4l5 4z"/><path d="m16 9 6 6M22 9l-6 6"/>';
+  if(!soundOn){ liveStop(); $("#liveBtn").setAttribute("aria-pressed","false"); } else sfx.tick();
+  toast(soundOn ? t("soundOn") : t("soundOff"));
+});
+$("#liveBtn").addEventListener("click", ()=>{
+  const b = $("#liveBtn"), on = b.getAttribute("aria-pressed")!=="true";
+  if(on && !soundOn) $("#soundBtn").click();
+  b.setAttribute("aria-pressed", on?"true":"false");
+  if(on) liveStart(); else liveStop();
+  toast(on ? t("liveOn") : t("liveOff"));
+});
+$("#quickBtn").addEventListener("click", openQuick);
+["vipName","vipCompany","vipRole"].forEach(id=>$("#"+id).addEventListener("input", renderVip));
+$("#vipForm").addEventListener("submit", e=>e.preventDefault());
+$("#vip").addEventListener("pointermove", vipTilt);
+$("#vip").addEventListener("pointerleave", ()=>{ $("#vip").style.transform = ""; });
+$("#fClose").addEventListener("click", closeFinale);
+$("#encoreBtn").addEventListener("click", openFinale);
+$("#vipMail").addEventListener("click", ()=>{ sfx.chime(); });
+$("#vipCopy").addEventListener("click", async ()=>{
+  const m = msg(), b = $("#vipCopy");
+  try{ await navigator.clipboard.writeText(m.subject + "\n\n" + m.body); b.textContent = t("msgCopied"); tone({f:880,d:.08,v:.1}); tone({f:1320,d:.12,v:.08,delay:.07}); }
+  catch(e){ b.textContent = t("copyFail"); }
+  setTimeout(()=>{ b.textContent = t("fCopy"); }, 1800);
+});
+document.addEventListener("keydown", e=>{
+  const f = $("#finale"); if(f.hidden) return;
+  if(e.key === "Escape") closeFinale();
+  if(e.key === "Tab"){
+    const els = [...f.querySelectorAll("button,a[href],input")]; if(!els.length) return;
+    if(e.shiftKey && document.activeElement === els[0]){ e.preventDefault(); els[els.length-1].focus(); }
+    else if(!e.shiftKey && document.activeElement === els[els.length-1]){ e.preventDefault(); els[0].focus(); }
+  }
+});
+// keep the poster title clear of the tile cluster
+function tilesWidth(){ const ti = document.querySelector(".tiles"); if(ti && getComputedStyle(ti).position==="absolute") document.querySelector(".poster").style.setProperty("--tw", ti.offsetWidth+"px"); }
+window.addEventListener("resize", tilesWidth);
+
+bindCopy(document);
+renderAll(); tilesWidth();
+})();
+</script>
+</body>
+</html>

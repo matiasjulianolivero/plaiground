@@ -1,0 +1,1055 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Matías Olivero Pop-up CV</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT@9..144,500..900,100&family=Figtree:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* Layout idea: a pop-up book lying on a cobalt desk. Paper pieces with ink outlines stand up, fold open and pop. Single theme by choice. */
+:root{
+  --desk:#2440a6;
+  --desk-deep:#1a2f80;
+  --paper:#fbf7ee;
+  --paper-2:#efe7d6;
+  --ink:#16142a;
+  --red:#ff5a47;
+  --sun:#ffc93c;
+  --mint:#3ec7a0;
+  --pink:#ff9ec4;
+  --font-display:"Fraunces", Georgia, "Times New Roman", serif;
+  --font-body:"Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --pop: cubic-bezier(.34,1.56,.64,1);
+  --line: 2.5px solid var(--ink);
+  --shadow: 5px 5px 0 var(--ink);
+  color-scheme: light;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  background:var(--desk);
+  background-image:
+    radial-gradient(circle at 1px 1px, rgba(255,255,255,.09) 1px, transparent 0);
+  background-size:22px 22px;
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:17px;
+  line-height:1.55;
+  overflow-x:hidden;
+}
+h1,h2,h3{font-family:var(--font-display);font-variation-settings:"SOFT" 100;line-height:1.05;margin:0;text-wrap:balance}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--sun);outline-offset:3px;border-radius:6px}
+a{color:inherit}
+
+/* ---------- top bar ---------- */
+.bar{position:fixed;top:14px;right:14px;z-index:60;display:flex;gap:8px}
+.chip-btn{
+  background:var(--paper);border:var(--line);border-radius:999px;padding:7px 14px;
+  font-weight:700;font-size:14px;box-shadow:3px 3px 0 var(--ink);display:inline-flex;align-items:center;gap:6px;
+  transition:transform .15s var(--pop), box-shadow .15s;
+}
+.chip-btn:hover{transform:translate(-1px,-1px);box-shadow:4px 4px 0 var(--ink)}
+.chip-btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink)}
+.chip-btn svg{width:18px;height:18px}
+.chip-btn.quick{background:var(--sun)}
+
+/* ---------- cover ---------- */
+#cover{
+  position:fixed;inset:0;z-index:100;display:grid;place-items:center;
+  background:var(--desk);
+  background-image:radial-gradient(circle at 1px 1px, rgba(255,255,255,.09) 1px, transparent 0);
+  background-size:22px 22px;
+  perspective:1800px;transition:opacity .6s ease .7s, visibility 0s linear 1.3s;
+}
+#cover.open{pointer-events:none}
+#cover.gone{opacity:0;visibility:hidden}
+.book{position:relative;width:min(400px,84vw);aspect-ratio:3/4;transform-style:preserve-3d;transform:rotateX(8deg)}
+.book-inner{position:absolute;inset:0;background:var(--paper);border:var(--line);border-radius:6px 16px 16px 6px;box-shadow:10px 10px 0 var(--desk-deep);display:grid;place-items:center;padding:30px;text-align:center}
+.book-inner p{font-family:var(--font-display);font-size:22px;font-weight:600}
+.book-cover{
+  position:absolute;inset:0;transform-origin:left center;transform:translateZ(1px);
+  transition:transform 1.1s cubic-bezier(.6,.05,.3,1);
+  background:var(--red);border:var(--line);border-radius:6px 16px 16px 6px;
+  box-shadow:10px 10px 0 var(--desk-deep);
+  display:flex;flex-direction:column;justify-content:space-between;padding:30px 28px;color:var(--paper);
+  backface-visibility:hidden;
+}
+#cover.open .book-cover{transform:translateZ(1px) rotateY(-165deg)}
+.book-cover::before{content:"";position:absolute;left:18px;top:0;bottom:0;width:3px;background:rgba(22,20,42,.35)}
+.cover-kicker{font-weight:800;letter-spacing:.14em;text-transform:uppercase;font-size:13px;padding-left:12px}
+.cover-name{font-family:var(--font-display);font-weight:900;font-size:clamp(40px,10vw,58px);line-height:.95;padding-left:12px;font-variation-settings:"SOFT" 100}
+.cover-role{font-weight:600;padding-left:12px;opacity:.95}
+.cover-deco{position:absolute;right:-30px;top:36%;width:118px;height:118px;border-radius:50%;background:var(--sun);border:var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-family:var(--font-display);font-weight:900;font-size:32px;line-height:1;color:var(--ink);transform:rotate(12deg);box-shadow:4px 4px 0 var(--ink)}
+.cover-open{
+  align-self:flex-start;margin-left:12px;background:var(--paper);color:var(--ink);border:var(--line);border-radius:999px;
+  padding:12px 22px;font-weight:800;font-size:17px;box-shadow:4px 4px 0 var(--ink);display:inline-flex;gap:10px;align-items:center;
+  animation:nudge 1.8s ease-in-out infinite;
+}
+.cover-open:hover{background:var(--sun)}
+.cover-langs{display:flex;flex-wrap:wrap;gap:10px;padding-left:12px}
+.cover-langs .cover-open{margin-left:0;padding:11px 18px}
+.cover-langs .cover-open:nth-child(2){animation-delay:.25s}
+.cover-choose{padding-left:12px;font-weight:800;font-size:14px}
+.cover-hint{font-size:13px;padding-left:12px;opacity:.9;display:flex;align-items:center;gap:6px}
+.cover-deco .l{font-family:var(--font-body);font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;line-height:1.15;text-align:center}
+@keyframes nudge{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+
+/* ---------- layout ---------- */
+main{max-width:1060px;margin:0 auto;padding:70px 18px 80px;display:grid;gap:56px}
+.section-head{display:flex;flex-wrap:wrap;align-items:end;justify-content:space-between;gap:10px 24px;margin-bottom:22px;color:var(--paper)}
+.section-head h2{font-size:clamp(30px,5vw,46px);font-weight:800}
+.hint{font-weight:600;color:#d9e0ff;font-size:15px;display:flex;align-items:center;gap:8px}
+.tab-label{display:inline-block;background:var(--sun);color:var(--ink);border:var(--line);border-radius:6px;padding:2px 10px;font-weight:800;font-size:13px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px;transform:rotate(-2deg)}
+
+/* ---------- hero stage ---------- */
+.hero{display:grid;gap:26px}
+.stage{position:relative;height:clamp(330px,46vw,450px);perspective:1500px;perspective-origin:50% 0%}
+.spread{
+  position:absolute;inset:0;transform-style:preserve-3d;
+  transform:rotateX(calc(14deg + var(--ty,0deg))) rotateY(var(--tx,0deg));
+  transition:transform .4s ease-out;
+}
+.page-bg{
+  position:absolute;inset:6% 0 0 0;transform:translateZ(-60px);background:var(--paper);border:var(--line);border-radius:18px;
+  box-shadow:8px 8px 0 var(--desk-deep);overflow:hidden;
+}
+.page-bg::after{content:"";position:absolute;left:50%;top:0;bottom:0;width:2px;background:linear-gradient(var(--paper-2),rgba(22,20,42,.18),var(--paper-2))}
+.layer{
+  position:absolute;transform-origin:50% 100%;
+  transform:translateZ(var(--z,0px)) rotateX(-88deg);
+  transition:transform 1s var(--pop);
+  transition-delay:var(--d,0s);
+}
+.stage.up .layer{transform:translateZ(var(--z,0px)) rotateX(0deg)}
+.l-sun{--z:-20px;left:6%;top:12%;width:clamp(90px,15vw,150px);aspect-ratio:1}
+.l-sun .rays{position:absolute;inset:-22%;animation:spin 22s linear infinite}
+.l-sun .disc{position:absolute;inset:0;border-radius:50%;background:var(--sun);border:var(--line)}
+.l-city{--z:0px;left:34%;right:3%;bottom:8%;height:66%}
+.l-city svg{width:100%;height:100%;display:block}
+.l-plaque{--z:40px;left:4%;bottom:6%;width:min(520px,62%)}
+.plaque{background:var(--paper);border:var(--line);border-radius:14px;box-shadow:var(--shadow);padding:clamp(14px,2.4vw,24px) clamp(16px,3vw,30px);text-align:left}
+.plaque h1{font-size:clamp(28px,5.6vw,56px);font-weight:900;letter-spacing:-.01em}
+.plaque .role{font-weight:800;font-size:clamp(14px,1.9vw,19px);margin-top:6px}
+.plaque .tag{font-size:clamp(13px,1.6vw,15px);color:#4a4760;font-weight:600}
+.sticker{
+  --z:70px;position:absolute;padding:6px 12px;border:var(--line);border-radius:999px;font-weight:800;font-size:clamp(12px,1.6vw,15px);
+  box-shadow:3px 3px 0 var(--ink);white-space:nowrap;
+}
+.s1{right:5%;top:12%;background:var(--pink);rotate:6deg}
+.s2{right:12%;top:31%;background:var(--mint);rotate:-5deg}
+.s3{left:30%;top:16%;background:var(--paper);rotate:-4deg}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.profile{
+  background:var(--paper);border:var(--line);border-radius:18px;box-shadow:8px 8px 0 var(--desk-deep);
+  padding:clamp(20px,3vw,32px);display:grid;grid-template-columns:1.6fr 1fr;gap:24px;align-items:start
+}
+.profile p{margin:0;max-width:62ch;font-size:18px}
+.contact-mini{display:grid;gap:8px;font-weight:600;font-size:15px}
+.contact-mini span{display:flex;gap:8px;align-items:center}
+.contact-mini svg{width:18px;height:18px;flex:none}
+
+/* ---------- stats ---------- */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;perspective:900px}
+.stat{
+  background:var(--paper);border:var(--line);border-radius:14px;box-shadow:var(--shadow);padding:18px;
+  transform-origin:50% 100%;transition:transform .7s var(--pop);
+}
+.stat.folded{transform:scale(.9) rotate(-2deg)}
+.stat b{display:block;font-family:var(--font-display);font-size:clamp(38px,5vw,54px);font-weight:900;line-height:1;font-variant-numeric:tabular-nums}
+.stat span{font-weight:600;font-size:15px}
+.stat:nth-child(1) b{color:var(--red)}
+.stat:nth-child(2) b{color:#1f8f72}
+.stat:nth-child(3) b{color:var(--desk)}
+.stat:nth-child(4) b{color:#c43a7a}
+
+/* ---------- experience ---------- */
+.tracker{display:flex;align-items:center;gap:10px;background:var(--paper);border:var(--line);border-radius:999px;padding:6px 14px;font-weight:800;font-size:14px;box-shadow:3px 3px 0 var(--ink);color:var(--ink)}
+.dots{display:flex;gap:5px}
+.dots i{width:12px;height:12px;border-radius:50%;border:2px solid var(--ink);background:var(--paper);transition:background .3s, transform .3s var(--pop)}
+.dots i.on{background:var(--red);transform:scale(1.2)}
+.jobs{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:18px}
+.job{
+  position:relative;text-align:left;background:var(--paper);border:var(--line);border-radius:14px;box-shadow:var(--shadow);
+  padding:0;overflow:hidden;display:flex;flex-direction:column;min-height:250px;
+  transition:transform .25s var(--pop), box-shadow .25s;
+}
+.job:hover{transform:translate(-3px,-5px) rotate(-1deg);box-shadow:9px 10px 0 var(--ink)}
+.job:active{transform:translate(2px,2px);box-shadow:2px 2px 0 var(--ink)}
+.job .top{height:96px;display:grid;place-items:center;border-bottom:var(--line);position:relative}
+.job .top svg{width:62px;height:62px;transition:transform .4s var(--pop)}
+.job:hover .top svg{transform:translateY(-6px) rotate(-8deg) scale(1.1)}
+.job .body{padding:14px 16px 16px;display:flex;flex-direction:column;gap:4px;flex:1}
+.job .years{font-weight:800;font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:#4a4760}
+.job h3{font-size:22px;font-weight:800}
+.job .r{font-weight:600;font-size:15px}
+.job .cta{margin-top:auto;padding-top:10px;font-weight:800;font-size:14px;display:flex;align-items:center;gap:6px}
+.job .seen{position:absolute;top:10px;right:10px;background:var(--ink);color:var(--paper);font-size:12px;font-weight:800;padding:3px 9px;border-radius:999px;transform:scale(0);transition:transform .4s var(--pop)}
+.job.is-seen .seen{transform:scale(1) rotate(6deg)}
+
+/* ---------- modal pop-up ---------- */
+.modal{position:fixed;inset:0;z-index:80;display:grid;place-items:center;padding:16px;perspective:1600px}
+.modal[hidden]{display:none}
+.scrim{position:absolute;inset:0;background:rgba(14,22,66,.62);backdrop-filter:blur(3px);animation:fade .3s ease}
+@keyframes fade{from{opacity:0}}
+.sheet{
+  position:relative;width:min(760px,100%);max-height:calc(100% - 10px);overflow:auto;
+  background:var(--paper);border:var(--line);border-radius:18px;box-shadow:10px 10px 0 var(--ink);
+  transform-origin:50% 100%;animation:sheetIn .65s var(--pop);
+}
+@keyframes sheetIn{from{transform:rotateX(-80deg) scale(.7);opacity:0}}
+.sheet-head{padding:24px 26px 20px;border-bottom:var(--line);display:flex;gap:18px;align-items:center;transform-origin:50% 0;animation:flapIn .7s var(--pop) .15s both}
+@keyframes flapIn{from{transform:rotateX(-100deg)}}
+.sheet-head .icon{flex:none;width:84px;height:84px;border:var(--line);border-radius:16px;display:grid;place-items:center;box-shadow:3px 3px 0 var(--ink);background:var(--paper)}
+.sheet-head .icon svg{width:62px;height:62px}
+.sheet-head h3{font-size:clamp(24px,4vw,34px);font-weight:900}
+.sheet-head .meta{font-weight:600;color:#4a4760;font-size:15px}
+.sheet-body{padding:22px 26px 10px;display:grid;gap:18px}
+.summary{font-size:18px;font-weight:500;margin:0;max-width:62ch}
+.pops{display:flex;flex-wrap:wrap;gap:12px;perspective:700px}
+.pop-card{
+  border:var(--line);border-radius:12px;padding:10px 14px;box-shadow:3px 3px 0 var(--ink);min-width:120px;max-width:220px;
+  transform-origin:50% 100%;animation:standUp .7s var(--pop) both;
+}
+.pop-card b{display:block;font-family:var(--font-display);font-size:34px;font-weight:900;line-height:1}
+.pop-card span{font-size:13px;font-weight:700;line-height:1.3;display:block}
+@keyframes standUp{from{transform:rotateX(-90deg)}}
+.bullets{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.bullets li{position:relative;padding-left:28px;animation:slideIn .5s ease both;max-width:66ch}
+.bullets li::before{content:"";position:absolute;left:4px;top:.45em;width:12px;height:12px;border:2px solid var(--ink);border-radius:3px;background:var(--sun);transform:rotate(45deg)}
+@keyframes slideIn{from{opacity:0;transform:translateX(-14px)}}
+.tags{display:flex;flex-wrap:wrap;gap:8px}
+.tags span{border:2px solid var(--ink);border-radius:999px;padding:2px 11px;font-size:13px;font-weight:700;background:var(--paper-2)}
+.sheet-foot{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:14px 26px 22px;flex-wrap:wrap}
+.sheet-foot .nav{display:flex;gap:8px}
+.x-btn{position:absolute;top:12px;right:12px;width:40px;height:40px;border-radius:50%;border:var(--line);background:var(--paper);display:grid;place-items:center;box-shadow:2px 2px 0 var(--ink);z-index:2}
+.x-btn:hover{background:var(--red);color:var(--paper)}
+.x-btn svg{width:18px;height:18px}
+
+/* quick view */
+.quick-grid{display:grid;gap:14px}
+.quick-grid .row{display:grid;grid-template-columns:150px 1fr;gap:12px;border-top:2px dashed rgba(22,20,42,.25);padding-top:12px}
+.quick-grid .row b{font-weight:800}
+.quick-grid ul{margin:0;padding-left:18px}
+
+/* ---------- skills bubble wrap ---------- */
+.wrap-sheet{background:var(--paper);border:var(--line);border-radius:18px;box-shadow:8px 8px 0 var(--desk-deep);padding:clamp(18px,3vw,28px);display:grid;gap:22px}
+.wrap-group h3{font-size:22px;font-weight:800;margin-bottom:12px}
+.bubbles{display:flex;flex-wrap:wrap;gap:10px}
+.bubble{
+  position:relative;border:2.5px solid var(--ink);border-radius:999px;padding:10px 18px;font-weight:700;font-size:15px;
+  background:radial-gradient(circle at 30% 28%, #fff 0 14%, transparent 15%), linear-gradient(160deg,#e9fbff,#bfe6f7);
+  box-shadow:inset -4px -5px 0 rgba(22,20,42,.12), 3px 3px 0 var(--ink);
+  transition:transform .18s var(--pop), background .2s, box-shadow .2s;
+}
+.bubble.tool{background:radial-gradient(circle at 30% 28%, #fff 0 14%, transparent 15%), linear-gradient(160deg,#fff4d6,#ffd97a)}
+.bubble:hover{transform:scale(1.07) rotate(-2deg)}
+.bubble[aria-pressed="true"]{
+  background:var(--paper-2);box-shadow:inset 2px 2px 0 rgba(22,20,42,.18);transform:scale(.94);
+  border-style:dashed;
+}
+.bubble.burst{animation:burst .3s ease}
+@keyframes burst{0%{transform:scale(1.15)}40%{transform:scale(.82)}100%{transform:scale(.94)}}
+.wrap-foot{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;font-weight:700}
+.meter{flex:1;min-width:160px;max-width:320px;height:14px;border:2px solid var(--ink);border-radius:999px;overflow:hidden;background:var(--paper-2)}
+.meter i{display:block;height:100%;width:0;background:var(--mint);transition:width .35s var(--pop)}
+
+/* ---------- education flip cards ---------- */
+.edu{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:18px}
+.flip{border:0;background:none;padding:0;perspective:900px;height:200px;text-align:left}
+.flip-inner{position:relative;width:100%;height:100%;transform-style:preserve-3d;transition:transform .7s var(--pop)}
+.flip[aria-pressed="true"] .flip-inner{transform:rotateY(180deg)}
+.face{position:absolute;inset:0;backface-visibility:hidden;border:var(--line);border-radius:14px;box-shadow:var(--shadow);padding:16px;display:flex;flex-direction:column;gap:6px}
+.face.front{background:var(--paper)}
+.face.back{background:var(--ink);color:var(--paper);transform:rotateY(180deg);box-shadow:5px 5px 0 var(--sun)}
+.face .yr{font-family:var(--font-display);font-weight:900;font-size:30px;line-height:1}
+.face .inst{font-weight:800;font-size:18px}
+.face .turn{margin-top:auto;font-size:13px;font-weight:800;display:flex;gap:6px;align-items:center}
+.face.back .prog{font-family:var(--font-display);font-size:21px;font-weight:700;line-height:1.2}
+.badge-live{align-self:flex-start;background:var(--mint);color:var(--ink);border:2px solid var(--ink);border-radius:999px;font-size:12px;font-weight:800;padding:1px 9px}
+
+.langs{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:18px}
+.lang{background:var(--paper);border:var(--line);border-radius:14px;box-shadow:var(--shadow);padding:16px 18px;display:grid;gap:8px}
+.lang b{font-family:var(--font-display);font-size:22px;font-weight:800}
+.lang .lvl{display:flex;gap:5px}
+.lang .lvl i{flex:1;height:10px;border:2px solid var(--ink);border-radius:4px;background:var(--paper-2)}
+.lang .lvl i.f{background:var(--red)}
+
+/* ---------- envelope ---------- */
+.contact{display:grid;justify-items:center;gap:16px;padding-top:10px}
+.contact .section-head{justify-content:center;text-align:center;flex-direction:column;align-items:center}
+.env-wrap{position:relative;width:min(540px,100%);margin-top:190px}
+.envelope{position:relative;height:300px;perspective:1200px}
+.env-back{position:absolute;inset:0;background:#e6d6b8;border:var(--line);border-radius:12px;box-shadow:8px 8px 0 var(--desk-deep)}
+.letter{
+  position:absolute;left:5%;right:5%;bottom:14px;height:282px;background:var(--paper);border:var(--line);border-radius:10px;
+  padding:16px 22px;z-index:2;transition:transform .9s var(--pop) .35s;display:flex;flex-direction:column;gap:12px;
+}
+.envelope.open .letter{transform:translateY(-200px)}
+.envelope.out .letter{z-index:6}
+.letter h3{font-size:30px;font-weight:900}
+.letter .line{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:space-between;border-top:2px dashed rgba(22,20,42,.25);padding-top:10px}
+.letter .line .v{font-weight:700;word-break:break-all}
+.letter .line .k{font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#4a4760;display:block}
+.mini-btn{border:2px solid var(--ink);background:var(--sun);border-radius:999px;padding:4px 12px;font-weight:800;font-size:13px;box-shadow:2px 2px 0 var(--ink);text-decoration:none;white-space:nowrap}
+.mini-btn:active{transform:translate(1px,1px);box-shadow:1px 1px 0 var(--ink)}
+.env-front{
+  position:absolute;inset:0;z-index:4;pointer-events:none;
+  background:
+    linear-gradient(to top right, #f1e3c6 49.6%, transparent 50%) left bottom/51% 100% no-repeat,
+    linear-gradient(to top left, #ecdcbc 49.6%, transparent 50%) right bottom/51% 100% no-repeat,
+    #e9d9b9;
+  border-radius:12px;border:var(--line);
+}
+.env-front::after{content:"";position:absolute;left:0;right:0;bottom:0;height:52%;background:#f4e8cf;clip-path:polygon(0 100%,50% 0,100% 100%);}
+.env-flap{
+  position:absolute;left:0;right:0;top:0;height:58%;z-index:5;transform-origin:50% 0;
+  transition:transform .55s ease, z-index 0s linear .3s;
+}
+.env-flap::before{content:"";position:absolute;inset:0;background:var(--ink);clip-path:polygon(0 0,100% 0,50% 100%)}
+.env-flap::after{content:"";position:absolute;inset:3px 4px 5px;background:#dcc59c;clip-path:polygon(0 0,100% 0,50% 100%)}
+.envelope.open .env-flap{transform:rotateX(180deg);z-index:1}
+.seal{position:absolute;left:50%;top:48%;z-index:7;width:74px;height:74px;margin:-37px 0 0 -37px;border-radius:50%;background:var(--red);border:var(--line);display:grid;place-items:center;color:var(--paper);font-family:var(--font-display);font-weight:900;font-size:26px;box-shadow:3px 3px 0 var(--ink);transition:transform .45s var(--pop), opacity .3s}
+.envelope.open .seal{transform:scale(0) rotate(90deg);opacity:0}
+.env-btn{position:absolute;inset:0;z-index:8;background:transparent;border:0;border-radius:12px}
+.env-btn span{position:absolute;left:50%;bottom:-54px;transform:translateX(-50%);background:var(--paper);border:var(--line);border-radius:999px;padding:8px 18px;font-weight:800;box-shadow:3px 3px 0 var(--ink);white-space:nowrap;animation:nudge 1.8s ease-in-out infinite}
+.envelope.open .env-btn{display:none}
+.envelope.glow .env-back{box-shadow:0 0 0 6px var(--sun), 8px 8px 0 var(--desk-deep)}
+
+footer{color:#c8d1ff;text-align:center;font-size:14px;padding:30px 18px 40px}
+
+/* toast */
+.toast{position:fixed;left:50%;bottom:22px;z-index:90;transform:translate(-50%,160%);background:var(--sun);border:var(--line);border-radius:14px;padding:12px 18px;font-weight:800;box-shadow:5px 5px 0 var(--ink);transition:transform .5s var(--pop);max-width:min(560px,92vw);text-align:center}
+.toast.show{transform:translate(-50%,0)}
+#confetti{position:fixed;inset:0;pointer-events:none;z-index:95}
+
+/* ---------- responsive ---------- */
+@media (max-width:760px){
+  .l-plaque{width:78%}
+  .l-city{left:20%}
+  .profile{grid-template-columns:1fr}
+  .stats{grid-template-columns:repeat(2,1fr)}
+  .s2,.s3{display:none}
+  .quick-grid .row{grid-template-columns:1fr;gap:4px}
+  .langs{grid-template-columns:1fr}
+  body{font-size:16px}
+}
+@media (max-width:440px){
+  .letter{padding:16px}
+  .letter h3{font-size:28px}
+  .sheet-head{flex-direction:column;align-items:flex-start}
+  .bar .label-txt{display:none}
+}
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;transition-delay:0s!important}
+}
+</style>
+</head>
+<body>
+
+<!-- Cover -->
+<div id="cover" aria-hidden="false">
+  <div class="book">
+    <div class="book-inner"><p data-i18n="coverInside">Let's go!</p></div>
+    <div class="book-cover">
+      <div class="cover-kicker">Pop-up CV</div>
+      <div>
+        <div class="cover-name">Matías<br>Julián<br>Olivero</div>
+        <div class="cover-role" style="margin-top:10px">Digital Marketing Manager<br>&amp; AI Strategy</div>
+      </div>
+      <div class="cover-deco" aria-label="10+ años de experiencia · 10+ years of experience"><span class="n">10+</span><span class="l">años<br>years</span></div>
+      <div style="display:grid;gap:12px">
+        <div class="cover-choose">Elige tu idioma · Choose your language</div>
+        <div class="cover-langs">
+          <button class="cover-open" type="button" data-pick="es" lang="es">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M2 5h7a3 3 0 0 1 3 3v12a2 2 0 0 0-2-2H2z"/><path d="M22 5h-7a3 3 0 0 0-3 3v12a2 2 0 0 1 2-2h8z"/></svg>
+            <span>Español</span>
+          </button>
+          <button class="cover-open" type="button" data-pick="en" lang="en">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M2 5h7a3 3 0 0 1 3 3v12a2 2 0 0 0-2-2H2z"/><path d="M22 5h-7a3 3 0 0 0-3 3v12a2 2 0 0 1 2-2h8z"/></svg>
+            <span>English</span>
+          </button>
+        </div>
+        <div class="cover-hint">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M19 5a10 10 0 0 1 0 14"/></svg>
+          <span>Mejor con sonido · Best with sound on</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Top controls -->
+<div class="bar">
+  <button class="chip-btn quick" id="quickBtn" type="button">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h9l-1 8 10-12h-9z"/></svg>
+    <span class="label-txt" data-i18n="quick">30-second version</span>
+  </button>
+  <button class="chip-btn" id="langBtn" type="button" aria-label="Cambiar idioma / Change language">ES</button>
+  <button class="chip-btn" id="soundBtn" type="button" aria-pressed="true" aria-label="Sound">
+    <svg id="soundIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M19 5a10 10 0 0 1 0 14"/></svg>
+  </button>
+</div>
+
+<main>
+  <!-- HERO -->
+  <section class="hero" aria-label="Intro">
+    <div class="stage" id="stage">
+      <div class="spread" id="spread">
+        <div class="page-bg"></div>
+        <div class="layer l-sun" style="--d:.05s" aria-hidden="true">
+          <svg class="rays" viewBox="0 0 100 100"><g stroke="#16142a" stroke-width="3" stroke-linecap="round">
+            <line x1="50" y1="2" x2="50" y2="14"/><line x1="50" y1="86" x2="50" y2="98"/><line x1="2" y1="50" x2="14" y2="50"/><line x1="86" y1="50" x2="98" y2="50"/>
+            <line x1="16" y1="16" x2="25" y2="25"/><line x1="75" y1="75" x2="84" y2="84"/><line x1="84" y1="16" x2="75" y2="25"/><line x1="16" y1="84" x2="25" y2="75"/></g></svg>
+          <div class="disc"></div>
+        </div>
+        <div class="layer l-city" style="--d:.25s" aria-hidden="true">
+          <svg viewBox="0 0 900 260" preserveAspectRatio="xMidYMax meet">
+            <g stroke="#16142a" stroke-width="3" stroke-linejoin="round">
+              <rect x="40" y="200" width="60" height="60" fill="#3ec7a0"/>
+              <rect x="110" y="180" width="54" height="80" fill="#ff9ec4"/>
+              <rect x="174" y="160" width="62" height="100" fill="#3ec7a0"/>
+              <polygon points="250,260 250,96 296,80 296,260" fill="#ffc93c"/>
+              <polygon points="316,260 330,100 372,112 358,260" fill="#ff5a47"/>
+              <polygon points="384,260 398,112 440,100 426,260" fill="#ff5a47"/>
+              <rect x="560" y="120" width="58" height="140" fill="#ff9ec4"/>
+              <rect x="630" y="90" width="64" height="170" fill="#3ec7a0"/>
+              <rect x="706" y="60" width="62" height="200" fill="#ffc93c"/>
+              <rect x="780" y="30" width="70" height="230" fill="#ff5a47"/>
+            </g>
+            <g fill="#16142a">
+              <rect x="56" y="214" width="10" height="10"/><rect x="74" y="214" width="10" height="10"/>
+              <rect x="190" y="176" width="10" height="10"/><rect x="210" y="176" width="10" height="10"/><rect x="190" y="200" width="10" height="10"/><rect x="210" y="200" width="10" height="10"/>
+              <rect x="646" y="110" width="10" height="10"/><rect x="668" y="110" width="10" height="10"/><rect x="646" y="134" width="10" height="10"/><rect x="668" y="134" width="10" height="10"/>
+              <rect x="796" y="50" width="12" height="12"/><rect x="820" y="50" width="12" height="12"/><rect x="796" y="76" width="12" height="12"/><rect x="820" y="76" width="12" height="12"/>
+            </g>
+            <path d="M40 150 C 200 140, 420 120, 520 80 S 760 20, 860 8" fill="none" stroke="#16142a" stroke-width="5" stroke-linecap="round" stroke-dasharray="2 14"/>
+            <polygon points="872,4 846,0 858,24" fill="#16142a"/>
+          </svg>
+        </div>
+        <div class="layer l-plaque" style="--d:.5s">
+          <div class="plaque">
+            <h1>Matías Julián Olivero</h1>
+            <div class="role">Digital Marketing Manager · AI Strategy</div>
+            <div class="tag" data-i18n="tagline">Strategy, campaigns &amp; growth · Madrid, Spain</div>
+          </div>
+        </div>
+        <div class="layer sticker s1" style="--d:.75s;--z:70px" data-i18n="st1">10+ years in marketing</div>
+        <div class="layer sticker s2" style="--d:.9s;--z:60px" data-i18n="st2">B2B · AI · Data</div>
+        <div class="layer sticker s3" style="--d:1.05s;--z:50px" data-i18n="st3">ES · EN</div>
+      </div>
+    </div>
+
+    <div class="profile">
+      <div>
+        <div class="tab-label" data-i18n="profileTab">Profile</div>
+        <p data-i18n="profile">Digital marketing professional with 10+ years across consultancy, agency and entrepreneurship. I combine strategic vision with hands-on delivery to design, lead and optimise work across acquisition, content, CRM and analytics, connecting every activity to brand and business objectives. I coordinate clients, creative teams and suppliers, manage campaigns and budgets, and use data and generative AI to guide decisions.</p>
+      </div>
+      <div class="contact-mini">
+        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s7-6.2 7-12a7 7 0 0 0-14 0c0 5.8 7 12 7 12z"/><circle cx="12" cy="10" r="2.5"/></svg><span data-i18n="loc">Madrid, Spain</span></span>
+        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>matiasjulianolivero@gmail.com</span>
+        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3h4l2 5-2.5 1.5a11 11 0 0 0 6 6L16 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 5a2 2 0 0 1 2-2"/></svg>+34 697 973 545</span>
+        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M8 10v7M8 7v.01M12 17v-4a2 2 0 0 1 4 0v4M12 10v7"/></svg><a href="https://www.linkedin.com/in/oliveromatias/" target="_blank" rel="noopener">linkedin.com/in/oliveromatias</a></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- STATS -->
+  <section aria-label="Key numbers">
+    <div class="stats" id="stats">
+      <div class="stat"><b data-count="10" data-suffix="+">10+</b><span data-i18n="stat1">years in digital marketing</span></div>
+      <div class="stat"><b data-count="111">111</b><span data-i18n="stat2">cities in the City Brand Barometer</span></div>
+      <div class="stat"><b data-count="5">5</b><span data-i18n="stat3">international markets: US, UK, ES, KSA, JP</span></div>
+      <div class="stat"><b data-count="8" data-suffix="+">8+</b><span data-i18n="stat4">years running my own agency</span></div>
+    </div>
+  </section>
+
+  <!-- EXPERIENCE -->
+  <section aria-labelledby="expTitle">
+    <div class="section-head">
+      <div>
+        <h2 id="expTitle" data-i18n="expTitle">Chapters of experience</h2>
+        <div class="hint" style="margin-top:6px" data-i18n="expHint">Tap a card to pop it open. Can you find all five?</div>
+      </div>
+      <div class="tracker" aria-live="polite"><div class="dots" id="dots"></div><span id="trackTxt">0/5</span></div>
+    </div>
+    <div class="jobs" id="jobs"></div>
+  </section>
+
+  <!-- SKILLS -->
+  <section aria-labelledby="skillsTitle">
+    <div class="section-head">
+      <div>
+        <h2 id="skillsTitle" data-i18n="skillsTitle">Skills &amp; tools</h2>
+        <div class="hint" style="margin-top:6px" data-i18n="skillsHint">It's bubble wrap. You know what to do.</div>
+      </div>
+    </div>
+    <div class="wrap-sheet">
+      <div class="wrap-group"><h3 data-i18n="strategyLabel">Strategy &amp; delivery</h3><div class="bubbles" id="bStrategy"></div></div>
+      <div class="wrap-group"><h3 data-i18n="toolsLabel">Tools</h3><div class="bubbles" id="bTools"></div></div>
+      <div class="wrap-foot">
+        <div class="meter" aria-hidden="true"><i id="meterFill"></i></div>
+        <span id="popCount" aria-live="polite">0/22</span>
+        <button class="chip-btn" id="reinflate" type="button" data-i18n="reset">Re-inflate</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- EDUCATION -->
+  <section aria-labelledby="eduTitle">
+    <div class="section-head">
+      <div>
+        <h2 id="eduTitle" data-i18n="eduTitle">Education &amp; certifications</h2>
+        <div class="hint" style="margin-top:6px" data-i18n="eduHint">Flip each card to see the programme.</div>
+      </div>
+    </div>
+    <div class="edu" id="edu"></div>
+    <div class="langs">
+      <div class="lang"><b data-i18n="langEs">Spanish</b><span data-i18n="lvlNative">Native</span><div class="lvl"><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i></div></div>
+      <div class="lang"><b data-i18n="langEn">English</b><span data-i18n="lvlPro">Professional working proficiency</span><div class="lvl"><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i></i></div></div>
+    </div>
+  </section>
+
+  <!-- CONTACT -->
+  <section class="contact" aria-labelledby="contactTitle" id="contact">
+    <div class="section-head">
+      <h2 id="contactTitle" data-i18n="contactTitle">Have a role in mind?</h2>
+      <div class="hint" data-i18n="contactHint">There's a letter for you in this envelope.</div>
+    </div>
+    <div class="env-wrap">
+      <div class="envelope" id="envelope">
+        <div class="env-back"></div>
+        <div class="letter">
+          <h3 data-i18n="letterTitle">Let's talk.</h3>
+          <div class="line"><div><span class="k">Email</span><span class="v">matiasjulianolivero@gmail.com</span></div><button class="mini-btn" type="button" data-copy="matiasjulianolivero@gmail.com" data-i18n="copy">Copy</button></div>
+          <div class="line"><div><span class="k" data-i18n="phoneK">Phone</span><span class="v">+34 697 973 545</span></div><button class="mini-btn" type="button" data-copy="+34 697 973 545" data-i18n="copy">Copy</button></div>
+          <div class="line"><div><span class="k">LinkedIn</span><span class="v">linkedin.com/in/oliveromatias</span></div><a class="mini-btn" href="https://www.linkedin.com/in/oliveromatias/" target="_blank" rel="noopener" data-i18n="openLink">Open</a></div>
+        </div>
+        <div class="env-front"></div>
+        <div class="env-flap"></div>
+        <div class="seal" aria-hidden="true">MO</div>
+        <button class="env-btn" id="envBtn" type="button"><span data-i18n="envOpen">Open the envelope</span></button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer data-i18n="footer">Built like a pop-up book. Every sound is synthesised live in your browser.</footer>
+
+<!-- Modal -->
+<div class="modal" id="modal" hidden>
+  <div class="scrim" data-close></div>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="mTitle" id="sheet"></div>
+</div>
+
+<div class="toast" id="toast" role="status"></div>
+<canvas id="confetti"></canvas>
+
+<script>
+(function(){
+"use strict";
+
+/* ================= CONTENT ================= */
+const ICONS = {
+  saffron:'<svg viewBox="0 0 64 64"><g stroke="#16142a" stroke-width="2.5" stroke-linejoin="round"><path d="M32 56V34" fill="none"/><path d="M32 46c-6-1-10-5-11-10 6 0 10 4 11 10z" fill="#3ec7a0"/><ellipse cx="32" cy="20" rx="7" ry="14" fill="#c99cf0"/><ellipse cx="22" cy="24" rx="6" ry="12" transform="rotate(-28 22 24)" fill="#c99cf0"/><ellipse cx="42" cy="24" rx="6" ry="12" transform="rotate(28 42 24)" fill="#c99cf0"/></g><g stroke="#ff5a47" stroke-width="3" stroke-linecap="round"><path d="M32 30V14M29 30l-4-13M35 30l4-13"/></g></svg>',
+  compass:'<svg viewBox="0 0 64 64"><g stroke="#16142a" stroke-width="2.5" stroke-linejoin="round"><circle cx="32" cy="32" r="24" fill="#fbf7ee"/><circle cx="32" cy="32" r="18" fill="#ffc93c"/><polygon points="32,14 38,32 32,50 26,32" fill="#ff5a47"/><polygon points="32,32 38,32 32,50 26,32" fill="#fbf7ee"/><circle cx="32" cy="32" r="3" fill="#16142a"/></g></svg>',
+  sparkle:'<svg viewBox="0 0 64 64"><g stroke="#16142a" stroke-width="2.5" stroke-linejoin="round"><rect x="22" y="34" width="20" height="24" rx="3" fill="#16142a"/><rect x="24" y="22" width="16" height="14" fill="#ffc93c"/><path d="M26 22V12l12-6v16z" fill="#ff5a47"/><path d="M50 8l2 6 6 2-6 2-2 6-2-6-6-2 6-2z" fill="#ff9ec4"/><path d="M12 26l1.5 4 4 1.5-4 1.5-1.5 4-1.5-4-4-1.5 4-1.5z" fill="#ffc93c"/></g></svg>',
+  megaphone:'<svg viewBox="0 0 64 64"><g stroke="#16142a" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"><path d="M8 26h10l24-14v40L18 38H8z" fill="#ff9ec4"/><path d="M14 38l4 14h7l-3-14" fill="#fbf7ee"/><path d="M50 22c3 3 3 17 0 20M55 16c6 6 6 26 0 32" fill="none"/></g></svg>',
+  melon:'<svg viewBox="0 0 64 64"><g stroke="#16142a" stroke-width="2.5" stroke-linejoin="round"><path d="M4 22a28 28 0 0 0 56 0z" fill="#3ec7a0"/><path d="M10 22a22 22 0 0 0 44 0z" fill="#fbf7ee"/><path d="M14 22a18 18 0 0 0 36 0z" fill="#ff5a47"/></g><g fill="#16142a"><ellipse cx="24" cy="29" rx="1.8" ry="3"/><ellipse cx="32" cy="34" rx="1.8" ry="3"/><ellipse cx="40" cy="29" rx="1.8" ry="3"/><ellipse cx="28" cy="25" rx="1.6" ry="2.6"/><ellipse cx="36" cy="25" rx="1.6" ry="2.6"/></g></svg>'
+};
+const TOP_COLORS = ["#c9b8f5","#ffc93c","#ff9ec4","#3ec7a0","#ff5a47"];
+const POP_COLORS = ["#ffc93c","#3ec7a0","#ff9ec4","#bfe6f7"];
+
+const JOBS = [
+ { icon:"saffron", company:"Saffron Brand Consultants",
+   en:{ role:"Digital Marketing Manager", years:"Jun 2024 – Oct 2026", dur:"2 yrs 5 mos", place:"Madrid, Spain",
+     summary:"Led digital marketing for an international brand consultancy, aligning campaigns, content and digital channels with brand visibility and new-business priorities.",
+     bullets:["Segmented B2B acquisition campaigns across AI, cybersecurity, aviation, energy and financial services, adapted for the US, UK, Spain, KSA and Japan.",
+       "Built interactive dashboards that turn GA4, Search Console, Semrush and campaign data into recommendations for senior stakeholders.",
+       "Strengthened marketing operations with CRM segmentation, email marketing, attribution and UTM practices.",
+       "Brought ChatGPT and Claude into research, competitive intelligence, campaign planning and content development.",
+       "Led the City Brand Barometer from methodology to digital delivery, covering 111 cities. Built the Japanese edition's analytical framework and a study comparing 10 semiconductor brands."],
+     pops:[["111","cities in the City Brand Barometer"],["5","markets: US · UK · ES · KSA · JP"],["5","B2B sectors"],["10","semiconductor brands compared"]] },
+   es:{ role:"Digital Marketing Manager", years:"jun 2024 – oct 2026", dur:"2 años 5 meses", place:"Madrid, España",
+     summary:"Lideré el marketing digital de una consultora de marca internacional, alineando campañas, contenidos y canales digitales con la visibilidad de marca y las prioridades de negocio.",
+     bullets:["Campañas B2B de captación segmentadas en IA, ciberseguridad, aviación, energía y servicios financieros, adaptadas a EE. UU., Reino Unido, España, Arabia Saudí y Japón.",
+       "Dashboards interactivos que convierten datos de GA4, Search Console, Semrush y campañas en recomendaciones para la dirección.",
+       "Mejora de las operaciones de marketing con segmentación CRM, email marketing, atribución y buenas prácticas de UTM.",
+       "Integración de ChatGPT y Claude en investigación, inteligencia competitiva, planificación de campañas y contenidos.",
+       "Lideré el City Brand Barometer desde la metodología hasta la entrega digital, con 111 ciudades. Desarrollé el marco analítico de la edición japonesa y un estudio comparativo de 10 marcas de semiconductores."],
+     pops:[["111","ciudades en el City Brand Barometer"],["5","mercados: EE. UU. · UK · ES · KSA · JP"],["5","sectores B2B"],["10","marcas de semiconductores comparadas"]] },
+   tags:["B2B","GA4","Search Console","Semrush","CRM","Email","Dashboards","Generative AI"] },
+ { icon:"compass", company:"Independent Consultant",
+   en:{ company:"Independent Consultant", role:"Digital Marketing Consultant · Self-employed", years:"Jan 2023 – Jun 2024", dur:"1 yr 6 mos", place:"Madrid, Spain",
+     summary:"Advised companies on digital marketing strategy, turning business objectives and audience needs into practical action plans.",
+     bullets:["Supported acquisition, paid media, lead generation, content, CRM and performance measurement.",
+       "Implemented and optimised campaigns hands-on in selected engagements."],
+     pops:[["6","areas covered, from acquisition to analytics"],["1:1","strategy to execution"]] },
+   es:{ company:"Consultor independiente", role:"Consultor de marketing digital · Autónomo", years:"ene 2023 – jun 2024", dur:"1 año 6 meses", place:"Madrid, España",
+     summary:"Asesoré a empresas en estrategia de marketing digital, convirtiendo objetivos de negocio y necesidades de la audiencia en planes de acción prácticos.",
+     bullets:["Apoyo en captación, medios pagados, generación de leads, contenidos, CRM y medición de resultados.",
+       "Implementación y optimización de campañas en proyectos seleccionados."],
+     pops:[["6","áreas cubiertas, de la captación a la analítica"],["1:1","de la estrategia a la ejecución"]] },
+   tags:["Strategy","Paid media","Lead gen","Content","CRM","Analytics"] },
+ { icon:"sparkle", company:"Wild Magic Spain",
+   en:{ role:"Digital Marketing Manager", years:"Nov 2020 – Apr 2023", dur:"2 yrs 6 mos", place:"Spain",
+     summary:"Led digital marketing and customer acquisition for beauty and cosmetics brands, including Adore Cosmetics and Kristal Cosmetics.",
+     bullets:["Managed Google Ads and Meta Ads campaigns for lead generation and acquisition, using campaign, audience and sales data to improve performance.",
+       "Ran digital content and social media, aligning brand communication with acquisition goals."],
+     pops:[["2","cosmetics brands"],["2","ad platforms: Google & Meta"]] },
+   es:{ role:"Digital Marketing Manager", years:"nov 2020 – abr 2023", dur:"2 años 6 meses", place:"España",
+     summary:"Lideré el marketing digital y la captación de clientes para marcas de belleza y cosmética como Adore Cosmetics y Kristal Cosmetics.",
+     bullets:["Gestión de campañas en Google Ads y Meta Ads para generación de leads y captación, optimizando con datos de campaña, audiencia y ventas.",
+       "Gestión de contenidos digitales y redes sociales, alineando la comunicación de marca con los objetivos de captación."],
+     pops:[["2","marcas de cosmética"],["2","plataformas: Google y Meta"]] },
+   tags:["Beauty","Google Ads","Meta Ads","Lead gen","Social media"] },
+ { icon:"megaphone", company:"Rockin Media",
+   en:{ role:"Account Manager", years:"Jan 2020 – Dec 2020", dur:"1 yr", place:"Madrid, Spain",
+     summary:"Advised Miniso, Pernod Ricard, The Glowfilter, Aster District and Micampus on digital strategy and campaign development.",
+     bullets:["Translated business objectives into marketing plans.",
+       "Coordinated client relationships and campaign delivery, and analysed performance to find improvements."],
+     pops:[["5","client brands, Miniso and Pernod Ricard among them"]] },
+   es:{ role:"Account Manager", years:"ene 2020 – dic 2020", dur:"1 año", place:"Madrid, España",
+     summary:"Asesoré a Miniso, Pernod Ricard, The Glowfilter, Aster District y Micampus en estrategia digital y desarrollo de campañas.",
+     bullets:["Convertí objetivos de negocio en planes de marketing.",
+       "Coordiné la relación con clientes y la ejecución de campañas, y analicé resultados para detectar mejoras."],
+     pops:[["5","marcas cliente, entre ellas Miniso y Pernod Ricard"]] },
+   tags:["Agency","Account management","Digital strategy","Campaigns"] },
+ { icon:"melon", company:"Sandía",
+   en:{ role:"Founder & Head of Marketing", years:"Oct 2011 – Jan 2020", dur:"8 yrs 4 mos", place:"Argentina",
+     summary:"Founded and led a marketing business delivering strategy, digital marketing, advertising and project management across industries.",
+     bullets:["Managed multichannel campaigns, budgets, clients and suppliers; led acquisition through Google Ads, Meta Ads and inbound marketing.",
+       "Implemented CRM and marketing automation workflows, coordinating design, content and delivery from strategy to execution."],
+     pops:[["8+","years as founder"],["360°","strategy, ads, CRM and automation"]] },
+   es:{ role:"Fundador y Head of Marketing", years:"oct 2011 – ene 2020", dur:"8 años 4 meses", place:"Argentina",
+     summary:"Fundé y dirigí un negocio de marketing que ofrecía estrategia, marketing digital, publicidad y gestión de proyectos en distintos sectores.",
+     bullets:["Gestión de campañas multicanal, presupuestos, clientes y proveedores; captación con Google Ads, Meta Ads e inbound marketing.",
+       "Implementación de CRM y flujos de automatización, coordinando diseño, contenidos y entrega de la estrategia a la ejecución."],
+     pops:[["8+","años como fundador"],["360°","estrategia, anuncios, CRM y automatización"]] },
+   tags:["Entrepreneurship","Inbound","Google Ads","Meta Ads","Automation","Budgets"] }
+];
+
+const SKILLS = {
+  en:["Marketing planning","B2B acquisition","Paid media","Content & social","Email marketing","CRM","Marketing automation","Performance analysis","Budget management","Stakeholder coordination"],
+  es:["Planificación de marketing","Captación B2B","Medios pagados","Contenidos y redes","Email marketing","CRM","Automatización de marketing","Análisis de resultados","Gestión de presupuestos","Coordinación de stakeholders"]
+};
+const TOOLS = ["ChatGPT","Claude","GA4","Search Console","Semrush","Brand24","Metricool","RD Station","Apollo","Google Ads","Meta Ads","LinkedIn"];
+
+const EDU = [
+  { yr:"2026", inst:"Founderz", live:true, en:"AI & Innovation Programme", es:"Programa de IA e Innovación" },
+  { yr:"2020–21", inst:"thePower", en:"ThePowerMBA, Digital Marketing specialisation", es:"ThePowerMBA, especialización en Marketing Digital" },
+  { yr:"2018", inst:"International Scrum Institute", en:"Scrum Master Certification", es:"Certificación Scrum Master" },
+  { yr:"2013", inst:"Universidad de Buenos Aires", en:"Executive Programme in Online Marketing", es:"Programa Ejecutivo en Marketing Online" },
+  { yr:"2005–12", inst:"UCES", en:"Licenciatura in Marketing", es:"Licenciatura en Marketing" }
+];
+
+const T = {
+  en:{
+    coverKicker:"A pop-up CV", coverOpen:"Open the book", coverHint:"Best with sound on", coverInside:"Let's go!",
+    quick:"30-second version", tagline:"Strategy, campaigns & growth · Madrid, Spain",
+    st1:"10+ years in marketing", st2:"AI strategy · B2B · Data", st3:"ES · EN", profileTab:"Profile",
+    profile:"Digital marketing professional with 10+ years across consultancy, agency and entrepreneurship. I combine strategic vision with hands-on delivery to design, lead and optimise work across acquisition, content, CRM and analytics, connecting every activity to brand and business objectives. I coordinate clients, creative teams and suppliers, manage campaigns and budgets, and use data and generative AI to guide decisions.",
+    loc:"Madrid, Spain",
+    stat1:"years in digital marketing", stat2:"cities in the City Brand Barometer", stat3:"international markets: US, UK, ES, KSA, JP", stat4:"years running my own agency",
+    expTitle:"Chapters of experience", expHint:"Tap a card to pop it open. Can you find all five?",
+    popOpen:"Pop it open", seen:"Seen",
+    skillsTitle:"Skills & tools", skillsHint:"It's bubble wrap. You know what to do.", strategyLabel:"Strategy & delivery", toolsLabel:"Tools", reset:"Re-inflate", popped:"popped",
+    eduTitle:"Education & certifications", eduHint:"Flip each card to see the programme.", flip:"Flip", flipBack:"Flip back", inProgress:"In progress",
+    langEs:"Spanish", langEn:"English", lvlNative:"Native", lvlPro:"Professional working proficiency",
+    contactTitle:"Have a role in mind?", contactHint:"There's a letter for you in this envelope.", envOpen:"Open the envelope", letterTitle:"Let's talk.",
+    copy:"Copy", copied:"Copied!", copyFail:"Select the text to copy", phoneK:"Phone", openLink:"Open",
+    footer:"Built like a pop-up book. Every sound is synthesised live in your browser.",
+    prev:"Previous", next:"Next", close:"Close", of:"of",
+    allFound:"All five chapters discovered! There's a letter waiting for you at the bottom.",
+    allPopped:"Every bubble popped. Very satisfying. Now let's talk.",
+    soundOn:"Sound on", soundOff:"Sound off",
+    qTitle:"Matías in 30 seconds", qWho:"Who", qWhoV:"Digital Marketing Manager focused on AI strategy, with 10+ years across consultancy, agency and his own business. Based in Madrid.",
+    qNow:"Latest role", qNowV:"Saffron Brand Consultants (2024–2026): B2B acquisition in 5 markets, analytics dashboards for leadership, AI in daily workflows, City Brand Barometer of 111 cities.",
+    qStrong:"Strengths", qStrongL:["B2B acquisition and paid media (Google, Meta, LinkedIn)","Analytics: GA4, Search Console, Semrush, dashboards","CRM, email and marketing automation","Generative AI for research, planning and content"],
+    qLang:"Languages", qLangV:"Spanish (native) · English (professional)", qContact:"Contact", toContact:"Go to the envelope"
+  },
+  es:{
+    coverKicker:"Un CV pop-up", coverOpen:"Abrir el libro", coverHint:"Mejor con sonido", coverInside:"¡Vamos!",
+    quick:"Versión de 30 segundos", tagline:"Estrategia, campañas y crecimiento · Madrid, España",
+    st1:"+10 años en marketing", st2:"Estrategia IA · B2B · Datos", st3:"ES · EN", profileTab:"Perfil",
+    profile:"Profesional del marketing digital con más de 10 años de experiencia en consultoría, agencia y emprendimiento. Combino visión estratégica con ejecución para diseñar, liderar y optimizar iniciativas de captación, contenidos, CRM y analítica, conectando cada acción con los objetivos de marca y de negocio. Coordino clientes, equipos creativos y proveedores, gestiono campañas y presupuestos, y uso los datos y la IA generativa para tomar decisiones.",
+    loc:"Madrid, España",
+    stat1:"años en marketing digital", stat2:"ciudades en el City Brand Barometer", stat3:"mercados internacionales: EE. UU., UK, ES, KSA, JP", stat4:"años dirigiendo mi propia agencia",
+    expTitle:"Capítulos de experiencia", expHint:"Toca una tarjeta para desplegarla. ¿Puedes descubrir las cinco?",
+    popOpen:"Desplegar", seen:"Vista",
+    skillsTitle:"Habilidades y herramientas", skillsHint:"Es plástico de burbujas. Ya sabes qué hacer.", strategyLabel:"Estrategia y ejecución", toolsLabel:"Herramientas", reset:"Volver a inflar", popped:"explotadas",
+    eduTitle:"Formación y certificaciones", eduHint:"Gira cada tarjeta para ver el programa.", flip:"Girar", flipBack:"Volver", inProgress:"En curso",
+    langEs:"Español", langEn:"Inglés", lvlNative:"Nativo", lvlPro:"Nivel profesional",
+    contactTitle:"¿Tienes un puesto en mente?", contactHint:"Hay una carta para ti dentro de este sobre.", envOpen:"Abrir el sobre", letterTitle:"Hablemos.",
+    copy:"Copiar", copied:"¡Copiado!", copyFail:"Selecciona el texto para copiarlo", phoneK:"Teléfono", openLink:"Abrir",
+    footer:"Hecho como un libro pop-up. Cada sonido se sintetiza en directo en tu navegador.",
+    prev:"Anterior", next:"Siguiente", close:"Cerrar", of:"de",
+    allFound:"¡Has descubierto los cinco capítulos! Abajo te espera una carta.",
+    allPopped:"Todas las burbujas explotadas. Muy satisfactorio. Ahora, hablemos.",
+    soundOn:"Sonido activado", soundOff:"Sonido desactivado",
+    qTitle:"Matías en 30 segundos", qWho:"Quién", qWhoV:"Digital Marketing Manager especializado en estrategia de IA, con más de 10 años en consultoría, agencia y negocio propio. Vive en Madrid.",
+    qNow:"Último puesto", qNowV:"Saffron Brand Consultants (2024–2026): captación B2B en 5 mercados, dashboards de analítica para la dirección, IA en el día a día y el City Brand Barometer de 111 ciudades.",
+    qStrong:"Puntos fuertes", qStrongL:["Captación B2B y medios pagados (Google, Meta, LinkedIn)","Analítica: GA4, Search Console, Semrush, dashboards","CRM, email y automatización de marketing","IA generativa para investigación, planificación y contenidos"],
+    qLang:"Idiomas", qLangV:"Español (nativo) · Inglés (profesional)", qContact:"Contacto", toContact:"Ir al sobre"
+  }
+};
+
+let lang = "en";
+try{ const saved = localStorage.getItem("mo-cv-lang"); if(saved==="es"||saved==="en") lang = saved; else if((navigator.language||"").toLowerCase().startsWith("es")) lang="es"; }
+catch(e){ if((navigator.language||"").toLowerCase().startsWith("es")) lang="es"; }
+
+/* ================= SOUND ================= */
+let ctx = null, soundOn = true;
+function ac(){
+  if(!soundOn) return null;
+  try{
+    if(!ctx) ctx = new (window.AudioContext||window.webkitAudioContext)();
+    if(ctx.state === "suspended") ctx.resume();
+  }catch(e){ ctx = null; }
+  return ctx;
+}
+function tone(o){
+  const c = ac(); if(!c) return;
+  const t = c.currentTime + (o.delay||0);
+  const osc = c.createOscillator(), g = c.createGain();
+  osc.type = o.type||"sine";
+  osc.frequency.setValueAtTime(o.f, t);
+  if(o.f2) osc.frequency.exponentialRampToValueAtTime(o.f2, t + (o.d||.15));
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(o.v||.2, t + .008);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + (o.d||.15));
+  osc.connect(g).connect(c.destination);
+  osc.start(t); osc.stop(t + (o.d||.15) + .05);
+}
+let noiseBuf = null;
+function noise(o){
+  const c = ac(); if(!c) return;
+  if(!noiseBuf){
+    noiseBuf = c.createBuffer(1, c.sampleRate*1, c.sampleRate);
+    const d = noiseBuf.getChannelData(0); for(let i=0;i<d.length;i++) d[i] = Math.random()*2-1;
+  }
+  const t = c.currentTime + (o.delay||0), dur = o.d||.3;
+  const src = c.createBufferSource(); src.buffer = noiseBuf;
+  const f = c.createBiquadFilter(); f.type = o.ftype||"bandpass"; f.Q.value = o.q||1.2;
+  f.frequency.setValueAtTime(o.f1||800, t); f.frequency.exponentialRampToValueAtTime(o.f2||3000, t+dur);
+  const g = c.createGain();
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(o.v||.15, t + dur*.25);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  src.connect(f).connect(g).connect(c.destination);
+  src.start(t, Math.random()*.5); src.stop(t+dur+.05);
+}
+const sfx = {
+  pop(p){ p = p||1; tone({f:720*p,f2:150*p,d:.11,v:.32}); noise({d:.05,v:.12,f1:2500,f2:1200,q:.8}); },
+  bubble(){ const p = .8+Math.random()*.6; noise({d:.06,v:.45,f1:1800*p,f2:600*p,q:.6,ftype:"bandpass"}); tone({f:300*p,f2:90,d:.07,v:.25,type:"triangle"}); },
+  paper(delay){ noise({d:.38,v:.14,f1:900,f2:5200,q:.7,delay:delay||0}); },
+  fold(){ noise({d:.22,v:.12,f1:4000,f2:700,q:.9}); tone({f:220,f2:120,d:.12,v:.08,type:"triangle"}); },
+  tick(){ tone({f:1400,d:.035,v:.05,type:"square"}); },
+  flip(){ noise({d:.18,v:.12,f1:1200,f2:4500,q:1}); tone({f:500,f2:900,d:.1,v:.06,type:"triangle",delay:.05}); },
+  spring(delay){ tone({f:260,f2:640,d:.16,v:.12,type:"triangle",delay:delay||0}); },
+  chime(){ [523.25,659.25,783.99,1046.5].forEach((f,i)=>tone({f,d:.5,v:.16,type:"sine",delay:i*.09})); [1046.5,1318.5].forEach((f,i)=>tone({f,d:.7,v:.08,type:"triangle",delay:.4+i*.08})); },
+  open(){ sfx.paper(); noise({d:.6,v:.1,f1:500,f2:2400,q:.6,delay:.15}); tone({f:392,d:.35,v:.1,delay:.55}); tone({f:523.25,d:.45,v:.1,delay:.65}); },
+  copy(){ tone({f:880,d:.08,v:.12}); tone({f:1320,d:.12,v:.1,delay:.07}); }
+};
+
+/* ================= HELPERS ================= */
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+function t(k){ return T[lang][k]; }
+
+let toastTimer;
+function toast(msg){
+  const el = $("#toast"); el.textContent = msg; el.classList.add("show");
+  clearTimeout(toastTimer); toastTimer = setTimeout(()=>el.classList.remove("show"), 4200);
+}
+
+/* confetti */
+const cv = $("#confetti"), cx = cv.getContext("2d");
+let parts = [], raf = null;
+function confetti(){
+  if(reduce) return;
+  cv.width = innerWidth; cv.height = innerHeight;
+  const cols = ["#ff5a47","#ffc93c","#3ec7a0","#ff9ec4","#fbf7ee","#c99cf0"];
+  for(let i=0;i<160;i++){
+    parts.push({x:innerWidth/2+(Math.random()-.5)*200,y:innerHeight*.6,vx:(Math.random()-.5)*16,vy:-Math.random()*16-6,
+      w:6+Math.random()*8,h:8+Math.random()*10,r:Math.random()*6,vr:(Math.random()-.5)*.4,c:cols[i%cols.length],life:0});
+  }
+  if(!raf) loop();
+}
+function loop(){
+  cx.clearRect(0,0,cv.width,cv.height);
+  parts.forEach(p=>{ p.vy+=.45; p.vx*=.99; p.x+=p.vx; p.y+=p.vy; p.r+=p.vr; p.life++;
+    cx.save(); cx.translate(p.x,p.y); cx.rotate(p.r); cx.fillStyle=p.c; cx.strokeStyle="#16142a"; cx.lineWidth=1.5;
+    cx.fillRect(-p.w/2,-p.h/2,p.w,p.h); cx.strokeRect(-p.w/2,-p.h/2,p.w,p.h); cx.restore(); });
+  parts = parts.filter(p=>p.y < cv.height+40 && p.life < 400);
+  if(parts.length){ raf = requestAnimationFrame(loop); } else { raf = null; cx.clearRect(0,0,cv.width,cv.height); }
+}
+
+/* ================= RENDER ================= */
+const seen = new Set();
+function renderJobs(){
+  const wrap = $("#jobs"); wrap.innerHTML = "";
+  JOBS.forEach((j,i)=>{
+    const L = j[lang];
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "job" + (seen.has(i) ? " is-seen":"");
+    b.innerHTML = `<div class="top" style="background:${TOP_COLORS[i]}">${ICONS[j.icon]}</div>
+      <span class="seen">${esc(t("seen"))}</span>
+      <div class="body"><span class="years">${esc(L.years)}</span><h3>${esc(L.company||j.company)}</h3><span class="r">${esc(L.role)}</span>
+      <span class="cta">${esc(t("popOpen"))} <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M8 7h9v9"/></svg></span></div>`;
+    b.addEventListener("mouseenter", ()=>sfx.tick());
+    b.addEventListener("click", ()=>openJob(i, b));
+    wrap.appendChild(b);
+  });
+  renderTracker();
+}
+function renderTracker(){
+  $("#dots").innerHTML = JOBS.map((_,i)=>`<i class="${seen.has(i)?"on":""}"></i>`).join("");
+  $("#trackTxt").textContent = `${seen.size}/${JOBS.length}`;
+}
+
+let popped = new Set();
+function renderSkills(){
+  const mk = (list, el, cls, offset) => {
+    el.innerHTML = "";
+    list.forEach((name,i)=>{
+      const id = offset+i;
+      const b = document.createElement("button");
+      b.type = "button"; b.className = "bubble" + (cls?" "+cls:""); b.textContent = name;
+      b.setAttribute("aria-pressed", popped.has(id) ? "true":"false");
+      b.addEventListener("click", ()=>{
+        if(popped.has(id)){ popped.delete(id); b.setAttribute("aria-pressed","false"); sfx.spring(); }
+        else { popped.add(id); b.setAttribute("aria-pressed","true"); sfx.bubble(); b.classList.remove("burst"); void b.offsetWidth; b.classList.add("burst");
+          if(popped.size === SKILLS.en.length + TOOLS.length){ setTimeout(()=>{ sfx.chime(); toast(t("allPopped")); confetti(); }, 200); } }
+        updateMeter();
+      });
+      el.appendChild(b);
+    });
+  };
+  mk(SKILLS[lang], $("#bStrategy"), "", 0);
+  mk(TOOLS, $("#bTools"), "tool", 100);
+  updateMeter();
+}
+function updateMeter(){
+  const total = SKILLS.en.length + TOOLS.length;
+  $("#meterFill").style.width = (popped.size/total*100) + "%";
+  $("#popCount").textContent = `${popped.size}/${total} ${t("popped")}`;
+}
+
+function renderEdu(){
+  const el = $("#edu"); el.innerHTML = "";
+  EDU.forEach(e=>{
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "flip"; b.setAttribute("aria-pressed","false");
+    b.innerHTML = `<div class="flip-inner">
+      <div class="face front">${e.live?`<span class="badge-live">${esc(t("inProgress"))}</span>`:""}<span class="yr">${esc(e.yr)}</span><span class="inst">${esc(e.inst)}</span>
+        <span class="turn">${esc(t("flip"))} <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg></span></div>
+      <div class="face back"><span class="inst" style="color:#ffc93c">${esc(e.inst)}</span><span class="prog">${esc(e[lang])}</span><span class="turn">${esc(t("flipBack"))}</span></div></div>`;
+    b.setAttribute("aria-label", `${e.yr}, ${e.inst}: ${e[lang]}`);
+    b.addEventListener("click", ()=>{ const on = b.getAttribute("aria-pressed")!=="true"; b.setAttribute("aria-pressed", on?"true":"false"); sfx.flip(); });
+    el.appendChild(b);
+  });
+}
+
+function applyStatic(){
+  document.documentElement.lang = lang;
+  document.querySelectorAll("[data-i18n]").forEach(el=>{ const v = T[lang][el.dataset.i18n]; if(typeof v === "string") el.textContent = v; });
+  $("#langBtn").textContent = lang === "en" ? "ES" : "EN";
+  $("#soundBtn").setAttribute("aria-label", soundOn ? t("soundOn") : t("soundOff"));
+}
+function renderAll(){ applyStatic(); renderJobs(); renderSkills(); renderEdu(); }
+
+/* ================= MODAL ================= */
+let lastFocus = null, current = -1;
+function openModal(html){
+  const m = $("#modal"), s = $("#sheet");
+  s.innerHTML = html;
+  if(m.hidden){ lastFocus = document.activeElement; m.hidden = false; document.body.style.overflow = "hidden"; }
+  s.style.animation = "none"; void s.offsetWidth; s.style.animation = "";
+  const x = s.querySelector(".x-btn"); if(x) x.focus();
+  s.querySelectorAll("[data-close]").forEach(b=>b.addEventListener("click", closeModal));
+}
+function closeModal(){
+  const m = $("#modal"); if(m.hidden) return;
+  m.hidden = true; document.body.style.overflow = ""; current = -1; sfx.fold();
+  if(lastFocus && lastFocus.focus) lastFocus.focus();
+}
+const X_BTN = () => `<button class="x-btn" type="button" data-close aria-label="${esc(t("close"))}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>`;
+
+function openJob(i){
+  current = i;
+  const j = JOBS[i], L = j[lang];
+  const pops = L.pops.map((p,k)=>`<div class="pop-card" style="background:${POP_COLORS[k%POP_COLORS.length]};animation-delay:${.45+k*.14}s"><b>${esc(p[0])}</b><span>${esc(p[1])}</span></div>`).join("");
+  const bullets = L.bullets.map((b,k)=>`<li style="animation-delay:${.7+k*.08}s">${esc(b)}</li>`).join("");
+  const tags = j.tags.map(x=>`<span>${esc(x)}</span>`).join("");
+  openModal(`${X_BTN()}
+    <div class="sheet-head" style="background:${TOP_COLORS[i]}">
+      <div class="icon">${ICONS[j.icon]}</div>
+      <div><h3 id="mTitle">${esc(L.company||j.company)}</h3><div class="meta" style="color:#16142a">${esc(L.role)}<br>${esc(L.years)} · ${esc(L.dur)} · ${esc(L.place)}</div></div>
+    </div>
+    <div class="sheet-body">
+      <p class="summary">${esc(L.summary)}</p>
+      <div class="pops">${pops}</div>
+      <ul class="bullets">${bullets}</ul>
+      <div class="tags">${tags}</div>
+    </div>
+    <div class="sheet-foot">
+      <span style="font-weight:800">${i+1} ${esc(t("of"))} ${JOBS.length}</span>
+      <div class="nav">
+        <button class="chip-btn" type="button" id="mPrev" ${i===0?"disabled style=\"opacity:.45\"":""}>← ${esc(t("prev"))}</button>
+        <button class="chip-btn" type="button" id="mNext" ${i===JOBS.length-1?"disabled style=\"opacity:.45\"":""}>${esc(t("next"))} →</button>
+      </div>
+    </div>`);
+  $("#mPrev").addEventListener("click", ()=>{ if(current>0) openJob(current-1); });
+  $("#mNext").addEventListener("click", ()=>{ if(current<JOBS.length-1) openJob(current+1); });
+
+  sfx.paper(); sfx.pop(.9);
+  L.pops.forEach((_,k)=>{ setTimeout(()=>sfx.pop(1.1+k*.15), 450+k*140); });
+
+  const wasNew = !seen.has(i);
+  seen.add(i);
+  const card = $("#jobs").children[i]; if(card) card.classList.add("is-seen");
+  renderTracker();
+  if(wasNew && seen.size === JOBS.length){
+    setTimeout(()=>{ sfx.chime(); confetti(); toast(t("allFound")); $("#envelope").classList.add("glow"); }, 900);
+  }
+}
+
+function openQuick(){
+  current = -1;
+  const Q = T[lang];
+  openModal(`${X_BTN()}
+    <div class="sheet-head" style="background:var(--sun)">
+      <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="#16142a" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:48px;height:48px"><path d="M13 2 3 14h9l-1 8 10-12h-9z" fill="#ff5a47"/></svg></div>
+      <div><h3 id="mTitle">${esc(Q.qTitle)}</h3><div class="meta" style="color:#16142a">Digital Marketing Manager · AI Strategy · Madrid</div></div>
+    </div>
+    <div class="sheet-body quick-grid">
+      <div class="row"><b>${esc(Q.qWho)}</b><span>${esc(Q.qWhoV)}</span></div>
+      <div class="row"><b>${esc(Q.qNow)}</b><span>${esc(Q.qNowV)}</span></div>
+      <div class="row"><b>${esc(Q.qStrong)}</b><ul>${Q.qStrongL.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>
+      <div class="row"><b>${esc(Q.qLang)}</b><span>${esc(Q.qLangV)}</span></div>
+      <div class="row"><b>${esc(Q.qContact)}</b><span>matiasjulianolivero@gmail.com<br>+34 697 973 545<br><a href="https://www.linkedin.com/in/oliveromatias/" target="_blank" rel="noopener">linkedin.com/in/oliveromatias</a></span></div>
+    </div>
+    <div class="sheet-foot"><span></span><button class="chip-btn quick" type="button" id="goContact">${esc(Q.toContact)} ↓</button></div>`);
+  sfx.paper(); sfx.spring(.1);
+  $("#goContact").addEventListener("click", ()=>{ closeModal(); $("#contact").scrollIntoView({behavior: reduce?"auto":"smooth", block:"center"}); });
+}
+
+document.addEventListener("keydown", e=>{
+  const m = $("#modal");
+  if(m.hidden) return;
+  if(e.key === "Escape") closeModal();
+  if(current >= 0 && e.key === "ArrowRight" && current < JOBS.length-1) openJob(current+1);
+  if(current >= 0 && e.key === "ArrowLeft" && current > 0) openJob(current-1);
+  if(e.key === "Tab"){
+    const f = [...$("#sheet").querySelectorAll("button:not([disabled]),a[href]")];
+    if(!f.length) return;
+    const first = f[0], last = f[f.length-1];
+    if(e.shiftKey && document.activeElement === first){ e.preventDefault(); last.focus(); }
+    else if(!e.shiftKey && document.activeElement === last){ e.preventDefault(); first.focus(); }
+  }
+});
+$("#modal .scrim").addEventListener("click", closeModal);
+
+/* ================= HERO / COVER ================= */
+const stage = $("#stage");
+function raiseStage(){
+  stage.classList.add("up");
+  [0,.25,.5].forEach((d,i)=>{ setTimeout(()=>sfx.paper(), d*1000+80); });
+  [.75,.9,1.05].forEach((d,i)=>{ setTimeout(()=>sfx.pop(1+i*.2), d*1000+250); });
+}
+document.querySelectorAll("[data-pick]").forEach(btn=>btn.addEventListener("click", ()=>{
+  lang = btn.dataset.pick;
+  try{ localStorage.setItem("mo-cv-lang", lang); }catch(e){}
+  renderAll();
+  ac(); sfx.open();
+  const cover = $("#cover");
+  cover.classList.add("open");
+  setTimeout(()=>{ cover.classList.add("gone"); cover.setAttribute("aria-hidden","true"); }, reduce?0:600);
+  setTimeout(raiseStage, reduce?0:1100);
+  setTimeout(()=>{ const q = $("#quickBtn"); if(q) q.focus({preventScroll:true}); }, 1400);
+}));
+// let the plaque be visible if someone lands without the cover (e.g. reduced motion)
+stage.addEventListener("pointermove", e=>{
+  if(reduce) return;
+  const r = stage.getBoundingClientRect();
+  const x = (e.clientX - r.left)/r.width - .5, y = (e.clientY - r.top)/r.height - .5;
+  $("#spread").style.setProperty("--tx", (x*10)+"deg");
+  $("#spread").style.setProperty("--ty", (-y*8)+"deg");
+});
+stage.addEventListener("pointerleave", ()=>{ $("#spread").style.setProperty("--tx","0deg"); $("#spread").style.setProperty("--ty","0deg"); });
+stage.addEventListener("click", ()=>{
+  // tap the scene to replay the pop-up
+  stage.classList.remove("up"); sfx.fold();
+  setTimeout(raiseStage, 450);
+});
+
+/* stats count-up as they come into view */
+const statEls = [...document.querySelectorAll(".stat")];
+if("IntersectionObserver" in window && !reduce){
+  statEls.forEach(s=>s.classList.add("folded"));
+  const io = new IntersectionObserver(entries=>{
+    entries.forEach(en=>{
+      if(!en.isIntersecting) return;
+      const s = en.target, idx = statEls.indexOf(s);
+      io.unobserve(s);
+      setTimeout(()=>{
+        s.classList.remove("folded");
+        if(ctx) sfx.spring();
+        const b = s.querySelector("b"), n = +b.dataset.count, suf = b.dataset.suffix||"";
+        const start = performance.now(), dur = 900;
+        (function step(now){ const p = Math.min(1,(now-start)/dur); b.textContent = Math.round(n*(1-Math.pow(1-p,3))) + suf; if(p<1) requestAnimationFrame(step); })(start);
+      }, idx*150);
+    });
+  }, {threshold:.4});
+  statEls.forEach(s=>io.observe(s));
+}
+
+/* ================= ENVELOPE ================= */
+$("#envBtn").addEventListener("click", ()=>{
+  const env = $("#envelope");
+  env.classList.add("open"); env.classList.remove("glow");
+  sfx.paper(); setTimeout(()=>sfx.paper(), 380); setTimeout(()=>sfx.chime(), 900);
+  setTimeout(()=>{ env.classList.add("out"); const first = env.querySelector(".mini-btn"); if(first) first.focus({preventScroll:true}); }, reduce?0:1250);
+});
+document.querySelectorAll("[data-copy]").forEach(btn=>{
+  btn.addEventListener("click", async ()=>{
+    const v = btn.dataset.copy;
+    try{ await navigator.clipboard.writeText(v); btn.textContent = t("copied"); sfx.copy(); }
+    catch(e){ btn.textContent = t("copyFail"); }
+    setTimeout(()=>{ btn.textContent = t("copy"); }, 1800);
+  });
+});
+
+/* ================= CONTROLS ================= */
+$("#langBtn").addEventListener("click", ()=>{
+  lang = lang === "en" ? "es" : "en";
+  try{ localStorage.setItem("mo-cv-lang", lang); }catch(e){}
+  renderAll(); sfx.flip();
+});
+$("#soundBtn").addEventListener("click", ()=>{
+  soundOn = !soundOn;
+  const b = $("#soundBtn");
+  b.setAttribute("aria-pressed", soundOn ? "true":"false");
+  b.setAttribute("aria-label", soundOn ? t("soundOn") : t("soundOff"));
+  $("#soundIcon").innerHTML = soundOn
+    ? '<path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M19 5a10 10 0 0 1 0 14"/>'
+    : '<path d="M11 5 6 9H2v6h4l5 4z"/><path d="m16 9 6 6M22 9l-6 6"/>';
+  if(soundOn) sfx.pop();
+  toast(soundOn ? t("soundOn") : t("soundOff"));
+});
+$("#quickBtn").addEventListener("click", openQuick);
+$("#reinflate").addEventListener("click", ()=>{
+  popped.clear(); renderSkills();
+  [0,1,2,3].forEach(k=>sfx.spring(k*.06));
+});
+
+renderAll();
+})();
+</script>
+</body>
+</html>
