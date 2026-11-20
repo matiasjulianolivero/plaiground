@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Metodología · Franchise Brand Barometer · plaiground</title>
+<meta name="description" content="Cómo se calcula el Franchise Brand Barometer: pilares Promise, Experience y Delivery, valor de marca, fuentes y limitaciones.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 300'%3E%3Crect width='300' height='300' rx='70' fill='%2314162E'/%3E%3Cpolygon points='92,74 92,131 204,131' fill='%238B8CF8' stroke='%238B8CF8' stroke-width='30' stroke-linejoin='round'/%3E%3Cpolygon points='92,226 92,169 204,169' fill='%23F4F5FB' stroke='%23F4F5FB' stroke-width='30' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#F4F5FB;--ink:#14162E;--muted:#555A7A;--line:rgba(20,22,46,.10);--paper:#fff;--ind:#4338CA;--e:#FF7A59;--p:#19B5A5;--d:#4338CA;--gold:#E0A100;
+--display:"Bricolage Grotesque",system-ui,sans-serif;--body:"DM Sans",system-ui,sans-serif}
+*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:90px}html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.65;-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0;z-index:-1;background:radial-gradient(40% 50% at 95% 0%,rgba(67,56,202,.16),transparent 70%),radial-gradient(30% 40% at 0% 100%,rgba(255,122,89,.12),transparent 70%)}
+a{color:var(--ind)}:focus-visible{outline:3px solid var(--ind);outline-offset:3px;border-radius:8px}
+header{position:sticky;top:0;z-index:20;backdrop-filter:blur(14px);background:color-mix(in srgb,var(--bg) 82%,transparent);border-bottom:1px solid var(--line)}
+.nav{max-width:1180px;margin:0 auto;padding:0 24px;height:66px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--ink);font-family:var(--display);font-weight:700;font-size:21px;letter-spacing:-.045em}
+.brand svg{width:32px;height:32px;border-radius:9px}.ai{color:var(--ind)}
+.back{display:inline-flex;align-items:center;gap:8px;padding:9px 16px;border-radius:999px;background:var(--ink);color:#fff;text-decoration:none;font-weight:600;font-size:14px}
+.back:hover{background:var(--ind)}
+.hero{max-width:1180px;margin:0 auto;padding:64px 24px 36px}
+.eyebrow{font-weight:700;font-size:13px;letter-spacing:.2em;text-transform:uppercase;color:var(--ind)}
+h1,h2,h3{font-family:var(--display);letter-spacing:-.025em;line-height:1.08;margin:0}
+h1{font-size:clamp(40px,6vw,72px);font-weight:800;margin:12px 0 18px}
+.hero p{font-size:clamp(18px,1.8vw,21px);color:var(--muted);max-width:760px;margin:0}
+.pills{display:flex;gap:10px;flex-wrap:wrap;margin-top:26px}
+.pill{display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border-radius:999px;background:var(--paper);border:1px solid var(--line);font-weight:600;font-size:14px}
+.pill i{width:10px;height:10px;border-radius:50%;background:var(--c)}
+.layout{max-width:1180px;margin:0 auto;padding:0 24px 80px;display:grid;grid-template-columns:240px 1fr;gap:48px;align-items:start}
+@media (max-width:900px){.layout{grid-template-columns:1fr}.toc{display:none}}
+.toc{position:sticky;top:96px;font-size:14px}
+.toc b{display:block;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+.toc a{display:block;padding:7px 12px;border-left:2px solid var(--line);color:var(--muted);text-decoration:none}
+.toc a:hover,.toc a.on{color:var(--ink);border-color:var(--ind);background:rgba(67,56,202,.06)}
+article{min-width:0}
+section{background:var(--paper);border:1px solid var(--line);border-radius:24px;padding:36px 40px;margin-bottom:22px;box-shadow:0 12px 40px rgba(28,30,80,.06);position:relative;overflow:hidden}
+@media (max-width:640px){section{padding:26px 20px}}
+section::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--c,var(--ind))}
+section h2{font-size:clamp(26px,3vw,34px);font-weight:800;margin-bottom:16px}
+section h2 small{display:block;font:700 13px var(--body);letter-spacing:.16em;text-transform:uppercase;color:var(--c,var(--ind));margin-bottom:8px}
+p{margin:0 0 14px}
+ul,ol{margin:0 0 16px;padding-left:22px}li{margin-bottom:8px}
+.tw{overflow-x:auto;margin:18px 0 20px;border:1px solid var(--line);border-radius:16px}
+table{width:100%;border-collapse:collapse;font-size:15px;min-width:560px}
+th{text-align:left;background:#F0F1FA;font-weight:700;font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+th,td{padding:12px 16px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:0}
+td:first-child{font-weight:600}
+.calc{background:linear-gradient(135deg,rgba(67,56,202,.07),rgba(25,181,165,.06));border:1px solid rgba(67,56,202,.16);border-radius:18px;padding:22px 24px;margin:20px 0}
+.calc>strong{display:block;font-family:var(--display);font-size:19px;margin-bottom:10px}
+.formula{font-family:var(--display);font-weight:700;font-size:clamp(17px,2.2vw,22px);background:var(--ink);color:#F4F5FB;border-radius:14px;padding:16px 20px;margin:14px 0;overflow-x:auto;white-space:nowrap}
+.formula em{font-style:normal;color:#8B8CF8}
+.note{border-left:3px solid var(--gold);background:rgba(224,161,0,.08);padding:12px 16px;border-radius:0 12px 12px 0;font-size:15.5px;color:#4a3f10}
+.quad{display:grid;grid-template-columns:auto 1fr;gap:10px;margin:20px 0}
+.quad .ax{writing-mode:vertical-rl;transform:rotate(180deg);text-align:center;font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.qg{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.q{border-radius:14px;padding:16px;font-size:14.5px;line-height:1.45}
+.q b{display:block;font-family:var(--display);font-size:17px;margin-bottom:4px}
+.qx{grid-column:2;text-align:center;font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.score{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin:10px 0 4px;font-size:13px;text-align:center}
+.score span{background:#F0F1FA;border-radius:8px;padding:6px 2px}.score b{display:block;font-family:var(--display)}
+@media (max-width:560px){.score{grid-template-columns:repeat(5,1fr);font-size:12px}}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin:16px 0}
+.cards div{border:1px solid var(--line);border-radius:14px;padding:14px 16px;font-size:15px}
+.cards b{display:block;font-family:var(--display);font-size:17px}
+footer{border-top:1px solid var(--line);padding:30px 24px 44px;text-align:center;color:var(--muted);font-size:14px}
+footer a{color:var(--ink)}
+</style>
+</head>
+<body>
+<header>
+  <div class="nav">
+    <a class="brand" href="/" aria-label="plaiground, inicio">
+      <svg viewBox="0 0 300 300" aria-hidden="true"><rect width="300" height="300" fill="#14162E"/><polygon points="92,74 92,131 204,131" fill="#8B8CF8" stroke="#8B8CF8" stroke-width="30" stroke-linejoin="round"/><polygon points="92,226 92,169 204,169" fill="#F4F5FB" stroke="#F4F5FB" stroke-width="30" stroke-linejoin="round"/></svg>
+      <span>pl<span class="ai">ai</span>ground</span>
+    </a>
+    <a class="back" href="/barometer/">← Volver al Barometer</a>
+  </div>
+</header>
+
+<div class="hero">
+  <div class="eyebrow">Franchise Brand Barometer · Metodología</div>
+  <h1>Cómo medimos la fuerza de una franquicia</h1>
+  <p>Tres pilares comparables, un índice ajustable y cada dato con su fuente y su nivel de confianza. El índice es una herramienta comparativa, no una tasación financiera.</p>
+  <div class="pills">
+    <span class="pill" style="--c:var(--e)"><i></i>Promise · 20 %</span>
+    <span class="pill" style="--c:var(--d)"><i></i>Experience · 50 %</span>
+    <span class="pill" style="--c:var(--p)"><i></i>Delivery · 30 %</span>
+    <span class="pill" style="--c:var(--gold)"><i></i>Actualizada el 19/11/2026</span>
+  </div>
+</div>
+
+<div class="layout">
+  <nav class="toc" aria-label="Índice">
+    <b>En esta página</b>
+    <a href="#objetivo">Objetivo y alcance</a>
+    <a href="#universo">Universo y filtros</a>
+    <a href="#promise">Promise</a>
+    <a href="#experience">Experience</a>
+    <a href="#delivery">Delivery</a>
+    <a href="#valor">Valor de marca</a>
+    <a href="#indice">Cálculo del índice</a>
+    <a href="#navegacion">Navegación</a>
+    <a href="#calidad">Calidad de datos y piloto</a>
+  </nav>
+
+  <article>
+    <section id="objetivo">
+      <h2><small>01</small>Objetivo y alcance</h2>
+      <p>El Franchise Brand Barometer valora 46 franquicias de entretenimiento con tres pilares comparables: <strong>Promise</strong> (lo que la marca promete), <strong>Experience</strong> (cómo la vive el público) y <strong>Delivery</strong> (el negocio, el alcance y la rentabilidad que genera). Es una adaptación de la lógica del City Brand Barometer al mundo de las franquicias.</p>
+      <p>La plataforma permite ver cada pilar por separado, el índice combinado y la brecha entre lo que una franquicia promete y lo que el público vive.</p>
+      <p class="note">Todo dato que no sea oficial se marca como estimado o aproximado. El índice es una herramienta comparativa, no una tasación financiera.</p>
+    </section>
+
+    <section id="universo">
+      <h2><small>02</small>Universo y filtros</h2>
+      <p>El universo son 46 franquicias en tres tiers (11 en Tier 1, 21 en Tier 2 y 14 en Tier 3). El tier inicial es provisional: se recalculará a partir del índice.</p>
+      <p>Cada título de cada franquicia lleva cuatro etiquetas:</p>
+      <div class="tw"><table>
+        <thead><tr><th>Etiqueta</th><th>Valores</th></tr></thead>
+        <tbody>
+          <tr><td>Tipo</td><td>Saga principal, precuela o spin-off, serie de acción real, serie de animación, reboot o remake</td></tr>
+          <tr><td>Canal</td><td>Cine, streaming, TV</td></tr>
+          <tr><td>Estado</td><td>Estrenado o anunciado (lo anunciado se muestra pero no suma)</td></tr>
+          <tr><td>Subfranquicia</td><td>Por ejemplo MCU, Sony o Fox dentro de Marvel</td></tr>
+        </tbody>
+      </table></div>
+      <p>La plataforma ofrece tres filtros:</p>
+      <ul>
+        <li><strong>Alcance:</strong> solo saga principal, saga más spin-offs, o ecosistema completo (añade series, parques, productos y videojuegos).</li>
+        <li><strong>Periodo:</strong> histórico acumulado o últimos 10 años (2016–2026).</li>
+        <li><strong>Subfranquicia:</strong> ver una franquicia entera o desglosada.</li>
+      </ul>
+    </section>
+
+    <section id="promise" style="--c:var(--e)">
+      <h2><small>Pilar 1</small>Promise: la promesa de marca</h2>
+      <p>Promise mide qué promete la franquicia y cuánta expectativa genera antes de que el público la consuma.</p>
+      <div class="tw"><table>
+        <thead><tr><th>Indicador</th><th>Qué mide</th><th>Fuente posible</th></tr></thead>
+        <tbody>
+          <tr><td>Reconocimiento</td><td>Interés de búsqueda sostenido</td><td>Google Trends</td></tr>
+          <tr><td>Comunidad</td><td>Seguidores en redes oficiales</td><td>Instagram, TikTok, YouTube, X</td></tr>
+          <tr><td>Expectación</td><td>Visualizaciones de tráilers en las primeras 24 horas</td><td>Datos de estudios y prensa</td></tr>
+          <tr><td>Identidad</td><td>Personajes, símbolos y universo reconocibles</td><td>Evaluación cualitativa con rúbrica</td></tr>
+          <tr><td>Inversión en marca</td><td>Marketing y presencia de licencias</td><td>Estimaciones de prensa especializada</td></tr>
+        </tbody>
+      </table></div>
+      <div class="calc">
+        <strong>Cómo se calcula hoy</strong>
+        <p>Promise combina dos indicadores, cada uno normalizado de 0 a 100 con la escala elegida:</p>
+        <ul>
+          <li><strong>Comunidad:</strong> suma de seguidores de todas las cuentas oficiales globales de Instagram de la franquicia (películas, series, juegos, espectáculos). Se excluyen las cuentas regionales y las de estudios enteros, como @disney o @pixar, porque mezclan muchas franquicias.</li>
+          <li><strong>Búsqueda:</strong> interés en Google Trends, mundial, últimos 12 meses. Se usan temas de Google en lugar de palabras sueltas (para no confundir Frozen con comida congelada) y Star Wars como referencia común (= 100) en todas las comparaciones.</li>
+        </ul>
+        <div class="formula">Promise = media(<em>Comunidad</em>, <em>Búsqueda</em>)</div>
+        <p style="margin:0">Si falta uno de los dos, se usa el otro. La expectación por tráilers solo se midió en el piloto y queda pendiente para el resto.</p>
+      </div>
+    </section>
+
+    <section id="experience" style="--c:var(--d)">
+      <h2><small>Pilar 2</small>Experience: cómo se vive</h2>
+      <p>Experience mide lo que opina la gente cuando consume la franquicia, en cada canal donde existe. Se pondera por el peso de cada canal en esa franquicia, para no castigar a quien no tiene parques o libros.</p>
+      <div class="tw"><table>
+        <thead><tr><th>Canal</th><th>Indicadores</th><th>Fuente posible</th></tr></thead>
+        <tbody>
+          <tr><td>Películas y series</td><td>Nota de crítica y de público</td><td>Rotten Tomatoes, IMDb, Metacritic, CinemaScore</td></tr>
+          <tr><td>Libros, cómics y manga</td><td>Valoración media de lectores</td><td>Goodreads</td></tr>
+          <tr><td>Videojuegos</td><td>Nota de crítica y de jugadores</td><td>Metacritic, Steam</td></tr>
+          <tr><td>Parques, restaurantes y tiendas</td><td>Nota media y número de reseñas</td><td>TripAdvisor, Google</td></tr>
+          <tr><td>Premios</td><td>Oscar, BAFTA, Globos de Oro, Annie, Tony, Hugo, The Game Awards (ganados y nominaciones)</td><td>Wikidata, webs oficiales de los premios</td></tr>
+        </tbody>
+      </table></div>
+      <p><strong>Premios:</strong> cada Óscar ganado vale 3 puntos y cada nominación no ganada, 1 punto. El total se normaliza frente a la franquicia con más puntos. Los demás premios (BAFTA, Annie, Tony, etc.) quedan para una fase posterior.</p>
+      <div class="calc">
+        <strong>Cómo se calcula hoy</strong>
+        <div class="formula">Experience = 51 % <em>Público</em> + 34 % <em>Crítica</em> + 15 % <em>Premios</em></div>
+        <p>Así se mantiene la proporción 60/40 entre público y crítica dentro de las notas.</p>
+        <ul>
+          <li><strong>Público:</strong> media del CinemaScore de las películas convertido a 0–100. Se usa porque la nota de público de Rotten Tomatoes no existe de forma homogénea para todas las películas.</li>
+        </ul>
+        <div class="score" aria-label="Conversión de CinemaScore">
+          <span><b>A+</b>100</span><span><b>A</b>95</span><span><b>A−</b>90</span><span><b>B+</b>85</span><span><b>B</b>80</span>
+          <span><b>B−</b>75</span><span><b>C+</b>70</span><span><b>C</b>65</span><span><b>C−</b>60</span><span><b>D</b>50</span>
+        </div>
+        <ul style="margin-top:14px">
+          <li><strong>Crítica:</strong> media de Rotten Tomatoes de las películas de cine de la franquicia.</li>
+          <li>Si una franquicia no tiene CinemaScore, Experience se calcula con crítica y premios, reescalados.</li>
+        </ul>
+      </div>
+      <p>Las notas de libros, videojuegos y parques solo se aplicaron en el piloto; la versión de 41 franquicias usa únicamente cine, con 285 películas analizadas.</p>
+      <p class="note">Cuando una nota de usuarios está distorsionada por una campaña masiva de reseñas negativas, se usa la nota de compradores o espectadores verificados si existe. Si no existe, ese dato se marca como no fiable y se excluye del cálculo.</p>
+    </section>
+
+    <section id="delivery" style="--c:var(--p)">
+      <h2><small>Pilar 3</small>Delivery: negocio, alcance y rentabilidad</h2>
+      <p>Delivery mide lo que la franquicia realmente genera y si eso justifica que continúe. Tiene cuatro bloques.</p>
+      <div class="tw"><table>
+        <thead><tr><th>Bloque</th><th>Indicadores</th><th>Fuente posible</th></tr></thead>
+        <tbody>
+          <tr><td>Volumen de negocio</td><td>Ingresos por capa: taquilla, streaming y TV, merchandising, videojuegos, libros, parques y experiencias</td><td>Box Office Mojo, The Numbers, License Global, informes anuales</td></tr>
+          <tr><td>Alcance</td><td>Espectadores estimados, unidades vendidas, amplitud del ecosistema</td><td>Taquilla dividida por precio medio de entrada, datos de editoriales y fabricantes</td></tr>
+          <tr><td>Rentabilidad</td><td>Múltiplo de taquilla sobre presupuesto, beneficio neto estimado por película, valor de compra frente a ingresos posteriores, peso en los resultados del dueño</td><td>Presupuestos publicados, ranking anual de rentabilidad de Deadline, informes a inversores</td></tr>
+          <tr><td>Continuidad</td><td>Proyectos anunciados, frecuencia de lanzamientos, constancia de calidad entre entregas</td><td>Calendarios de estudios, prensa especializada</td></tr>
+        </tbody>
+      </table></div>
+      <p>La rentabilidad explica la continuidad: una franquicia rentable recibe secuelas, parques y licencias nuevas. Algunas compras sirven de referencia de valor:</p>
+      <div class="cards">
+        <div><b>~4.000 M$</b>Disney → Marvel (2009)</div>
+        <div><b>~4.000 M$</b>Disney → Lucasfilm (2012)</div>
+        <div><b>2.500 M$</b>Microsoft → Mojang (2014)</div>
+        <div><b>~8.500 M$</b>Amazon → MGM (2022)</div>
+      </div>
+      <p class="note">Los presupuestos de marketing casi nunca se publican y la contabilidad de Hollywood rebaja los beneficios declarados. La rentabilidad será siempre una estimación con su nivel de confianza.</p>
+      <div class="calc">
+        <strong>Cómo se calcula hoy</strong>
+        <div class="formula">Delivery = 0,4 · <em>Volumen</em> + 0,3 · <em>Diversidad</em> + 0,3 · <em>Rentabilidad</em></div>
+        <ul>
+          <li><strong>Volumen:</strong> ingresos ponderados (peso del cine × ingresos de cine + resto de ingresos), normalizados.</li>
+          <li><strong>Diversidad:</strong> amplitud del ecosistema / 15 × 100 × (0,5 + 0,5 × equilibrio). El equilibrio es 1 menos el índice de Herfindahl del reparto de ingresos entre canales.</li>
+          <li><strong>Rentabilidad:</strong> taquilla mundial dividida entre presupuesto, sumando todas las películas con presupuesto publicado en The Numbers. Llega a 100 puntos a partir de 4 veces el presupuesto. Si falta, Volumen y Diversidad se reescalan.</li>
+        </ul>
+        <p style="margin:0">Los presupuestos no están ajustados por inflación, lo que favorece a las sagas antiguas.</p>
+      </div>
+    </section>
+
+    <section id="valor" style="--c:var(--gold)">
+      <h2><small>Indicador complementario</small>Valor de marca: diversidad, rentabilidad y reputación</h2>
+      <p>El valor de marca premia a las franquicias con más unidades de negocio, siempre que sean rentables y tengan buena reputación. Se calcula aparte del índice global y la plataforma muestra ambos.</p>
+      <div class="tw"><table>
+        <thead><tr><th>Componente</th><th>Cómo se mide</th><th>De dónde sale</th></tr></thead>
+        <tbody>
+          <tr><td>Diversidad (D)</td><td>Número de unidades de negocio activas, corregido por equilibrio: cuenta más una franquicia con ingresos repartidos que una con el 90 % en un solo canal</td><td>Amplitud del ecosistema e ingresos por capa (Delivery)</td></tr>
+          <tr><td>Rentabilidad (R)</td><td>Beneficio estimado y múltiplo sobre inversión</td><td>Bloque de rentabilidad de Delivery</td></tr>
+          <tr><td>Reputación (Rep)</td><td>Valoración del público y de la crítica, más premios</td><td>Pilar Experience</td></tr>
+        </tbody>
+      </table></div>
+      <p>Los tres se multiplican en lugar de sumarse. Así una franquicia muy diversificada pero poco rentable, o rentable pero con mala reputación, no compensa su punto débil con los otros dos.</p>
+      <div class="formula">Valor de marca = <em>D</em><sup>a</sup> · <em>R</em><sup>b</sup> · <em>Rep</em><sup>c</sup>,&nbsp;&nbsp; a + b + c = 1</div>
+      <p>El equilibrio de la diversidad se mide con el reparto de ingresos entre unidades de negocio: si cada unidad pesa lo mismo, el equilibrio es máximo; si una sola concentra casi todo, se acerca a cero.</p>
+    </section>
+
+    <section id="indice">
+      <h2><small>El índice</small>Cálculo del índice</h2>
+      <p>Cada indicador se normaliza de 0 a 100 frente al máximo de las franquicias analizadas, con escala logarítmica (por defecto) o lineal. Cada pilar es la media ponderada de sus indicadores. La ponderación prioriza la experiencia del público: Experience 50 %, Delivery 30 % y Promise 20 %, ajustable en la plataforma.</p>
+      <div class="formula">Índice = <em>w<sub>P</sub></em> · P + <em>w<sub>E</sub></em> · E + <em>w<sub>D</sub></em> · D,&nbsp;&nbsp; w<sub>P</sub> + w<sub>E</sub> + w<sub>D</sub> = 1</div>
+      <p>La brecha entre Promise y Experience sitúa cada franquicia en uno de cuatro cuadrantes. Las de promesa alta y experiencia baja son las que más riesgo tienen de perder valor.</p>
+      <div class="quad" aria-label="Cuadrantes de la brecha Promise-Experience">
+        <div class="ax">Promise →</div>
+        <div class="qg">
+          <div class="q" style="background:rgba(255,122,89,.14)"><b>Promesa alta · Experiencia baja</b>Mayor riesgo de perder valor.</div>
+          <div class="q" style="background:rgba(25,181,165,.16)"><b>Promesa alta · Experiencia alta</b>Cumple lo que promete.</div>
+          <div class="q" style="background:#F0F1FA"><b>Promesa baja · Experiencia baja</b>Marca de bajo perfil.</div>
+          <div class="q" style="background:rgba(67,56,202,.10)"><b>Promesa baja · Experiencia alta</b>Supera las expectativas.</div>
+        </div>
+        <div></div><div class="qx">Experience →</div>
+      </div>
+      <p>El volumen de negocio tiene dos parámetros que el usuario elige en la plataforma:</p>
+      <ul>
+        <li><strong>Escala:</strong> logarítmica (por defecto), que compara órdenes de magnitud y evita que una franquicia gigante aplaste al resto, o lineal, que premia el tamaño absoluto.</li>
+        <li><strong>Peso del cine:</strong> los ingresos de cine (taquilla y vídeo doméstico) se multiplican por un factor frente al resto de negocios. Por defecto vale 2, porque el estudio prioriza el cine; con 1, todos los negocios cuentan igual.</li>
+      </ul>
+      <p>El mismo peso del cine se aplica en Experience: las notas de crítica y público de las películas pesan ese factor frente a las de libros, series, videojuegos y parques. Así la prioridad del cine es coherente en toda la metodología.</p>
+    </section>
+
+    <section id="navegacion">
+      <h2><small>Plataforma</small>Navegación de la plataforma</h2>
+      <p>Cada puntuación se puede abrir hasta el dato original, en cuatro niveles:</p>
+      <ol>
+        <li><strong>Índice:</strong> la clasificación de las franquicias.</li>
+        <li><strong>Pilar:</strong> Promise, Experience o Delivery por separado.</li>
+        <li><strong>Indicador:</strong> por ejemplo taquilla, nota del público o seguidores, comparable entre franquicias.</li>
+        <li><strong>Título y tiempo:</strong> el indicador película a película y año a año, en valores anuales o acumulados.</li>
+      </ol>
+      <p>Por eso los datos se guardan por título y por año, no solo como totales: taquilla y presupuesto por película, y recepción por película (Rotten Tomatoes y CinemaScore).</p>
+    </section>
+
+    <section id="calidad">
+      <h2><small>Transparencia</small>Calidad de datos y piloto</h2>
+      <p>Cada dato lleva su fuente y uno de tres niveles de confianza:</p>
+      <div class="cards">
+        <div><b>Oficial</b>Publicado por el dueño o por una fuente de referencia (taquilla, informes anuales, premios).</div>
+        <div><b>Estimado</b>Calculado a partir de datos oficiales con un método declarado (espectadores, beneficio neto).</div>
+        <div><b>Aproximado</b>Cifras de prensa o de terceros sin método verificable.</div>
+      </div>
+      <p>Algunas fuentes, como Rotten Tomatoes y TripAdvisor, no permiten una extracción masiva sencilla. Se priorizan APIs abiertas (Wikidata, OMDb, TMDb) y muestras representativas.</p>
+      <p>El piloto valida la metodología con cinco franquicias muy distintas antes de escalar a las 46:</p>
+      <ol>
+        <li>Wizarding World: libros, cine, parques y teatro.</li>
+        <li>Pokémon: videojuego y merchandising, poco cine.</li>
+        <li>Fast &amp; Furious: cine puro, ecosistema ligero.</li>
+        <li>One Piece: manga y anime, fuerte en Asia.</li>
+        <li>Dune: libros y cine de prestigio, merchandising pequeño.</li>
+      </ol>
+      <p>La versión actual analiza 41 franquicias. Los ingresos totales por canal salen de la lista de franquicias más taquilleras de Wikipedia, con estimaciones propias para One Piece y Dune y estos complementos, marcados como estimados: merchandising de Marvel (fila Avengers de Wikipedia) y de Super Mario (fuentes de fans, confianza baja), ventas de Minecraft (estimación de analistas) y libros de El Señor de los Anillos, Los Juegos del Hambre y Crepúsculo (ejemplares vendidos × 10 $). Quedan excluidas por ahora, por falta de un total comparable: Cómo entrenar a tu dragón, Wicked, John Wick, Ne Zha y Detective Conan.</p>
+      <p><strong>Limitaciones conocidas de esta versión:</strong></p>
+      <ul>
+        <li>La rentabilidad llega pronto a su tope, así que favorece a los éxitos de bajo presupuesto (Demon Slayer, Dragon Ball).</li>
+        <li>El CinemaScore distingue poco: casi todas las películas están entre B+ y A.</li>
+        <li>En Google Trends, algunas franquicias se miden con el tema de su película principal porque el tema de franquicia apenas tiene búsquedas, y los valores pequeños se redondean.</li>
+        <li>Varias franquicias no tienen una cuenta oficial global propia (Dragon Ball, Demon Slayer, Lilo &amp; Stitch, Zootopia, Misión Imposible); su Promise se basa solo en búsquedas.</li>
+        <li>Rentabilidad sin dato para One Piece.</li>
+      </ul>
+    </section>
+  </article>
+</div>
+
+<footer>
+  <a href="/barometer/">← Volver al Franchise Brand Barometer</a> · <a href="/">plaiground</a> · © <span id="y"></span> Matías Olivero
+</footer>
+<script>
+document.getElementById('y').textContent=new Date().getFullYear();
+const links=[...document.querySelectorAll('.toc a')];
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){links.forEach(a=>a.classList.toggle('on',a.getAttribute('href')==='#'+e.target.id));}}),{rootMargin:'-40% 0px -55% 0px'});
+document.querySelectorAll('article section').forEach(s=>io.observe(s));
+</script>
+</body>
+</html>
