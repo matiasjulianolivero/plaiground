@@ -169,6 +169,22 @@ section{padding:110px 0}
 .proj.rev{grid-template-columns:1fr 1.15fr}.proj.rev .thumb{order:2}
 @media (max-width:960px){.proj,.proj.rev{grid-template-columns:1fr}.proj.rev .thumb{order:0}}
 .thumb{position:relative;overflow:hidden;background:var(--tb);display:flex;align-items:center;justify-content:center}
+.flythumb{min-height:460px;display:block}
+.flythumb canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.hud-top{position:absolute;left:22px;top:18px;right:22px;display:flex;justify-content:space-between;align-items:flex-start;pointer-events:none}
+.ht{white-space:nowrap;font:700 12px var(--body);letter-spacing:.16em;text-transform:uppercase;color:#C9CCEA;background:rgba(20,22,46,.55);padding:6px 10px;border-radius:999px;backdrop-filter:blur(6px)}
+.hy{font:800 54px/0.9 var(--display);letter-spacing:-.04em;color:#fff;text-shadow:0 6px 24px rgba(0,0,0,.4)}
+.hc{position:absolute;right:22px;top:84px;width:170px;background:rgba(20,22,46,.6);backdrop-filter:blur(8px);border:1px solid rgba(244,245,251,.12);border-radius:14px;padding:10px 12px;pointer-events:none}
+.hc small{display:block;font:700 10.5px var(--body);letter-spacing:.12em;text-transform:uppercase;color:#A3A8CC}
+.hc b{display:block;font:800 22px var(--display);letter-spacing:-.03em;color:#FFB8A6;margin:4px 0 8px}
+.hc span{display:block;height:5px;border-radius:9px;background:rgba(244,245,251,.12);overflow:hidden}
+.hc span i{display:block;height:100%;width:0;background:linear-gradient(90deg,#FF7A59,#FFB8A6);transition:width .9s cubic-bezier(.2,.7,.2,1)}
+.hl{position:absolute;left:18px;right:18px;bottom:16px;list-style:none;margin:0;padding:0;display:grid;gap:6px;pointer-events:none}
+.hl li{display:flex;align-items:center;gap:8px;background:rgba(20,22,46,.72);backdrop-filter:blur(8px);border:1px solid rgba(244,245,251,.12);border-radius:12px;padding:8px 12px;font-size:13.5px;color:#C9CCEA;animation:hin .5s cubic-bezier(.2,.7,.2,1) both}
+.hl li:nth-child(2){animation-delay:.12s}.hl li:nth-child(3){animation-delay:.24s}
+.hl li i{flex:none;width:9px;height:9px;border-radius:50%}.hl li b{color:#fff}
+@keyframes hin{from{opacity:0;transform:translateY(8px)}}
+@media (max-width:640px){.flythumb{min-height:420px}.ht{display:none}.hy{font-size:40px}.hud-top{justify-content:flex-start}.hc{top:16px;width:150px;padding:8px 10px}.hc b{font-size:18px;margin:2px 0 6px}}
 .wheelthumb svg{width:100%;height:auto;aspect-ratio:4/3;display:block}
 .wheel{transform-box:view-box;transform-origin:330px 240px;animation:spin 60s linear infinite}
 .wheel .up{transform-box:fill-box;transform-origin:center;animation:spin 60s linear infinite reverse}
@@ -404,23 +420,13 @@ footer{background:var(--ink);color:#A3A8CC;padding:64px 0 40px;font-size:14px}
       </div>
       <div class="projects">
         <a class="proj rv" href="/barometer/">
-          <div class="thumb wheelthumb" style="--tb:#191C3D"><svg viewBox="0 0 640 480" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Franchise Brand Barometer">
-<defs><radialGradient id="wg" cx=".5" cy=".45" r=".6"><stop offset="0" stop-color="#4338CA" stop-opacity=".55"/><stop offset="1" stop-color="#4338CA" stop-opacity="0"/></radialGradient></defs>
-<rect width="640" height="480" fill="#191C3D"/><rect width="640" height="480" fill="url(#wg)"/>
-<text x="32" y="46" font-family="DM Sans,sans-serif" font-weight="700" font-size="13" letter-spacing="2" fill="#A3A8CC">FRANCHISE BRAND BAROMETER · 2026</text>
-<g stroke="#2E3266" stroke-width="10" stroke-linecap="round"><line x1="330" y1="240" x2="238" y2="448"/><line x1="330" y1="240" x2="422" y2="448"/></g>
-<line x1="200" y1="450" x2="460" y2="450" stroke="#2E3266" stroke-width="6" stroke-linecap="round"/>
-<g class="wheel">
-<circle cx="330" cy="240" r="130" fill="none" stroke="#8B8CF8" stroke-opacity=".55" stroke-width="3"/>
-<circle cx="330" cy="240" r="96" fill="none" stroke="#8B8CF8" stroke-opacity=".2" stroke-width="2"/>
-<g stroke="#8B8CF8" stroke-opacity=".35" stroke-width="2"><line x1="330" y1="240" x2="330.0" y2="110.0"/><line x1="330" y1="240" x2="421.9" y2="148.1"/><line x1="330" y1="240" x2="460.0" y2="240.0"/><line x1="330" y1="240" x2="421.9" y2="331.9"/><line x1="330" y1="240" x2="330.0" y2="370.0"/><line x1="330" y1="240" x2="238.1" y2="331.9"/><line x1="330" y1="240" x2="200.0" y2="240.0"/><line x1="330" y1="240" x2="238.1" y2="148.1"/></g>
-<g transform="translate(330.0 110.0)"><g class="up"><rect x="-35.4" y="-16" width="70.8" height="32" rx="16" fill="#FF7A59"/><text y="5" text-anchor="middle" font-family="DM Sans,sans-serif" font-weight="700" font-size="13" fill="#14162E">Marvel</text></g></g><g transform="translate(421.9 148.1)"><g class="up"><rect x="-47.1" y="-16" width="94.2" height="32" rx="16" fill="#8B8CF8"/><text y="5" text-anchor="middle" font-family="DM Sans,sans-serif" font-weight="700" font-size="13" fill="#14162E">Star Wars</text></g></g><g transform="translate(460.0 240.0)"><g class="up"><rect x="-58.8" y="-16" width="117.6" height="32" rx="16" fill="#19B5A5"/><text y="5" text-anchor="middle" font-family="DM Sans,sans-serif" font-weight="700" font-size="13" fill="#14162E">Harry Potter</text></g></g><g transform="translate(421.9 331.9)"><g class="up"><rect x="-39.3" y="-16" width="78.6" height="32" rx="16" fill="#E0A100"/><text y="5" text-anchor="middle" font-family="DM Sans,sans-serif" font-weight="700" font-size="13" fill="#14162E">Pokémon</text></g></g><g transform="translate(330.0 370.0)"><g class="up"><rect x="-66.6" y="-16" width="133.2" height="32" rx="16" fill="#F472B6"/><text y="5" text-anchor="middle" font-family="DM Sans,sans-serif" font-weight="700" font-size="13" fill="#14162E">Jurassic World</text></g></g><g transform="translate(238.1 331.9)"><g class="up"><rect x="-47.1" y="-16" width="94.2" height="32" rx="16" fill="#60A5FA"/><text y="5" text-anchor="middle" font-family="DM Sans,sans-serif" font-weight="700" font-size="13" fill="#14162E">Toy Story</text></g></g><g transform="translate(200.0 240.0)"><g class="up"><rect x="-35.4" y="-16" width="70.8" height="32" rx="16" fill="#B3E5FC"/><text y="5" text-anchor="middle" font-family="DM Sans,sans-serif" font-weight="700" font-size="13" fill="#14162E">Frozen</text></g></g><g transform="translate(238.1 148.1)"><g class="up"><rect x="-54.9" y="-16" width="109.8" height="32" rx="16" fill="#FFB8A6"/><text y="5" text-anchor="middle" font-family="DM Sans,sans-serif" font-weight="700" font-size="13" fill="#14162E">Super Mario</text></g></g>
-</g>
-<circle cx="330" cy="240" r="48" fill="#4338CA"/><circle cx="330" cy="240" r="48" fill="none" stroke="#8B8CF8" stroke-width="3"/>
-<text x="330" y="246" text-anchor="middle" font-family="Bricolage Grotesque,sans-serif" font-weight="800" font-size="34" fill="#fff">41</text>
-<text x="330" y="264" text-anchor="middle" font-family="DM Sans,sans-serif" font-weight="700" font-size="10.5" letter-spacing="1" fill="#C9CCEA"><tspan lang="es">FRANQUICIAS</tspan><tspan lang="en">FRANCHISES</tspan></text>
-<g class="bob" style="animation-delay:0.0s"><rect x="12" y="150" width="104" height="30" rx="15" fill="rgba(244,245,251,.08)" stroke="rgba(244,245,251,.16)"/><circle cx="27" cy="165" r="4.5" fill="#FF7A59"/><text x="38" y="170" font-family="DM Sans,sans-serif" font-weight="600" font-size="12.5" fill="#E6E8F5"><tspan lang="es">Cine</tspan><tspan lang="en">Film</tspan></text></g><g class="bob" style="animation-delay:0.4s"><rect x="12" y="208" width="104" height="30" rx="15" fill="rgba(244,245,251,.08)" stroke="rgba(244,245,251,.16)"/><circle cx="27" cy="223" r="4.5" fill="#8B8CF8"/><text x="38" y="228" font-family="DM Sans,sans-serif" font-weight="600" font-size="12.5" fill="#E6E8F5"><tspan lang="es">Streaming</tspan><tspan lang="en">Streaming</tspan></text></g><g class="bob" style="animation-delay:0.8s"><rect x="12" y="266" width="104" height="30" rx="15" fill="rgba(244,245,251,.08)" stroke="rgba(244,245,251,.16)"/><circle cx="27" cy="281" r="4.5" fill="#19B5A5"/><text x="38" y="286" font-family="DM Sans,sans-serif" font-weight="600" font-size="12.5" fill="#E6E8F5"><tspan lang="es">Parques</tspan><tspan lang="en">Parks</tspan></text></g><g class="bob" style="animation-delay:1.2000000000000002s"><rect x="524" y="150" width="104" height="30" rx="15" fill="rgba(244,245,251,.08)" stroke="rgba(244,245,251,.16)"/><circle cx="539" cy="165" r="4.5" fill="#E0A100"/><text x="550" y="170" font-family="DM Sans,sans-serif" font-weight="600" font-size="12.5" fill="#E6E8F5"><tspan lang="es">Juguetes</tspan><tspan lang="en">Toys</tspan></text></g><g class="bob" style="animation-delay:1.6s"><rect x="524" y="208" width="104" height="30" rx="15" fill="rgba(244,245,251,.08)" stroke="rgba(244,245,251,.16)"/><circle cx="539" cy="223" r="4.5" fill="#F472B6"/><text x="550" y="228" font-family="DM Sans,sans-serif" font-weight="600" font-size="12.5" fill="#E6E8F5"><tspan lang="es">Videojuegos</tspan><tspan lang="en">Games</tspan></text></g><g class="bob" style="animation-delay:2.0s"><rect x="524" y="266" width="104" height="30" rx="15" fill="rgba(244,245,251,.08)" stroke="rgba(244,245,251,.16)"/><circle cx="539" cy="281" r="4.5" fill="#60A5FA"/><text x="550" y="286" font-family="DM Sans,sans-serif" font-weight="600" font-size="12.5" fill="#E6E8F5"><tspan lang="es">Libros</tspan><tspan lang="en">Books</tspan></text></g>
-</svg></div>
+          <div class="thumb flythumb" id="hpfly" style="--tb:#14162E">
+            <canvas aria-hidden="true"></canvas>
+            <div class="hud-top"><span class="ht">Wizarding World · 1997–2027</span><span class="hy">1997</span></div>
+            <div class="hc"><small></small><b></b><span><i></i></span></div>
+            <ul class="hl"></ul>
+          </div>
+
           <div class="info">
             <div class="tags"><span class="tag" style="--tc:#B3B8FF"><span lang="es">Destacado</span><span lang="en">Featured</span></span><span class="tag"><span lang="es">Datos</span><span lang="en">Data</span></span><span class="tag"><span lang="es">Plataforma</span><span lang="en">Platform</span></span></div>
             <h3>Franchise Brand Barometer</h3>
@@ -523,6 +529,7 @@ footer{background:var(--ink);color:#A3A8CC;padding:64px 0 40px;font-size:14px}
   </div>
 </footer>
 
+<script src="/js/hp-flight.js" defer></script>
 <script>
 document.getElementById('y').textContent=new Date().getFullYear();
 const H=document.documentElement;
