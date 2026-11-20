@@ -175,7 +175,7 @@
     const items = [];
     FILMS.filter(f => f[0] === year).forEach(f => items.push(`<li><i style="background:${f[4] === 'm' ? '#8B8CF8' : '#3FE0CC'}"></i><span>${L === 'es' ? 'Película' : 'Film'} · <b>${L === 'es' ? f[1] : f[2]}</b> · ${Math.round(f[3]).toLocaleString(L)} M$</span></li>`));
     EV.filter(e => e[0] === year).forEach(e => items.push(`<li><i style="background:${LANE[e[1]][0]}"></i><span>${LANE[e[1]][L === 'es' ? 1 : 2]} · <b>${L === 'es' ? e[2] : e[3]}</b></span></li>`));
-    $('.hl').innerHTML = items.join('');
+    $('.hudl').innerHTML = items.join('');
     const v = cum(year);
     $('.hc b').textContent = (v / 1000).toLocaleString(L, { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + (L === 'es' ? ' mil M$' : ' bn $');
     $('.hc i').style.width = (v / CUMMAX * 100) + '%';
@@ -188,7 +188,7 @@
     const holdFor = si === 0 ? FIRST : si === STOPS.length - 1 ? END : HOLD;
     if (phase === 'hold' && tPhase > holdFor) {
       from = STOPS[si]; si = (si + 1) % STOPS.length; to = STOPS[si]; phase = 'move'; tPhase = 0;
-      $('.hl').innerHTML = '';
+      $('.hudl').innerHTML = '';
     }
     if (phase === 'move') {
       const k = Math.min(1, tPhase / (to < from ? BACK : moveFor(from, to)));

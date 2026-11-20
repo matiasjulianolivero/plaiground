@@ -179,10 +179,10 @@ section{padding:110px 0}
 .hc b{display:block;font:800 22px var(--display);letter-spacing:-.03em;color:#FFB8A6;margin:4px 0 8px}
 .hc span{display:block;height:5px;border-radius:9px;background:rgba(244,245,251,.12);overflow:hidden}
 .hc span i{display:block;height:100%;width:0;background:linear-gradient(90deg,#FF7A59,#FFB8A6);transition:width .9s cubic-bezier(.2,.7,.2,1)}
-.hl{position:absolute;left:18px;right:18px;bottom:16px;list-style:none;margin:0;padding:0;display:grid;gap:6px;pointer-events:none}
-.hl li{display:flex;align-items:center;gap:8px;background:rgba(20,22,46,.72);backdrop-filter:blur(8px);border:1px solid rgba(244,245,251,.12);border-radius:12px;padding:8px 12px;font-size:13.5px;color:#C9CCEA;animation:hin .5s cubic-bezier(.2,.7,.2,1) both}
-.hl li:nth-child(2){animation-delay:.12s}.hl li:nth-child(3){animation-delay:.24s}
-.hl li i{flex:none;width:9px;height:9px;border-radius:50%}.hl li b{color:#fff}
+.hudl{position:absolute;left:18px;right:18px;bottom:16px;list-style:none;margin:0;padding:0;display:grid;gap:6px;pointer-events:none}
+.hudl li{display:flex;align-items:center;gap:8px;background:rgba(20,22,46,.72);backdrop-filter:blur(8px);border:1px solid rgba(244,245,251,.12);border-radius:12px;padding:8px 12px;font-size:13.5px;color:#C9CCEA;animation:hin .5s cubic-bezier(.2,.7,.2,1) both}
+.hudl li:nth-child(2){animation-delay:.12s}.hudl li:nth-child(3){animation-delay:.24s}
+.hudl li i{flex:none;width:9px;height:9px;border-radius:50%}.hudl li b{color:#fff}
 @keyframes hin{from{opacity:0;transform:translateY(8px)}}
 @media (max-width:640px){.flythumb{min-height:420px}.ht{display:none}.hy{font-size:40px}.hud-top{justify-content:flex-start}.hc{top:62px;left:16px;width:150px;padding:8px 10px}.hud-top{justify-content:flex-end}.hc b{font-size:18px;margin:2px 0 6px}}
 .wheelthumb svg{width:100%;height:auto;aspect-ratio:4/3;display:block}
@@ -423,7 +423,7 @@ footer{background:var(--ink);color:#A3A8CC;padding:64px 0 40px;font-size:14px}
             <canvas aria-hidden="true"></canvas>
             <div class="hud-top"><span class="ht">Wizarding World · 1997–2027</span><span class="hy">1997</span></div>
             <div class="hc"><small></small><b></b><span><i></i></span></div>
-            <ul class="hl"></ul>
+            <ul class="hudl"></ul>
           </div>
 
           <div class="info">
