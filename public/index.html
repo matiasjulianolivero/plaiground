@@ -4,11 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>plaiground · AI-Driven Playful Marketing</title>
-<meta name="description" content="matIAs plAIground: marketing, analítica y growth con inteligencia artificial. Proyectos y experimentos interactivos de Matías Olivero.">
+<meta name="description" content="plaiground: marketing, analítica y growth con inteligencia artificial. Proyectos y experimentos interactivos de Matías Olivero.">
 <meta property="og:title" content="plaiground · AI-Driven Playful Marketing">
 <meta property="og:description" content="Marketing, analítica y growth con IA. Proyectos y experimentos interactivos de Matías Olivero.">
 <meta name="theme-color" content="#F4F5FB">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 300'%3E%3Crect width='300' height='300' rx='70' fill='%2314162E'/%3E%3Cpolygon points='92,74 92,131 204,131' fill='%238B8CF8' stroke='%238B8CF8' stroke-width='30' stroke-linejoin='round'/%3E%3Cpolygon points='92,226 92,169 204,169' fill='%23F4F5FB' stroke='%23F4F5FB' stroke-width='30' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%234338CA'/%3E%3Ctext x='32' y='44' text-anchor='middle' font-family='Arial,sans-serif' font-weight='700' font-size='34' fill='%23fff'%3Eai%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
@@ -37,7 +37,7 @@ a{color:inherit}
 header{position:sticky;top:0;z-index:40;backdrop-filter:blur(14px);background:color-mix(in srgb,var(--bg) 78%,transparent);border-bottom:1px solid transparent;transition:border-color .3s}
 header.scrolled{border-color:var(--line)}
 .nav{display:flex;align-items:center;justify-content:space-between;height:72px}
-.brand{display:flex;align-items:center;gap:12px;text-decoration:none;font-family:var(--display);font-weight:700;font-size:24px;letter-spacing:-.045em}
+.brand{display:flex;align-items:center;gap:12px;text-decoration:none;font-family:var(--display);font-weight:700;font-size:26px;letter-spacing:-.045em}
 .brand svg{width:38px;height:38px;border-radius:11px;flex:none}
 .nav ul{display:flex;gap:6px;list-style:none;margin:0;padding:0}
 .nav ul a{display:block;padding:8px 14px;border-radius:999px;text-decoration:none;font-weight:500;font-size:15px;color:var(--muted);transition:background .2s,color .2s}
@@ -65,7 +65,8 @@ header.scrolled{border-color:var(--line)}
 .btn.ghost:hover{border-color:var(--ink)}
 .btn svg{width:18px;height:18px}
 
-/* stacked lockup (from LinkedIn cover) */
+/* wordmark (from LinkedIn logo) */
+.wordmark{font-family:var(--display);font-weight:700;font-size:clamp(52px,7.4vw,108px);letter-spacing:-.045em;line-height:.9;text-align:center}
 .lockup-wrap{display:flex;justify-content:center}
 .lockup{position:relative;display:grid;grid-template-columns:auto auto auto;align-items:baseline;font-family:var(--display);font-weight:700;font-size:clamp(48px,13vw,128px);letter-spacing:-.045em;line-height:.86}
 .lockup .a{grid-column:1;text-align:right}.lockup .c{grid-column:2}.lockup .z{grid-column:3;text-align:left}
@@ -162,7 +163,7 @@ footer{background:var(--ink);color:#A3A8CC;padding:56px 0 40px;font-size:14px}
 <header id="top">
   <nav class="wrap nav" aria-label="Principal">
     <a class="brand" href="#" aria-label="plaiground, inicio">
-      <svg viewBox="0 0 300 300" aria-hidden="true"><rect width="300" height="300" fill="#14162E"/><polygon points="92,74 92,131 204,131" fill="#8B8CF8" stroke="#8B8CF8" stroke-width="30" stroke-linejoin="round"/><polygon points="92,226 92,169 204,169" fill="#F4F5FB" stroke="#F4F5FB" stroke-width="30" stroke-linejoin="round"/></svg>
+      
       <span>pl<span class="ai">ai</span>ground</span>
     </a>
     <ul>
@@ -188,11 +189,7 @@ footer{background:var(--ink);color:#A3A8CC;padding:56px 0 40px;font-size:14px}
       </div>
       <div class="lockup-wrap rv">
         <div>
-          <div class="lockup" aria-label="matias plaiground">
-            <div class="rule" aria-hidden="true"></div>
-            <span class="a s1" aria-hidden="true">mat</span><span class="c s1" aria-hidden="true">ia</span><span class="z s1" aria-hidden="true">s</span>
-            <span class="a s2" aria-hidden="true">pl</span><span class="c s2" aria-hidden="true">ai</span><span class="z s2" aria-hidden="true">ground</span>
-          </div>
+          <div class="wordmark" aria-label="plaiground">pl<span class="ai">ai</span>ground</div>
         </div>
       </div>
     </div>
@@ -373,7 +370,7 @@ footer{background:var(--ink);color:#A3A8CC;padding:56px 0 40px;font-size:14px}
 <footer>
   <div class="wrap foot">
     <a class="brand" href="#" aria-label="Volver arriba">
-      <svg viewBox="0 0 300 300" aria-hidden="true"><rect width="300" height="300" fill="#232651"/><polygon points="92,74 92,131 204,131" fill="#8B8CF8" stroke="#8B8CF8" stroke-width="30" stroke-linejoin="round"/><polygon points="92,226 92,169 204,169" fill="#F4F5FB" stroke="#F4F5FB" stroke-width="30" stroke-linejoin="round"/></svg>
+      
       <span>pl<span class="ai">ai</span>ground</span>
     </a>
     <span>© <span id="y"></span> Matías Olivero · AI-Driven Playful Marketing</span>
