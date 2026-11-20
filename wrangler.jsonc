@@ -1,6 +1,10 @@
 {
   "name": "plaiground",
   "compatibility_date": "2026-11-20",
+  // La web real solo se sirve en plaigroundmarketing.com
+  "workers_dev": false,
+  // Activa las URLs de vista previa (rama staging → staging-plaiground.<cuenta>.workers.dev)
+  "preview_urls": true,
   "assets": {
     "directory": "./public",
     "not_found_handling": "404-page"
