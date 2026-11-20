@@ -96,6 +96,7 @@ a{color:var(--accent)}
 .byline{display:flex;align-items:center;gap:12px;font-size:15px;font-weight:600;color:var(--muted);margin-bottom:-10px}
 .mp.big{font-size:clamp(26px,3vw,36px)}
 .byline .sep{width:36px;height:2px;border-radius:2px;background:linear-gradient(90deg,var(--accent),var(--e))}
+.sitefoot .flegal{flex-basis:100%;font-size:12.5px}.sitefoot .flegal a{color:inherit;text-decoration:none}.sitefoot .flegal a:hover{text-decoration:underline}
 .sitefoot{max-width:1292px;margin:0 auto 110px;padding:22px 26px;display:flex;flex-wrap:wrap;gap:12px 24px;align-items:center;justify-content:space-between;font-size:13px;color:var(--muted)}
 
 
@@ -1520,7 +1521,7 @@ document.addEventListener('mousemove',e=>{const t=$('tip');if(document.body.clas
   document.addEventListener('click',e=>{if(sup){e.stopPropagation();e.preventDefault();sup=false;}},true);})();
 
 /* ===== Pie ===== */
-function rFoot(){$('foot').innerHTML=`<span class="mp big">pl<span style="color:var(--accent)">ai</span>ground</span><span>${L('Franchise Brand Barometer · Edición 2026 · Datos públicos de Rotten Tomatoes, CinemaScore, la Academia, The Numbers, Wikipedia, Instagram y Google Trends.','Franchise Brand Barometer · 2026 edition · Public data from Rotten Tomatoes, CinemaScore, the Academy, The Numbers, Wikipedia, Instagram and Google Trends.')}</span>`;}
+function rFoot(){$('foot').innerHTML=`<span class="mp big">pl<span style="color:var(--accent)">ai</span>ground</span><span>${L('Franchise Brand Barometer · Edición 2026 · Datos públicos de Rotten Tomatoes, CinemaScore, la Academia, The Numbers, Wikipedia, Instagram y Google Trends.','Franchise Brand Barometer · 2026 edition · Public data from Rotten Tomatoes, CinemaScore, the Academy, The Numbers, Wikipedia, Instagram and Google Trends.')}</span><span class="flegal"><a href="/legal/aviso-legal/">${L('Aviso legal','Legal notice')}</a> · <a href="/legal/privacidad/">${L('Privacidad','Privacy')}</a> · <a href="/legal/cookies/">Cookies</a> · <a href="/legal/terminos/">${L('Términos','Terms')}</a> · <a href="/legal/ia/">${L('Transparencia IA','AI transparency')}</a> · <a href="#" data-cookie-settings>${L('Configurar cookies','Cookie settings')}</a></span>`;}
 /* ===== Render y navegación ===== */
 let spy;
 function spyNow(){if(spy)spy.disconnect();spy=new IntersectionObserver(es=>{es.forEach(en=>{if(en.isIntersecting)document.querySelectorAll('.links a').forEach(a=>{const on=a.dataset.s===en.target.id;a.classList.toggle('on',on);if(on)a.scrollIntoView({block:'nearest',inline:'nearest'});});});},{rootMargin:'-45% 0px -50% 0px'});document.querySelectorAll('main section').forEach(s=>spy.observe(s));}
@@ -1588,5 +1589,6 @@ document.documentElement.setAttribute('data-theme',THEME);
 renderAll();route();
 </script>
 
+<script src="/js/consent.js" defer></script>
 </body>
 </html>
