@@ -3,7 +3,7 @@
 Genera `public/legal/*/index.html` (ES + EN) a partir de `content_es.py` y `content_en.py`.
 
 ```bash
-PLG_NIF="12345678Z" PLG_DOM="Calle Ejemplo 1, 28001 Madrid" python3 tools/legal/build.py public
+PLG_NIF="Y7836295W" PLG_DOM="Madrid (España). Dirección postal disponible bajo solicitud por email." PLG_DOM_EN="Madrid (Spain). Postal address available on request by email." python3 tools/legal/build.py public
 ```
 
 Sin `PLG_NIF` / `PLG_DOM` aparece el marcador amarillo "pendiente de completar".

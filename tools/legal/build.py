@@ -9,6 +9,7 @@ OUT = sys.argv[1]
 # Datos pendientes: se rellenan aquí y se regenera.
 NIF = os.environ.get("PLG_NIF", "")
 DOM = os.environ.get("PLG_DOM", "")
+DOM_EN = os.environ.get("PLG_DOM_EN", DOM)
 PEND_ES = '<mark class="todo">pendiente de completar</mark>'
 PEND_EN = '<mark class="todo">to be completed</mark>'
 
@@ -107,7 +108,8 @@ def footer():
 
 def fill(html, lang):
     pend = PEND_ES if lang == "es" else PEND_EN
-    return html.replace("{NIF}", NIF or pend).replace("{DOM}", DOM or pend)
+    dom = DOM if lang == "es" else DOM_EN
+    return html.replace("{NIF}", NIF or pend).replace("{DOM}", dom or pend)
 
 def page(slug, title_es, title_en, desc_es, main_html):
     return f"""<!DOCTYPE html>
