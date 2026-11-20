@@ -2,6 +2,12 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
+<script>
+(function(){var l;try{l=localStorage.getItem('plg-lang')}catch(e){}
+if(l!=='es'&&l!=='en'){l=((navigator.language||'es').toLowerCase().indexOf('es')===0)?'es':'en'}
+document.documentElement.setAttribute('data-lang',l);document.documentElement.lang=l;})();
+</script>
+
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>plaiground · AI-Driven Playful Marketing</title>
 <link rel="icon" href="/favicon.ico" sizes="any">
@@ -47,6 +53,15 @@ header.scrolled{border-color:var(--line)}
 .nav .cta{background:var(--ink);color:var(--bg)!important}
 .nav .cta:hover{background:var(--ind)!important}
 @media (max-width:720px){.nav ul li:not(:last-child){display:none}}
+
+
+/* i18n */
+html[data-lang="en"] [lang="es"],html[data-lang="es"] [lang="en"]{display:none!important}
+.nav{gap:16px}.nav ul{margin-left:auto}
+.lang{display:flex;gap:2px;padding:3px;border-radius:999px;background:var(--paper);border:1px solid var(--line);flex:none}
+.lang button{border:0;background:transparent;font:700 12px var(--body);letter-spacing:.06em;color:var(--muted);padding:6px 10px;border-radius:999px;cursor:pointer;transition:background .2s,color .2s}
+.lang button[aria-pressed="true"]{background:var(--ink);color:#fff}
+.lang button:hover:not([aria-pressed="true"]){color:var(--ink)}
 
 /* hero */
 .hero{position:relative;padding:96px 0 120px;overflow:hidden}
@@ -165,16 +180,17 @@ footer{background:var(--ink);color:#A3A8CC;padding:56px 0 40px;font-size:14px}
 <svg class="grain" aria-hidden="true" width="100%" height="100%"><filter id="g"><feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" stitchTiles="stitch"/><feColorMatrix type="saturate" values="0"/></filter><rect width="100%" height="100%" filter="url(#g)"/></svg>
 
 <header id="top">
-  <nav class="wrap nav" aria-label="Principal">
-    <a class="brand" href="#" aria-label="plaiground, inicio">
+  <nav class="wrap nav">
+    <a class="brand" href="#" aria-label="plaiground">
       
       <span>pl<span class="ai">ai</span>ground</span>
     </a>
     <ul>
-      <li><a href="#enfoque">Enfoque</a></li>
-      <li><a href="#lab">Proyectos</a></li>
-      <li><a class="cta" href="#contacto">Hablemos</a></li>
+      <li><a href="#enfoque"><span lang="es">Enfoque</span><span lang="en">Approach</span></a></li>
+      <li><a href="#lab"><span lang="es">Proyectos</span><span lang="en">Projects</span></a></li>
+      <li><a class="cta" href="#contacto"><span lang="es">Hablemos</span><span lang="en">Let’s talk</span></a></li>
     </ul>
+    <div class="lang" role="group" aria-label="Idioma / Language"><button type="button" data-l="es">ES</button><button type="button" data-l="en">EN</button></div>
   </nav>
 </header>
 
@@ -183,12 +199,12 @@ footer{background:var(--ink);color:#A3A8CC;padding:56px 0 40px;font-size:14px}
     <div class="wrap hero-grid">
       <div class="rv">
         <div class="eyebrow">AI-Driven Playful Marketing · Analytics &amp; Growth</div>
-        <h1>Marketing que se <em>juega</em>, se mide y crece con IA.</h1>
-        <p class="lead">Soy Matías Olivero. En plaiground convierto datos, marcas e ideas en experiencias interactivas: rankings, dashboards y CVs que se recorren como un festival.</p>
+        <h1><span lang="es">Marketing que se <em>juega</em>, se mide y crece con IA.</span><span lang="en">Marketing you can <em>play</em>, measure and grow with AI.</span></h1>
+        <p class="lead"><span lang="es">Soy Matías Olivero. En plaiground convierto datos, marcas e ideas en experiencias interactivas: rankings, dashboards y CVs que se recorren como un festival.</span><span lang="en">I’m Matías Olivero. At plaiground I turn data, brands and ideas into interactive experiences: rankings, dashboards and CVs you explore like a festival.</span></p>
         <div class="btns">
-          <a class="btn primary" href="#lab">Ver proyectos
+          <a class="btn primary" href="#lab"><span lang="es">Ver proyectos</span><span lang="en">See projects</span>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12l7 7 7-7"/></svg></a>
-          <a class="btn ghost" href="#contacto">Contactar</a>
+          <a class="btn ghost" href="#contacto"><span lang="es">Contactar</span><span lang="en">Get in touch</span></a>
         </div>
       </div>
       <div class="lockup-wrap rv">
@@ -200,20 +216,20 @@ footer{background:var(--ink);color:#A3A8CC;padding:56px 0 40px;font-size:14px}
   </section>
 
   <div class="marquee" aria-hidden="true"><div>
-    <span>Brand <b>analytics</b></span><span>✦</span><span>Growth <b>experiments</b></span><span>✦</span><span>Data <b>storytelling</b></span><span>✦</span><span>Prototipos con <b>IA</b></span><span>✦</span><span>Marketing <b>lúdico</b></span><span>✦</span>
-    <span>Brand <b>analytics</b></span><span>✦</span><span>Growth <b>experiments</b></span><span>✦</span><span>Data <b>storytelling</b></span><span>✦</span><span>Prototipos con <b>IA</b></span><span>✦</span><span>Marketing <b>lúdico</b></span><span>✦</span>
+    <span>Brand <b>analytics</b></span><span>✦</span><span>Growth <b>experiments</b></span><span>✦</span><span>Data <b>storytelling</b></span><span>✦</span><span><span lang="es">Prototipos con <b>IA</b></span><span lang="en"><b>AI</b> prototypes</span></span><span>✦</span><span><span lang="es">Marketing <b>lúdico</b></span><span lang="en">Playful <b>marketing</b></span></span><span>✦</span>
+    <span>Brand <b>analytics</b></span><span>✦</span><span>Growth <b>experiments</b></span><span>✦</span><span>Data <b>storytelling</b></span><span>✦</span><span><span lang="es">Prototipos con <b>IA</b></span><span lang="en"><b>AI</b> prototypes</span></span><span>✦</span><span><span lang="es">Marketing <b>lúdico</b></span><span lang="en">Playful <b>marketing</b></span></span><span>✦</span>
   </div></div>
 
   <section id="enfoque">
     <div class="wrap">
       <div class="sec-head rv">
-        <div><div class="eyebrow">Enfoque</div><h2>Tres ingredientes,<br>un solo <span class="ai">playground</span>.</h2></div>
-        <p>La IA acelera; el criterio de marketing decide. Cada proyecto mezcla estrategia, datos y una capa de juego que hace que la gente quiera explorarlo.</p>
+        <div><div class="eyebrow"><span lang="es">Enfoque</span><span lang="en">Approach</span></div><h2><span lang="es">Tres ingredientes,<br>un solo <span class="ai">playground</span>.</span><span lang="en">Three ingredients,<br>one <span class="ai">playground</span>.</span></h2></div>
+        <p><span lang="es">La IA acelera; el criterio de marketing decide. Cada proyecto mezcla estrategia, datos y una capa de juego que hace que la gente quiera explorarlo.</span><span lang="en">AI speeds things up; marketing judgment makes the call. Every project blends strategy, data and a layer of play that makes people want to explore it.</span></p>
       </div>
       <div class="pillars">
-        <article class="pillar rv" style="--c:var(--ind)"><span class="n">01</span><h3>Play</h3><p>Formatos interactivos y memorables: experiencias que se recorren en lugar de leerse.</p></article>
-        <article class="pillar rv" style="--c:var(--coral)"><span class="n">02</span><h3>Analytics</h3><p>Métricas claras, metodologías transparentes y visualizaciones que cuentan una historia.</p></article>
-        <article class="pillar rv" style="--c:var(--teal)"><span class="n">03</span><h3>Growth</h3><p>Prototipos rápidos con IA para validar ideas, posicionar marcas y abrir conversaciones.</p></article>
+        <article class="pillar rv" style="--c:var(--ind)"><span class="n">01</span><h3>Play</h3><p><span lang="es">Formatos interactivos y memorables: experiencias que se recorren en lugar de leerse.</span><span lang="en">Interactive, memorable formats: experiences you explore instead of just reading.</span></p></article>
+        <article class="pillar rv" style="--c:var(--coral)"><span class="n">02</span><h3>Analytics</h3><p><span lang="es">Métricas claras, metodologías transparentes y visualizaciones que cuentan una historia.</span><span lang="en">Clear metrics, transparent methodologies and visualizations that tell a story.</span></p></article>
+        <article class="pillar rv" style="--c:var(--teal)"><span class="n">03</span><h3>Growth</h3><p><span lang="es">Prototipos rápidos con IA para validar ideas, posicionar marcas y abrir conversaciones.</span><span lang="en">Fast AI prototypes to validate ideas, position brands and start conversations.</span></p></article>
       </div>
     </div>
   </section>
@@ -221,8 +237,8 @@ footer{background:var(--ink);color:#A3A8CC;padding:56px 0 40px;font-size:14px}
   <section id="lab">
     <div class="wrap" style="position:relative">
       <div class="sec-head rv">
-        <div><div class="eyebrow">The Lab</div><h2>Proyectos del pl<span class="ai">ai</span>ground</h2></div>
-        <p>Desarrollos reales, construidos mano a mano con IA. Entra, toca y explora: son interactivos.</p>
+        <div><div class="eyebrow">The Lab</div><h2><span lang="es">Proyectos del pl<span class="ai">ai</span>ground</span><span lang="en">Projects from the pl<span class="ai">ai</span>ground</span></h2></div>
+        <p><span lang="es">Desarrollos reales, construidos mano a mano con IA. Entra, toca y explora: son interactivos.</span><span lang="en">Real builds, made hand in hand with AI. Jump in, click around and explore: they’re interactive.</span></p>
       </div>
 
       
@@ -246,11 +262,11 @@ footer{background:var(--ink);color:#A3A8CC;padding:56px 0 40px;font-size:14px}
             </svg>
           </div>
           <div class="info">
-            <div class="tags"><span class="tag" style="--tc:#B3B8FF">Destacado</span><span class="tag">Datos</span><span class="tag">Plataforma</span></div>
+            <div class="tags"><span class="tag" style="--tc:#B3B8FF"><span lang="es">Destacado</span><span lang="en">Featured</span></span><span class="tag"><span lang="es">Datos</span><span lang="en">Data</span></span><span class="tag"><span lang="es">Plataforma</span><span lang="en">Platform</span></span></div>
             <h3>Franchise Brand Barometer</h3>
-            <p>El ranking de las franquicias de cine más fuertes del mundo, con un índice propio que combina atractivo, negocio y buzz. Incluye podio, ecosistemas, récords, mapa, comparador y metodología abierta.</p>
-            <div class="stats"><div>3<small>bloques</small></div><div>0–100<small>índice</small></div><div>ES/EN<small>bilingüe</small></div></div>
-            <span class="go"><i>→</i> Explorar el ranking</span>
+            <p><span lang="es">El ranking de las franquicias de cine más fuertes del mundo, con un índice propio que combina atractivo, negocio y buzz. Incluye podio, ecosistemas, récords, mapa, comparador y metodología abierta.</span><span lang="en">A ranking of the world’s strongest film franchises, built on a proprietary index that combines appeal, business and buzz. It includes a podium, ecosystems, records, a map, a comparison tool and an open methodology.</span></p>
+            <div class="stats"><div>3<small><span lang="es">bloques</span><span lang="en">blocks</span></small></div><div>0–100<small><span lang="es">índice</span><span lang="en">index</span></small></div><div>ES/EN<small><span lang="es">bilingüe</span><span lang="en">bilingual</span></small></div></div>
+            <span class="go"><i>→</i> <span lang="es">Explorar el ranking</span><span lang="en">Explore the ranking</span></span>
           </div>
         </a>
 
@@ -267,16 +283,16 @@ footer{background:var(--ink);color:#A3A8CC;padding:56px 0 40px;font-size:14px}
             </svg>
           </div>
           <div class="info">
-            <div class="tags"><span class="tag" style="--tc:#FFB8A6">CV interactivo</span></div>
+            <div class="tags"><span class="tag" style="--tc:#FFB8A6"><span lang="es">CV interactivo</span><span lang="en">Interactive CV</span></span></div>
             <h3>Olivero Fest CV</h3>
-            <p>Mi trayectoria profesional contada como un festival: cartel, mapa del recinto, horarios y escenarios para cada etapa. Disponible en español e inglés.</p>
-            <span class="go"><i>→</i> Entrar al festival</span>
+            <p><span lang="es">Mi trayectoria profesional contada como un festival: cartel, mapa del recinto, horarios y escenarios para cada etapa. Disponible en español e inglés.</span><span lang="en">My career told as a music festival: line-up poster, site map, schedule and a stage for each chapter. Available in Spanish and English.</span></p>
+            <span class="go"><i>→</i> <span lang="es">Entrar al festival</span><span lang="en">Enter the festival</span></span>
           </div>
         </a>
 
         <div class="soon rv">
-          <div><strong>Más experimentos en camino</strong><br>El laboratorio está siempre encendido. Pronto, nuevos proyectos.</div>
-          <a class="btn primary" href="#contacto">¿Construimos algo juntos?</a>
+          <div><strong><span lang="es">Más experimentos en camino</span><span lang="en">More experiments on the way</span></strong><br><span lang="es">El laboratorio está siempre encendido. Pronto, nuevos proyectos.</span><span lang="en">The lab is always on. New projects coming soon.</span></div>
+          <a class="btn primary" href="#contacto"><span lang="es">¿Construimos algo juntos?</span><span lang="en">Shall we build something together?</span></a>
         </div>
       </div>
     </div>
@@ -286,15 +302,15 @@ footer{background:var(--ink);color:#A3A8CC;padding:56px 0 40px;font-size:14px}
     <div class="wrap">
       <div class="contact rv">
         <div>
-          <div class="eyebrow" style="color:#C9CCEA">Hablemos</div>
-          <h2 style="margin-top:14px">¿Tienes una marca, un reto o una idea para jugar?</h2>
-          <p>Marketing, analítica y growth con IA. Escríbeme y vemos qué podemos construir.</p>
+          <div class="eyebrow" style="color:#C9CCEA"><span lang="es">Hablemos</span><span lang="en">Let’s talk</span></div>
+          <h2 style="margin-top:14px"><span lang="es">¿Tienes una marca, un reto o una idea para jugar?</span><span lang="en">Got a brand, a challenge or an idea to play with?</span></h2>
+          <p><span lang="es">Marketing, analítica y growth con IA. Escríbeme y vemos qué podemos construir.</span><span lang="en">AI-powered marketing, analytics and growth. Drop me a line and let’s see what we can build.</span></p>
         </div>
         <div class="btns">
           <a class="btn primary" href="https://www.linkedin.com/in/oliveromatias/" target="_blank" rel="noopener">
             <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4.98 3.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5zM3 9.5h4V21H3zM9.5 9.5h3.8v1.6h.05c.53-1 1.83-2.05 3.77-2.05 4.03 0 4.78 2.65 4.78 6.1V21h-4v-5.1c0-1.22-.02-2.8-1.7-2.8-1.71 0-1.97 1.33-1.97 2.7V21h-4z"/></svg>
             LinkedIn</a>
-          <a class="btn ghost" href="/cv/">Ver mi CV</a>
+          <a class="btn ghost" href="/cv/"><span lang="es">Ver mi CV</span><span lang="en">See my CV</span></a>
         </div>
       </div>
     </div>
@@ -303,7 +319,7 @@ footer{background:var(--ink);color:#A3A8CC;padding:56px 0 40px;font-size:14px}
 
 <footer>
   <div class="wrap foot">
-    <a class="brand" href="#" aria-label="Volver arriba">
+    <a class="brand" href="#" aria-label="plaiground">
       
       <span>pl<span class="ai">ai</span>ground</span>
     </a>
@@ -318,6 +334,16 @@ const hdr=document.querySelector('header');
 addEventListener('scroll',()=>hdr.classList.toggle('scrolled',scrollY>8),{passive:true});
 const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}}),{threshold:.12});
 document.querySelectorAll('.rv').forEach((el,i)=>{el.style.transitionDelay=(i%4)*70+'ms';io.observe(el);});
+
+const META={es:{t:'plaiground · Marketing lúdico con IA',d:'plaiground: marketing, analítica y growth con inteligencia artificial. Proyectos y experimentos interactivos de Matías Olivero.'},
+ en:{t:'plaiground · AI-Driven Playful Marketing',d:'plaiground: AI-driven marketing, analytics and growth. Interactive projects and experiments by Matías Olivero.'}};
+function setLang(l,save){const h=document.documentElement;h.setAttribute('data-lang',l);h.lang=l;
+  document.title=META[l].t;const m=document.querySelector('meta[name="description"]');if(m)m.content=META[l].d;
+  document.querySelectorAll('.lang button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.l===l));
+  if(save){try{localStorage.setItem('plg-lang',l);}catch(e){}}}
+document.querySelectorAll('.lang button').forEach(b=>b.addEventListener('click',()=>setLang(b.dataset.l,true)));
+setLang(document.documentElement.getAttribute('data-lang')||'es',false);
+
 document.querySelectorAll('.filters button').forEach(b=>b.addEventListener('click',()=>{
   document.querySelectorAll('.filters button').forEach(x=>x.setAttribute('aria-pressed',x===b));
   const f=b.dataset.f;
