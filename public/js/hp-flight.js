@@ -26,13 +26,13 @@
     stage: ['#FF7A59', 'Libros y teatro', 'Books and stage'], hito: ['#E6E8F5', 'Hito', 'Milestone'],
     game: ['#FFC94D', 'Videojuego', 'Video game'], park: ['#3FE0CC', 'Parque', 'Theme park'], tv: ['#F472B6', 'Serie (anunciada)', 'Series (announced)']
   };
-  const Y0 = 1997, Y1 = 2027, STEP = 150;
-  const STOPS = [...new Set([...FILMS.map(f => f[0]), ...EV.map(e => e[0])])].sort((a, b) => a - b);
+  const Y0 = 1997, Y1 = 2027, STEP = 240;
+  const STOPS = [1997, 2001, 2005, 2010, 2011, 2016, 2022, 2025, 2027];
   const cum = (y) => FILMS.filter(f => f[0] <= y).reduce((a, f) => a + f[3], 0);
   const CUMMAX = cum(9999);
   const zOf = (y) => (y - Y0) * STEP;
-  const px = (z) => Math.sin(z / 420) * 70;
-  const dpx = (z) => Math.cos(z / 420) * 70 / 420;
+  const px = (z) => Math.sin(z / 620) * 90;
+  const dpx = (z) => Math.cos(z / 620) * 90 / 620;
 
   const towers = FILMS.map(f => {
     const z = zOf(f[0]);
@@ -47,13 +47,7 @@
   let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
   const DUST = Array.from({ length: 170 }, () => ({ x: (rnd() - .5) * 520, y: 6 + rnd() * 190, z: rnd() * (zOf(Y1) + 600) - 200, s: .6 + rnd() * 1.6, p: rnd() * 6.28 }));
   const STARS = Array.from({ length: 120 }, () => ({ x: rnd(), y: rnd() * .9, s: .4 + rnd() * 1.2, p: rnd() * 6.28 }));
-  const CASTLE = (() => {
-    const t = []; let x = 0;
-    while (x < 1) { const w = .008 + rnd() * .016, h = .02 + rnd() * .06; if (x > .18 && x < .82 || rnd() < .25) t.push([x, w, h, rnd() < .6]); x += w + .004 + rnd() * .03; }
-    return t;
-  })();
-
-  let W = 0, Hh = 0, DPR = 1, F = 500;
+    let W = 0, Hh = 0, DPR = 1, F = 500;
   function resize() {
     const r = root.getBoundingClientRect();
     DPR = Math.min(2, window.devicePixelRatio || 1);
@@ -81,8 +75,8 @@
   }
   const toCam = (P) => { const d = sub(P, cam.C); return [dot(d, cam.r), dot(d, cam.u), dot(d, cam.f)]; };
   const proj = (c) => [W / 2 + c[0] * F / c[2], Hh * 0.52 - c[1] * F / c[2]];
-  const NEAR = 10, FAR = 1900;
-  const fog = (z) => Math.max(0, Math.min(1, 1 - (z - 700) / (FAR - 700)));
+  const NEAR = 10, FAR = 2600;
+  const fog = (z) => Math.max(0, Math.min(1, 1 - (z - 900) / (FAR - 900)));
 
   function seg(a, b, color, width) {
     let A = toCam(a), B = toCam(b);
@@ -171,7 +165,8 @@
   }
 
   let si = 0, from = STOPS[0], to = STOPS[0], phase = 'hold', tPhase = 0, last = 0, running = false, curYear = STOPS[0];
-  const MOVE = 1150, HOLD = 1450, FIRST = 450, END = 2200, BACK = 1800;
+  const HOLD = 1500, FIRST = 400, END = 2200, BACK = 1900;
+  const moveFor = (a, b) => Math.min(2600, 700 + Math.abs(b - a) * 330);
   const ease = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
 
   function hud(year) {
@@ -196,9 +191,14 @@
       $('.hl').innerHTML = '';
     }
     if (phase === 'move') {
-      const k = Math.min(1, tPhase / (to < from ? BACK : MOVE));
+      const k = Math.min(1, tPhase / (to < from ? BACK : moveFor(from, to)));
       curYear = from + (to - from) * ease(k);
-      $('.hy').textContent = Math.round(curYear);
+      const yi = Math.round(curYear);
+      if ($('.hy').textContent !== String(yi)) {
+        $('.hy').textContent = yi; const L = lang(), v = cum(yi);
+        $('.hc b').textContent = (v / 1000).toLocaleString(L, { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + (L === 'es' ? ' mil M$' : ' bn $');
+        $('.hc i').style.width = (v / CUMMAX * 100) + '%';
+      }
       if (k >= 1) { phase = 'hold'; tPhase = 0; curYear = to; hud(to); }
     }
     render(t);
@@ -227,15 +227,6 @@
     glow(W * .58, horizon, W * .75, 'rgba(255,122,89,.32)', 1);
     glow(W * .28, horizon - 20, W * .55, 'rgba(109,91,240,.45)', 1);
     ctx.globalCompositeOperation = 'source-over';
-    const off = -(cam.C[0] * .15);
-    ctx.globalAlpha = 1; ctx.fillStyle = '#0B0C26';
-    CASTLE.forEach(([x, w, h, roof]) => {
-      const X = (x * W * 1.2 + off) - W * .1, Wd = w * W, Hg = h * Hh * .8;
-      ctx.fillRect(X, horizon - Hg, Wd, Hg + 2);
-      if (roof) { ctx.beginPath(); ctx.moveTo(X - Wd * .15, horizon - Hg); ctx.lineTo(X + Wd / 2, horizon - Hg - Wd * 1.6); ctx.lineTo(X + Wd * 1.15, horizon - Hg); ctx.fill(); }
-    });
-    ctx.fillStyle = '#FFC94D';
-    CASTLE.forEach(([x, w, h], i) => { if (i % 3) return; const X = (x * W * 1.2 + off) - W * .1; ctx.globalAlpha = .5 + .5 * Math.abs(Math.sin(t / 1300 + i)); ctx.fillRect(X + w * W * .4, horizon - h * Hh * .45, 2, 3); });
     ctx.globalAlpha = 1;
     const gg = ctx.createLinearGradient(0, horizon, 0, Hh);
     gg.addColorStop(0, 'rgba(20,22,60,0)'); gg.addColorStop(1, 'rgba(10,11,32,.85)');
@@ -252,7 +243,7 @@
     }
     ctx.globalCompositeOperation = 'source-over';
     for (let y = Y0; y <= Y1; y++) {
-      if (y < curYear - .6 || y > curYear + 7) continue;
+      if (y < curYear - .6 || y > curYear + 6) continue;
       const c = toCam([px(zOf(y)) + 22, 0, zOf(y)]);
       if (c[2] < NEAR || c[2] > FAR) continue;
       const p = proj(c), s = Math.min(1.25, 300 / c[2]), on = Math.abs(y - curYear) < .5;
