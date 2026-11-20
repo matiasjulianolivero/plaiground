@@ -113,6 +113,8 @@ section{padding:110px 0}
 @media (max-width:960px){.proj,.proj.half{grid-column:span 3}.proj.feature{grid-column:span 6;grid-template-columns:1fr}}
 @media (max-width:640px){.proj,.proj.half,.proj.feature{grid-column:span 6}}
 .proj.hide{display:none}
+.proj.feature.rev{grid-template-columns:1fr 1.15fr}.proj.feature.rev .thumb{order:2}
+@media (max-width:960px){.proj.feature.rev{grid-template-columns:1fr}.proj.feature.rev .thumb{order:0}}
 @media (max-width:640px){.stats{gap:18px}.stats div{font-size:24px}.proj.feature .info{padding:28px}}
 .thumb{position:relative;aspect-ratio:16/10;overflow:hidden;background:var(--tb)}
 .proj.feature .thumb{aspect-ratio:auto;min-height:340px}
@@ -180,7 +182,7 @@ footer{background:var(--ink);color:#A3A8CC;padding:56px 0 40px;font-size:14px}
       <div class="rv">
         <div class="eyebrow">AI-Driven Playful Marketing · Analytics &amp; Growth</div>
         <h1>Marketing que se <em>juega</em>, se mide y crece con IA.</h1>
-        <p class="lead">Soy Matías Olivero. En plaiground convierto datos, marcas e ideas en experiencias interactivas: rankings, dashboards, CVs que se recorren y cuentos que se despliegan.</p>
+        <p class="lead">Soy Matías Olivero. En plaiground convierto datos, marcas e ideas en experiencias interactivas: rankings, dashboards y CVs que se recorren como un festival.</p>
         <div class="btns">
           <a class="btn primary" href="#lab">Ver proyectos
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12l7 7 7-7"/></svg></a>
@@ -218,15 +220,10 @@ footer{background:var(--ink);color:#A3A8CC;padding:56px 0 40px;font-size:14px}
     <div class="wrap" style="position:relative">
       <div class="sec-head rv">
         <div><div class="eyebrow">The Lab</div><h2>Proyectos del pl<span class="ai">ai</span>ground</h2></div>
-        <p>Desarrollos reales, construidos mano a mano con IA. Entra, toca y explora: todos son interactivos.</p>
+        <p>Desarrollos reales, construidos mano a mano con IA. Entra, toca y explora: son interactivos.</p>
       </div>
 
-      <div class="filters rv" role="group" aria-label="Filtrar proyectos">
-        <button aria-pressed="true" data-f="all">Todos</button>
-        <button aria-pressed="false" data-f="data">Datos</button>
-        <button aria-pressed="false" data-f="cv">CV interactivo</button>
-        <button aria-pressed="false" data-f="story">Storytelling</button>
-      </div>
+      
 
       <div class="projects">
         <!-- Featured: Barometer -->
@@ -255,9 +252,9 @@ footer{background:var(--ink);color:#A3A8CC;padding:56px 0 40px;font-size:14px}
           </div>
         </a>
 
-        <a class="proj half rv" data-cat="cv" href="/cv/">
+        <a class="proj feature rev rv" data-cat="cv" href="/cv/">
           <div class="thumb" style="--tb:#FF7A59">
-            <svg viewBox="0 0 400 250" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+            <svg viewBox="0 0 400 250" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
               <rect width="400" height="250" fill="#FF7A59"/>
               <g fill="#14162E" opacity=".9"><rect x="0" y="190" width="400" height="60"/></g>
               <g fill="#FFD9CC"><circle cx="70" cy="40" r="4"/><circle cx="330" cy="30" r="5"/><circle cx="210" cy="22" r="3"/></g>
@@ -270,73 +267,8 @@ footer{background:var(--ink);color:#A3A8CC;padding:56px 0 40px;font-size:14px}
           <div class="info">
             <div class="tags"><span class="tag" style="--tc:#FFB8A6">CV interactivo</span></div>
             <h3>Olivero Fest CV</h3>
-            <p>Mi trayectoria contada como un festival: mapa del recinto, horarios y escenarios por etapa profesional.</p>
+            <p>Mi trayectoria profesional contada como un festival: cartel, mapa del recinto, horarios y escenarios para cada etapa. Disponible en español e inglés.</p>
             <span class="go"><i>→</i> Entrar al festival</span>
-          </div>
-        </a>
-
-        <a class="proj half rv" data-cat="cv" href="/brick/">
-          <div class="thumb" style="--tb:#E0A100">
-            <svg viewBox="0 0 400 250" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-              <rect width="400" height="250" fill="#F2C14E"/>
-              <g>
-                <rect x="70" y="150" width="120" height="60" rx="6" fill="#4338CA"/><circle cx="100" cy="146" r="12" fill="#4338CA"/><circle cx="160" cy="146" r="12" fill="#4338CA"/>
-                <rect x="190" y="150" width="120" height="60" rx="6" fill="#FF7A59"/><circle cx="220" cy="146" r="12" fill="#FF7A59"/><circle cx="280" cy="146" r="12" fill="#FF7A59"/>
-                <rect x="130" y="90" width="120" height="60" rx="6" fill="#19B5A5"/><circle cx="160" cy="86" r="12" fill="#19B5A5"/><circle cx="220" cy="86" r="12" fill="#19B5A5"/>
-                <rect x="250" y="90" width="60" height="60" rx="6" fill="#14162E"/><circle cx="280" cy="86" r="12" fill="#14162E"/>
-              </g>
-              <text x="200" y="40" text-anchor="middle" font-family="Bricolage Grotesque, sans-serif" font-weight="800" font-size="22" fill="#14162E">BRICK EDITION</text>
-            </svg>
-          </div>
-          <div class="info">
-            <div class="tags"><span class="tag" style="--tc:#FFE08A">CV interactivo</span></div>
-            <h3>Olivero Fest · Brick Edition</h3>
-            <p>La edición construida bloque a bloque: el mismo festival, ahora en versión de piezas de construcción.</p>
-            <span class="go"><i>→</i> Construir</span>
-          </div>
-        </a>
-
-        <a class="proj half rv" data-cat="cv" href="/cv-popup/">
-          <div class="thumb" style="--tb:#19B5A5">
-            <svg viewBox="0 0 400 250" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-              <rect width="400" height="250" fill="#19B5A5"/>
-              <path d="M40 200 L200 220 L360 200 L360 210 L200 232 L40 210 Z" fill="#0A6E63"/>
-              <path d="M40 200 L200 220 L200 90 L60 80 Z" fill="#F4F5FB"/>
-              <path d="M360 200 L200 220 L200 90 L340 80 Z" fill="#E6E8F5"/>
-              <path d="M150 190 L200 120 L250 190 Z" fill="#4338CA"/>
-              <path d="M115 195 L150 150 L185 195 Z" fill="#FF7A59"/>
-              <path d="M215 195 L255 140 L295 195 Z" fill="#14162E"/>
-              <circle cx="300" cy="60" r="16" fill="#FFE38A"/>
-            </svg>
-          </div>
-          <div class="info">
-            <div class="tags"><span class="tag" style="--tc:#8EEBDD">CV interactivo</span></div>
-            <h3>Matías Olivero · Pop-up CV</h3>
-            <p>Un currículum que se abre como un libro pop-up: capítulos de experiencia, habilidades y formación.</p>
-            <span class="go"><i>→</i> Abrir el libro</span>
-          </div>
-        </a>
-
-        <a class="proj half rv" data-cat="story" href="/el-faro/">
-          <div class="thumb" style="--tb:#1E2257">
-            <svg viewBox="0 0 400 250" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-              <defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1E2257"/><stop offset="1" stop-color="#4338CA"/></linearGradient>
-              <linearGradient id="beam" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#FFE38A" stop-opacity=".7"/><stop offset="1" stop-color="#FFE38A" stop-opacity="0"/></linearGradient></defs>
-              <rect width="400" height="250" fill="url(#sky)"/>
-              <g fill="#F4F5FB"><circle cx="60" cy="40" r="2"/><circle cx="120" cy="70" r="1.5"/><circle cx="340" cy="30" r="2"/><circle cx="300" cy="90" r="1.5"/><circle cx="30" cy="110" r="1.5"/></g>
-              <circle cx="330" cy="55" r="20" fill="#F4F5FB" opacity=".9"/>
-              <path d="M160 70 L400 20 L400 130 Z" fill="url(#beam)"/>
-              <path d="M140 210 L150 80 L170 80 L180 210 Z" fill="#F4F5FB"/>
-              <rect x="146" y="110" width="28" height="12" fill="#FF7A59"/><rect x="143" y="160" width="34" height="12" fill="#FF7A59"/>
-              <rect x="145" y="62" width="30" height="20" rx="4" fill="#FFE38A"/>
-              <path d="M0 210 Q100 195 200 210 T400 210 L400 250 L0 250 Z" fill="#14162E"/>
-            </svg>
-          </div>
-          <div class="info">
-            <div class="tags"><span class="tag" style="--tc:#B3B8FF">Storytelling</span></div>
-            <h3>El faro que traducía sueños</h3>
-            <p>Un cuento ilustrado y desplegable, escena a escena, creado como experimento de narrativa interactiva.</p>
-            <span class="go"><i>→</i> Leer el cuento</span>
           </div>
         </a>
 
