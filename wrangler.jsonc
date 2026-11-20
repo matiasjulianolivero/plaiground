@@ -5,6 +5,8 @@
   "workers_dev": false,
   // Activa las URLs de vista previa (rama staging → staging-plaiground.<cuenta>.workers.dev)
   "preview_urls": true,
+  // Necesario para `wrangler preview` (despliegues de la rama staging)
+  "previews": {},
   "assets": {
     "directory": "./public",
     "not_found_handling": "404-page"
