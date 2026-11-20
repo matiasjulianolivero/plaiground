@@ -1285,5 +1285,16 @@ bindCopy(document);
 renderAll(); tilesWidth();
 })();
 </script>
+<!-- plaiground home badge -->
+<style>
+#plg-home{all:initial;position:fixed;top:14px;left:14px;z-index:2147483000;display:flex;align-items:center;gap:8px;height:40px;padding:4px 14px 4px 4px;border-radius:999px;background:rgba(20,22,46,.92);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);box-shadow:0 8px 24px rgba(20,22,46,.28);cursor:pointer;text-decoration:none;font-family:"Bricolage Grotesque","DM Sans",system-ui,sans-serif;font-weight:700;font-size:16px;letter-spacing:-.04em;color:#F4F5FB;line-height:1;transition:transform .2s,background .2s}
+#plg-home:hover{transform:translateY(-1px);background:#4338CA}
+#plg-home:focus-visible{outline:3px solid #8B8CF8;outline-offset:3px}
+#plg-home svg{display:block;width:32px;height:32px;border-radius:999px;flex:none}
+#plg-home .plg-ai{color:#8B8CF8}#plg-home:hover .plg-ai{color:#fff}
+@media (max-width:600px){#plg-home{padding:4px;top:10px;left:10px}#plg-home .plg-t{display:none}}
+@media print{#plg-home{display:none}}
+</style>
+<a id="plg-home" href="/" aria-label="Volver a la home de plaiground" title="Volver a plaiground"><svg viewBox="0 0 300 300" aria-hidden="true"><rect width="300" height="300" fill="#14162E"/><polygon points="92,74 92,131 204,131" fill="#8B8CF8" stroke="#8B8CF8" stroke-width="30" stroke-linejoin="round"/><polygon points="92,226 92,169 204,169" fill="#F4F5FB" stroke="#F4F5FB" stroke-width="30" stroke-linejoin="round"/></svg><span class="plg-t">pl<span class="plg-ai">ai</span>ground</span></a>
 </body>
 </html>
