@@ -250,7 +250,12 @@ section{padding:110px 0}
 
 /* stats band (inside lab) */
 .band{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:rgba(244,245,251,.1);border-radius:24px;overflow:hidden;margin-bottom:96px;position:relative}
-@media (max-width:820px){.band{grid-template-columns:1fr 1fr}}
+@media (max-width:820px){.band{grid-template-columns:repeat(2,minmax(0,1fr))}.band div{min-width:0}.band b{font-size:30px;overflow-wrap:anywhere}}
+@media (max-width:560px){.band{grid-template-columns:1fr;border-radius:20px;margin-bottom:72px}
+ .band div{display:grid;grid-template-columns:1fr;padding:20px 22px;position:relative}
+ .band div::after{content:"";position:absolute;right:22px;top:24px;width:10px;height:10px;border-radius:50%;background:var(--ind2)}
+ .band div:nth-child(2)::after{background:var(--coral)}.band div:nth-child(3)::after{background:var(--teal)}.band div:nth-child(4)::after{background:var(--gold)}
+ .band em{margin-bottom:4px}.band b{font-size:26px}.band div>span{margin-top:6px;font-size:14.5px}}
 .band div{background:var(--ink2);padding:28px 26px}
 .band em{display:block;font:700 12px var(--body);font-style:normal;letter-spacing:.16em;text-transform:uppercase;color:#A3A8CC;margin-bottom:8px}
 .band b{display:block;font-family:var(--display);font-weight:800;font-size:clamp(30px,3vw,40px);letter-spacing:-.04em;line-height:1;background:linear-gradient(100deg,#fff,#B3B8FF);-webkit-background-clip:text;background-clip:text;color:transparent}
