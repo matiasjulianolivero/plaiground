@@ -133,7 +133,7 @@
   }
 
   // Render HTML de la sección de análisis (usa clases .an-*)
-  function render(a, lang, esc) {
+  function render(a, lang, esc, badge) {
     var en = lang === 'en', tr = function (es, e) { return en ? e : es; };
     esc = esc || function (s) { return String(s); };
     var li = function (arr) { return '<ul>' + arr.map(function (s) { return '<li>' + esc(s) + '</li>'; }).join('') + '</ul>'; };
@@ -145,17 +145,17 @@
       idea: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>'
     };
     var card = function (cls, icon, title, body) { return '<section class="an-card ' + cls + '"><h4><span class="an-ic">' + icon + '</span>' + title + '</h4>' + body + '</section>'; };
-    var acts = '<ol class="an-acts">' + a.actions.map(function (x) {
-      return '<li><div class="an-t">' + esc(x.t) + (x.est ? '<small>' + esc(x.est) + '</small>' : '') + '</div><div class="an-tags"><span>' + tr('Impacto', 'Impact') + ': <b>' + x.impact + '</b></span><span>' + tr('Esfuerzo', 'Effort') + ': <b>' + x.effort + '</b></span><span>' + x.when + '</span></div></li>';
+    var acts = '<ol class="an-acts">' + (a.actions || []).map(function (x) {
+      return '<li><div class="an-t">' + esc(x.t) + (x.est ? '<small>' + esc(x.est) + '</small>' : '') + '</div><div class="an-tags"><span>' + tr('Impacto', 'Impact') + ': <b>' + esc(x.impact) + '</b></span><span>' + tr('Esfuerzo', 'Effort') + ': <b>' + esc(x.effort) + '</b></span><span>' + esc(x.when) + '</span></div></li>';
     }).join('') + '</ol>';
-    return '<div class="an-head"><h3>' + tr('Análisis de tus datos', 'Analysis of your data') + '</h3><span class="an-badge">✦ ' + tr('Generado con IA a partir de cifras calculadas', 'AI-generated from computed figures') + '</span></div>' +
+    return '<div class="an-head"><h3>' + tr('Análisis de tus datos', 'Analysis of your data') + '</h3><span class="an-badge">' + (badge || ('✦ ' + tr('Generado con IA a partir de cifras calculadas', 'AI-generated from computed figures'))) + '</span></div>' +
       '<div class="an-grid">' +
-      card('an-ins', ic.ins, tr('Insights clave', 'Key insights'), li(a.insights)) +
-      card('an-opp', ic.opp, tr('Oportunidades', 'Opportunities'), li(a.opps)) +
-      card('an-rel', ic.rel, tr('Relaciones en los datos', 'Relationships in the data'), li(a.rels)) +
-      card('an-idea', ic.idea, tr('Ideas para profundizar', 'Ideas to dig deeper'), li(a.ideas)) +
-      card('an-act', ic.act, tr('Plan de acción', 'Action plan'), acts) +
-      '</div><p class="an-note">' + esc(a.note) + '</p>';
+      ((a.insights || []).length ? card('an-ins', ic.ins, tr('Insights clave', 'Key insights'), li(a.insights)) : '') +
+      ((a.opps || []).length ? card('an-opp', ic.opp, tr('Oportunidades', 'Opportunities'), li(a.opps)) : '') +
+      ((a.rels || []).length ? card('an-rel', ic.rel, tr('Relaciones en los datos', 'Relationships in the data'), li(a.rels)) : '') +
+      ((a.ideas || []).length ? card('an-idea', ic.idea, tr('Ideas para profundizar', 'Ideas to dig deeper'), li(a.ideas)) : '') +
+      ((a.actions || []).length ? card('an-act', ic.act, tr('Plan de acción', 'Action plan'), acts) : '') +
+      '</div>' + (a.note ? '<p class="an-note">' + esc(a.note) + '</p>' : '');
   }
 
   var CSS = '.an-head{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin:18px 0 10px}' +
