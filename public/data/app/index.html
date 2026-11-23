@@ -46,7 +46,7 @@ a{color:var(--ind)}:focus-visible{outline:3px solid var(--ind);outline-offset:3p
 .icon-btn{width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:var(--paper);color:var(--ink);display:grid;place-items:center;cursor:pointer;flex:none}
 .icon-btn svg{width:17px;height:17px}
 @media (max-width:640px){.chip{display:none}.brand small{display:none}}
-main{max-width:1180px;margin:0 auto;padding:36px 24px 80px}
+main{max-width:1280px;margin:0 auto;padding:36px 24px 80px}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:46px;padding:12px 20px;border-radius:999px;font:600 15px var(--body);text-decoration:none;border:1.5px solid transparent;cursor:pointer;transition:transform .15s,background .15s}
 .btn.pri{background:#4338CA;color:#fff}.btn.pri:hover{background:#3730A3}
 .btn.pri[disabled]{opacity:.45;cursor:not-allowed}
@@ -194,6 +194,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--ind)}
 <script src="/data/vendor/xlsx.core.min.js"></script>
 <script src="/data/engine.js"></script>
 <script src="/data/analysis.js"></script>
+<script src="/data/dashboard.js"></script>
 <script>
 {
 const H=document.documentElement,$=id=>document.getElementById(id),app=$('app');
@@ -422,25 +423,11 @@ V.proc=()=>`<div class="proc card"><h2>${tr('Preparando tu dashboard…','Prepar
  tr('Calculando las cifras del dashboard con código','Computing the dashboard figures with code'),tr('Guardando en tu cuenta y enviándote el email','Saving to your account and emailing you')].map(s=>`<li><i></i>${s}</li>`).join('')}</ol><div class="err" id="procErr"></div></div>`;
 
 V.dash=()=>cur&&cur.v===2?V.dash2():V.dash1();
-V.dash2=()=>{const d=cur,r=d.result||{};
- return `<div class="bar"><button class="btn sec" type="button" data-act="home">← ${tr('Mis dashboards','My dashboards')}</button><h1>${esc(d.title)}</h1>
-  <button class="btn sec" type="button" id="pdf">${tr('Descargar PDF','Download PDF')}</button><button class="btn pri" type="button" id="share">${tr('Compartir','Share')}</button></div>
- <div class="review" role="note"><span>⚠︎</span><span>${r.mode==='ai'?tr('Revisa los datos antes de presentarlo: la IA puede equivocarse y los datos de origen pueden tener errores. Las cifras se calculan con código a partir de tu archivo.','Review the data before presenting it: the AI can make mistakes and the source data may contain errors. Figures are computed with code from your file.'):tr('Revisa los datos antes de presentarlo: el análisis automático puede interpretar mal alguna columna y los datos de origen pueden tener errores.','Review the data before presenting it: the automatic analysis may misread a column and the source data may contain errors.')}</span></div>
- <div class="understood"><span class="tag">${tr('Contexto','Context')}</span>${d.company||d.bizType?`<span>${tr('Empresa','Business')}: <b>${esc(d.company||'')}</b>${d.bizType?` (${esc(d.bizType)})`:''}</span>`:''}<span>${tr('Datos','Data')}: <b>${esc(d.data||'')}</b></span><span>${tr('Para','For')}: <b>${AUD[d.aud][L()]}</b></span>${d.goal?`<span>${tr('Objetivo','Goal')}: <b>${esc(d.goal)}</b></span>`:''}</div>
- ${r.summary?`<p style="font-size:17px;margin:0 0 14px;max-width:900px">${esc(r.summary)}</p>`:''}
- ${(r.warnings||[]).length?`<div class="review" style="background:var(--soft);border-color:var(--line)"><span>ℹ︎</span><span>${r.warnings.map(esc).join(' · ')}</span></div>`:''}
- <div class="tiles" id="tiles"></div>
- <div class="charts" id="charts2"></div>
- <div id="analysis"></div>
- <p class="foot">${r.mode==='ai'?tr('Análisis con IA (Claude)','AI analysis (Claude)'):tr('Análisis automático (sin IA)','Automatic analysis (no AI)')} · ${tr('Creado el','Created on')} ${fmtDate(d.ts)} · ${tr('Fuente','Source')}: ${esc(d.source)}</p>`;};
+V.dash2=()=>`<div style="display:flex;gap:10px;align-items:center;margin:-8px 0 14px"><button class="btn sec" type="button" data-act="home" style="min-height:38px;padding:8px 14px;font-size:14px">← ${tr('Mis dashboards','My dashboards')}</button></div><div id="pdroot"></div>`;
 function paintDash(){if(cur&&cur.v===2)paintDash2();else paintDash1();}
-function paintDash2(){const r=cur.result||{},lang=cur.lang||L();
- $('tiles').innerHTML=(r.kpis||[]).map(t=>{let dd='';if(t.delta!==null&&t.delta!==undefined&&isFinite(t.delta)){const good=t.invert?t.delta<0:t.delta>=0;dd=`<span class="d ${good?'up':'down'}">${t.delta>=0?'▲':'▼'} ${nf(Math.abs(t.delta)*100,1)}% <span>${tr('vs. mes anterior','vs. last month')}</span></span>`;}
-  if(t.note)dd+=`<span class="d"><span>${esc(t.note)}</span></span>`;
-  return `<div class="tile"><small>${esc(t.label)}</small><b>${esc(t.text)}</b>${dd}</div>`;}).join('');
- $('charts2').innerHTML=(r.charts||[]).map((c,i)=>`<div class="ch"><h4>${esc(c.title)}</h4><p class="sub">${c.type==='line'?tr('Evolución mensual','Monthly trend'):(c.by?tr('Por','By')+' '+esc(c.by):'')} · ${esc(c.sheet||'')}</p><svg id="c${i}" role="img" aria-label="${esc(c.title)}"></svg><div class="tip" id="t${i}"></div></div>`).join('');
- (r.charts||[]).forEach((c,i)=>PLGEngine.drawChart($('c'+i),$('t'+i),c,L()));
- $('analysis').innerHTML=window.PLGAnalysis.render({insights:r.insights,opps:r.opportunities,rels:r.relationships,actions:r.actions,ideas:r.ideas,note:tr('Las relaciones muestran correlación, no causalidad. Revisa siempre las conclusiones con tu conocimiento del negocio.','Relationships show correlation, not causation. Always check conclusions against your business knowledge.')},L(),esc,r.mode==='ai'?'✦ '+tr('Redactado por IA a partir de cifras calculadas','Written by AI from computed figures'):tr('Calculado automáticamente','Computed automatically'));}
+function paintDash2(){const r=cur.result||{};
+ window.PLGDash.mount($('pdroot'),cur,{lang:L(),mode:'app',onShare:()=>openShare(),onPdf:()=>{try{window.print()}catch(e){toast(tr('Usa Imprimir → Guardar como PDF en tu navegador','Use Print → Save as PDF in your browser'));}},
+  footer:(r.mode==='ai'?tr('Análisis con IA (Claude)','AI analysis (Claude)'):tr('Análisis automático (sin IA)','Automatic analysis (no AI)'))+' · '+tr('Creado el','Created on')+' '+fmtDate(cur.ts)+' · '+tr('Fuente','Source')+': '+esc(cur.source||'')});}
 
 async function openShare(){
  if(MODE!=='live'||cur.v!==2){modal(`<h3 id="mTitle">${tr('Compartir dashboard','Share dashboard')}</h3><p class="muted">${MODE!=='live'?tr('Los enlaces para compartir están disponibles al iniciar sesión.','Share links are available once signed in.'):tr('Este dashboard de ejemplo no se puede compartir. Crea uno con tus datos.','This sample dashboard can’t be shared. Create one with your own data.')}</p><div class="actions" style="justify-content:flex-end"><button class="btn sec" type="button" data-close>${tr('Cerrar','Close')}</button></div>`);return;}
@@ -506,7 +493,7 @@ async function runProc(){const lis=[...document.querySelectorAll('#plist li')];l
   let comp=PLGEngine.compute(draft.wb,spec,lang);
   if(!comp.kpis.length&&!comp.charts.length){const h=PLGEngine.heuristicSpec(draft.wb,lang,facts,{company:draft.company});comp=PLGEngine.compute(draft.wb,h,lang);}
   const result={mode,summary:spec.summary||'',kpis:comp.kpis,charts:comp.charts,insights:spec.insights||[],opportunities:spec.opportunities||[],relationships:spec.relationships||[],
-   actions:(spec.actions||[]).map(a=>({t:a.t,est:a.est||'',impact:a.impact||'',effort:a.effort||'',when:a.when||''})),ideas:spec.ideas||[],warnings:(spec.warnings||[]).concat(draft.warnings||[]).slice(0,4)};
+   actions:(spec.actions||[]).map(a=>({t:a.t,est:a.est||'',impact:a.impact||'',effort:a.effort||'',when:a.when||''})),ideas:spec.ideas||[],warnings:(spec.warnings||[]).concat(draft.warnings||[]).slice(0,4),cube:PLGEngine.buildCube(draft.wb,facts)};
   await wait(300);step();
   const d={v:2,id:Math.random().toString(36).slice(2,10),ts:Date.now(),title:draft.title||spec.title||tr('Mi dashboard','My dashboard'),aud:draft.aud,company:draft.company||'',bizType:draft.bizType||'',data:draft.data||'',goal:draft.goal||'',source:draft.source,lang,result};
   let emailed=false;if(MODE==='live'){const r=await api('/api/dashboards',{method:'POST',body:JSON.stringify(d)});if(!r.ok)toast(tr('No se pudo guardar en tu cuenta','Could not save to your account'));else emailed=!!r.data.emailed;}
@@ -557,7 +544,7 @@ function bind(){
   $('back2').onclick=()=>{keep();go('new1');};
   $('gen').onclick=()=>{keep();if(!draft.title)draft.title=tr('Mi dashboard','My dashboard');go('proc');runProc();};}
  if(view==='dash'){if($('share'))$('share').onclick=()=>openShare();
-  $('pdf').onclick=()=>{try{window.print()}catch(e){toast(tr('Usa Imprimir → Guardar como PDF en tu navegador','Use Print → Save as PDF in your browser'));}};
+  if($('pdf'))$('pdf').onclick=()=>{try{window.print()}catch(e){toast(tr('Usa Imprimir → Guardar como PDF en tu navegador','Use Print → Save as PDF in your browser'));}};
   if($('tblBtn'))$('tblBtn').onclick=()=>{tblOpen=!tblOpen;render();};
   if($('seeMail'))$('seeMail').onclick=()=>modal(`<h3 id="mTitle">${tr('Tu dashboard está listo','Your dashboard is ready')}</h3><p class="muted" style="margin:0 0 10px">${tr('De','From')}: noreply@plaigroundmarketing.com · ${tr('Para','To')}: ${esc(S.email)}</p>
    <p>${tr('Hola, ya puedes ver','Hi, you can now view')} <b>“${esc(cur.title)}”</b>.</p><p class="muted">${tr('Incluye 4 KPIs clave, 2 gráficos, insights, oportunidades y un plan de acción.','It includes 4 key KPIs, 2 charts, insights, opportunities and an action plan.')}</p>
@@ -571,7 +558,7 @@ document.querySelectorAll('.lang button').forEach(b=>b.addEventListener('click',
  if(view==='new2'){draft.data=draft.data;}render();}));
 $('themeBtn').onclick=()=>{const t=H.getAttribute('data-theme')==='dark'?'light':'dark';H.setAttribute('data-theme',t);try{localStorage.setItem('plg-theme',t)}catch(e){}if(view==='dash')paintDash();};
 $('logoutBtn').onclick=async()=>{if(MODE==='live')await api('/api/auth/logout',{method:'POST'});S.email='';if(MODE==='live')S.dash=[];save();toast(tr('Sesión cerrada','Signed out'));go('login');};
-let rt;addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(()=>{if(view==='dash'){if(cur.v===2)paintDash2();else{drawLine(derive(cur.biz));drawBars(cur.biz);}}},150);});
+let rt;addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(()=>{if(view==='dash'&&cur.v!==2){drawLine(derive(cur.biz));drawBars(cur.biz);}},150);});
 boot();
 async function boot(){
  const qp=new URLSearchParams(location.search),tok=qp.get('login');
