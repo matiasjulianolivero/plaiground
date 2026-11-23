@@ -11,3 +11,7 @@ Cada push a `main` se despliega automáticamente.
 
 - Producción (rama `main`): https://plaigroundmarketing.com
 - Staging (rama `staging`): https://staging-plaiground.matiasjulianolivero.workers.dev
+
+## Prototipos de clientes
+
+- VAEM Aberturas: `public/vaem/` → https://plaigroundmarketing.com/vaem/ (fuera de Google con `noindex`).
