@@ -316,7 +316,7 @@ async function nlAdmin(env, url) {
     const r = await env.DB.prepare('SELECT COUNT(*) AS n FROM newsletter_sends WHERE issue = ? AND ok = 1').bind(i.id).first();
     i.sent = r ? r.n : 0;
   }
-  return json({ counts: counts.results || [], issues, batch: NL_BATCH });
+  return json({ counts: counts.results || [], issues, batch: NL_BATCH, welcome: String(env.WELCOME_ISSUE || '') });
 }
 async function nlSend(req, env, url, user) {
   const b = await req.json().catch(() => ({}));
@@ -336,6 +336,12 @@ async function nlSend(req, env, url, user) {
       AND NOT EXISTS (SELECT 1 FROM newsletter_sends n WHERE n.issue = ? AND n.email = s.email AND n.ok = 1) ORDER BY s.confirmed_at LIMIT ?`).bind(issue.id, NL_BATCH).all()).results || [];
   } else return json({ error: 'bad_mode' }, 400);
   if (!list.length) return json({ sent: 0, remaining: 0 });
+  const ok = await nlDeliver(env, base, issue, tpl, list, b.mode === 'all');
+  if (!ok) return json({ error: 'send_failed' }, 502);
+  const rem = b.mode === 'all' ? (await env.DB.prepare(`SELECT COUNT(*) AS n FROM subscribers s WHERE s.status = 'confirmed' AND NOT EXISTS (SELECT 1 FROM newsletter_sends n WHERE n.issue = ? AND n.email = s.email AND n.ok = 1)`).bind(issue.id).first()).n : 0;
+  return json({ sent: list.length, remaining: rem });
+}
+async function nlDeliver(env, base, issue, tpl, list, record) {
   const from = env.LEAD_FROM || env.EMAIL_FROM, owner = env.LEAD_NOTIFY_EMAIL;
   const payload = list.map(sub => {
     const L = sub.lang === 'en' ? 'en' : 'es', unsub = `${base}/api/newsletter/unsubscribe?t=${sub.token}`;
@@ -343,13 +349,29 @@ async function nlSend(req, env, url, user) {
       headers: { 'List-Unsubscribe': `<${unsub}>`, 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' } }, owner ? { reply_to: owner } : {});
   });
   const r = await fetch('https://api.resend.com/emails/batch', { method: 'POST', headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-  if (!r.ok) { console.error('Resend batch error', r.status, await r.text()); return json({ error: 'send_failed', status: r.status }, 502); }
-  if (b.mode === 'all') {
+  if (!r.ok) { console.error('Resend batch error', r.status, await r.text()); return false; }
+  if (record) {
     const now = Date.now();
     await env.DB.batch(list.map(sub => env.DB.prepare('INSERT OR REPLACE INTO newsletter_sends (issue, email, sent_at, ok) VALUES (?,?,?,1)').bind(issue.id, sub.email, now)));
   }
-  const rem = b.mode === 'all' ? (await env.DB.prepare(`SELECT COUNT(*) AS n FROM subscribers s WHERE s.status = 'confirmed' AND NOT EXISTS (SELECT 1 FROM newsletter_sends n WHERE n.issue = ? AND n.email = s.email AND n.ok = 1)`).bind(issue.id).first()).n : 0;
-  return json({ sent: list.length, remaining: rem });
+  return true;
+}
+// Envío automático de bienvenida: cada día (cron) manda el número WELCOME_ISSUE a quien confirmó la suscripción el día anterior o antes y aún no lo ha recibido.
+async function nlWelcome(env) {
+  const id = String(env.WELCOME_ISSUE || '').trim();
+  if (!id || !env.DB || !env.RESEND_API_KEY) return { skipped: true };
+  await ensureSchema(env.DB);
+  const base = (env.APP_URL || 'https://plaigroundmarketing.com').replace(/\/$/, '');
+  const issue = (await nlIssues(env, base)).find(i => i.id === id);
+  if (!issue) return { error: 'issue_not_found' };
+  const tpl = { es: await nlTemplate(env, base, id, 'es'), en: await nlTemplate(env, base, id, 'en') };
+  if (!tpl.es || !tpl.en) return { error: 'template_missing' };
+  const cutoff = Date.now() - 9 * 3600e3; // el cron corre a las 09:00 UTC: entra quien confirmó antes de medianoche (UTC)
+  const list = (await env.DB.prepare(`SELECT s.email, s.name, s.lang, s.token FROM subscribers s WHERE s.status = 'confirmed' AND s.confirmed_at <= ?
+    AND NOT EXISTS (SELECT 1 FROM newsletter_sends n WHERE n.issue = ? AND n.email = s.email AND n.ok = 1) ORDER BY s.confirmed_at LIMIT ?`).bind(cutoff, id, NL_BATCH).all()).results || [];
+  if (!list.length) return { sent: 0 };
+  const ok = await nlDeliver(env, base, issue, tpl, list, true);
+  return { sent: ok ? list.length : 0, error: ok ? undefined : 'send_failed' };
 }
 async function nlVote(env, url) {
   const base = (env.APP_URL || url.origin).replace(/\/$/, '');
@@ -703,5 +725,8 @@ export default {
       catch (e) { console.error(e); return json({ error: 'server_error' }, 500); }
     }
     return env.ASSETS.fetch(req);
+  },
+  async scheduled(event, env, ctx) {
+    ctx.waitUntil(nlWelcome(env).then(r => console.log('newsletter bienvenida', JSON.stringify(r))).catch(e => console.error('newsletter bienvenida', e)));
   }
 };
