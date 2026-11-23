@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<meta name="referrer" content="no-referrer">
+<title>Newsletter · plaiground</title>
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;display:grid;place-items:center;padding:24px;font:16px/1.55 "DM Sans",system-ui,sans-serif;color:#ECEEFF;
+background:radial-gradient(60% 60% at 90% 0%,rgba(109,91,240,.55),transparent 70%),radial-gradient(50% 60% at 0% 100%,rgba(255,122,89,.3),transparent 70%),#14162E}
+.card{width:min(100%,560px);background:rgba(255,255,255,.06);border:1px solid rgba(236,238,255,.14);border-radius:28px;padding:clamp(26px,5vw,44px)}
+.brand{font:800 24px "Bricolage Grotesque",system-ui;letter-spacing:-.045em;color:#fff;text-decoration:none}
+.brand i{font-style:normal;background:linear-gradient(100deg,#B8B9FF,#FF9B7E);-webkit-background-clip:text;background-clip:text;color:transparent}
+.ic{width:64px;height:64px;border-radius:20px;display:grid;place-items:center;font-size:30px;margin:28px 0 14px;background:linear-gradient(120deg,#4338CA,#7C5CFF 50%,#FF7A59)}
+h1{font:800 clamp(30px,5vw,42px)/1.04 "Bricolage Grotesque",system-ui;letter-spacing:-.04em;margin:0 0 12px;color:#fff}
+p{color:#C9CCEA;margin:0 0 14px}
+.btn{display:inline-block;margin-top:10px;border-radius:999px;padding:14px 22px;font-weight:700;text-decoration:none;color:#fff;background:linear-gradient(100deg,#4338CA,#7C5CFF 50%,#FF7A59)}
+.small{font-size:14px;color:#A3A8CC;margin-top:22px}.small a{color:#B8B9FF}
+</style>
+</head>
+<body>
+<main class="card" id="c"><a class="brand" href="/">pl<i>ai</i>ground</a><div id="out"></div></main>
+<script>
+(function(){
+  var q=new URLSearchParams(location.search),s=q.get('s')||'error',t=q.get('t')||'',l=q.get('l')==='en'?'en':(q.get('l')==='es'?'es':((navigator.language||'es').indexOf('es')===0?'es':'en'));
+  document.documentElement.lang=l;
+  var T=function(es,en){return l==='en'?en:es;};
+  var ok=/^[a-f0-9]{32}$/.test(t);
+  var u='/api/newsletter/unsubscribe?t='+t, c='/api/newsletter/confirm?t='+t, h;
+  if(s==='ok') h='<div class="ic" aria-hidden="true">✦</div><h1>'+T('¡Suscripción confirmada!','Subscription confirmed!')+'</h1><p>'+T('Una vez al mes te llegará la newsletter del plaiground: experimentos de marketing con IA, proyectos nuevos y aprendizajes prácticos. Sin spam.','Once a month you’ll get the plaiground newsletter: AI marketing experiments, new projects and practical lessons. No spam.')+'</p><a class="btn" href="/">'+T('Explorar el plaiground','Explore the plaiground')+' →</a>'+(ok?'<p class="small">'+T('¿Te lo has pensado mejor? ','Changed your mind? ')+'<a href="'+u+'">'+T('Darme de baja','Unsubscribe')+'</a></p>':'');
+  else if(s==='bye') h='<div class="ic" aria-hidden="true">👋</div><h1>'+T('Te has dado de baja','You’ve unsubscribed')+'</h1><p>'+T('No volverás a recibir la newsletter. Gracias por haber jugado con nosotros.','You won’t get the newsletter anymore. Thanks for playing with us.')+'</p><a class="btn" href="/">'+T('Volver al plaiground','Back to the plaiground')+'</a>'+(ok?'<p class="small">'+T('¿Ha sido un error? ','Was it a mistake? ')+'<a href="'+c+'">'+T('Volver a suscribirme','Subscribe again')+'</a></p>':'');
+  else h='<div class="ic" aria-hidden="true">?</div><h1>'+T('Enlace no válido','Invalid link')+'</h1><p>'+T('Este enlace no es válido o ha caducado. Si quieres gestionar tu suscripción, escríbeme a matiasjulianolivero@gmail.com.','This link is invalid or has expired. To manage your subscription, email matiasjulianolivero@gmail.com.')+'</p><a class="btn" href="/">'+T('Ir al plaiground','Go to the plaiground')+'</a>';
+  document.getElementById('out').innerHTML=h;
+  if(ok) history.replaceState(null,'',location.pathname+'?s='+s+'&l='+l);
+})();
+</script>
+</body>
+</html>
