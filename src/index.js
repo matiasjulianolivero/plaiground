@@ -14,6 +14,9 @@
  *   POST   /api/dashboards/:id/share                       → crea (o devuelve) el enlace público de solo lectura (30 días)
  *   DELETE /api/dashboards/:id/share                       → revoca el enlace público
  *   GET    /api/share/:token                               → dashboard compartido (sin sesión)
+ *   POST   /api/lead                                       → formulario de contacto (pase): guarda el lead, email de gracias y aviso al titular
+ *   GET    /api/newsletter/confirm?t=                      → confirma la suscripción (doble opt-in)
+ *   GET    /api/newsletter/unsubscribe?t=                  → baja de la newsletter
  *   GET    /api/sheets?url=                                → descarga una Google Sheet pública como .xlsx
  *   POST   /api/ai/context   { profile, lang }            → la IA propone el contexto (empresa, datos, público, objetivo)
  *   POST   /api/ai/analyze   { context, profile, facts }  → la IA propone KPIs, gráficos y el análisis escrito
@@ -61,7 +64,16 @@ async function ensureSchema(db) {
       token TEXT PRIMARY KEY, user_id TEXT NOT NULL, dash_id TEXT NOT NULL, created_at INTEGER NOT NULL, expires_at INTEGER NOT NULL)`),
     db.prepare(`CREATE INDEX IF NOT EXISTS idx_shares_dash ON shares(user_id, dash_id)`),
     db.prepare(`CREATE TABLE IF NOT EXISTS email_log (
-      user_id TEXT NOT NULL, ts INTEGER NOT NULL, kind TEXT)`)
+      user_id TEXT NOT NULL, ts INTEGER NOT NULL, kind TEXT)`),
+    db.prepare(`CREATE TABLE IF NOT EXISTS leads (
+      id TEXT PRIMARY KEY, code TEXT, created_at INTEGER NOT NULL, name TEXT, email TEXT NOT NULL, company TEXT, role TEXT,
+      interests TEXT, urgency INTEGER, message TEXT, newsletter INTEGER, lang TEXT, ip TEXT, privacy_at INTEGER)`),
+    db.prepare(`CREATE INDEX IF NOT EXISTS idx_leads_email ON leads(email, created_at)`),
+    db.prepare(`CREATE INDEX IF NOT EXISTS idx_leads_ip ON leads(ip, created_at)`),
+    db.prepare(`CREATE TABLE IF NOT EXISTS subscribers (
+      email TEXT PRIMARY KEY, name TEXT, lang TEXT, status TEXT NOT NULL, token TEXT NOT NULL, created_at INTEGER NOT NULL,
+      consent_at INTEGER, confirmed_at INTEGER, unsubscribed_at INTEGER, source TEXT)`),
+    db.prepare(`CREATE INDEX IF NOT EXISTS idx_subs_token ON subscribers(token)`)
   ]);
   schemaReady = true;
 }
@@ -126,11 +138,11 @@ function loginEmail(link, lang) {
   return { subject, html, text };
 }
 
-async function sendEmail(env, to, { subject, html, text }) {
+async function sendEmail(env, to, { subject, html, text, replyTo, from }) {
   const r = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ from: env.EMAIL_FROM || 'Data plaiground <onboarding@resend.dev>', to: [to], subject, html, text })
+    body: JSON.stringify(Object.assign({ from: from || env.EMAIL_FROM || 'Data plaiground <onboarding@resend.dev>', to: [to], subject, html, text }, replyTo ? { reply_to: replyTo } : {}))
   });
   if (!r.ok) {
     console.error('Resend error', r.status, await r.text());
@@ -171,6 +183,109 @@ async function sendReadyEmail(env, user, d, url) {
   const base = (env.APP_URL || url.origin).replace(/\/$/, '');
   const ok = await sendEmail(env, user.email, readyEmail(d, `${base}/data/app/?open=${d.id}`, d.lang || user.lang));
   if (ok) await env.DB.prepare("INSERT INTO email_log (user_id, ts, kind) VALUES (?,?, 'ready')").bind(user.id, Date.now()).run();
+}
+
+
+/* ---------- formulario de contacto (pase) y newsletter ---------- */
+const INTERESTS = {
+  ia: { es: 'Estrategia de IA para marketing', en: 'AI strategy for marketing' },
+  data: { es: 'Datos y dashboards', en: 'Data and dashboards' },
+  growth: { es: 'Captación y growth B2B', en: 'B2B acquisition and growth' },
+  brand: { es: 'Estudio de marca interactivo', en: 'Interactive brand research' },
+  dp: { es: 'Data plaiground (beta)', en: 'Data plaiground (beta)' },
+  curious: { es: 'Curiosear el plaiground', en: 'Exploring the plaiground' }
+};
+const ROLES = { ceo: { es: 'Dirección', en: 'Leadership' }, mkt: { es: 'Marketing', en: 'Marketing' }, sales: { es: 'Ventas', en: 'Sales' }, product: { es: 'Producto', en: 'Product' }, agency: { es: 'Agencia', en: 'Agency' }, other: { es: 'Otro', en: 'Other' } };
+const urgencyLabel = (u, lang) => { const en = lang === 'en'; return u < 25 ? (en ? 'Exploring ideas' : 'Explorando ideas') : u < 50 ? (en ? 'This quarter' : 'Este trimestre') : u < 75 ? (en ? 'This month' : 'Este mes') : (en ? 'We needed it yesterday' : 'Lo necesitábamos ayer'); };
+const clean = (v, n) => String(v == null ? '' : v).replace(/[\u0000-\u001f\u007f]/g, ' ').trim().slice(0, n);
+
+function emailShell(inner) {
+  return `<!DOCTYPE html><html><body style="margin:0;background:#F4F5FB;font-family:Arial,Helvetica,sans-serif;color:#14162E">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F4F5FB;padding:28px 12px"><tr><td align="center">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background:#ffffff;border-radius:20px;overflow:hidden">${inner}</table></td></tr></table></body></html>`;
+}
+
+function thanksEmail(l, base, confirmLink) {
+  const en = l.lang === 'en', tr = (es, e) => en ? e : es;
+  const first = esc((l.name || '').split(' ')[0] || tr('hola', 'there'));
+  const card = (href, t, d, c) => `<tr><td style="padding:0 28px 10px"><a href="${base}${href}" style="display:block;text-decoration:none;color:#14162E;border:1px solid #E6E8F5;border-left:5px solid ${c};border-radius:14px;padding:14px 16px"><b style="font-size:15px">${t} →</b><br><span style="font-size:13px;color:#555A7A">${d}</span></a></td></tr>`;
+  const inner = `<tr><td style="background:linear-gradient(110deg,#4338CA,#9a4fd8 45%,#FF7A59 75%,#19B5A5);background-color:#4338CA;padding:30px 28px;color:#ffffff">
+<div style="font-size:13px;letter-spacing:2px;text-transform:uppercase;opacity:.85">${tr('Pase emitido', 'Pass issued')} · ${esc(l.code)}</div>
+<div style="font-size:28px;font-weight:bold;margin-top:8px">${tr('¡Gracias', 'Thanks')}, ${first}! ${tr('Ya estás dentro del plaiground.', 'You’re in the plaiground.')}</div></td></tr>
+<tr><td style="padding:24px 28px 8px;font-size:15px;line-height:1.6">${tr('He recibido tu pase y te escribiré personalmente en menos de 48 horas laborables para hablar de', 'I’ve received your pass and will get back to you personally within 48 working hours to talk about')} <b>${esc(l.interestsText)}</b>.</td></tr>
+${confirmLink ? `<tr><td style="padding:10px 28px 6px"><table role="presentation" width="100%" style="background:#F4F5FB;border-radius:14px"><tr><td style="padding:16px 18px;font-size:14px;line-height:1.5"><b>${tr('Confirma tu suscripción a la newsletter', 'Confirm your newsletter subscription')}</b><br>${tr('Una vez al mes: experimentos de marketing con IA, nuevos proyectos del plaiground y aprendizajes prácticos. Sin spam.', 'Once a month: AI marketing experiments, new plaiground projects and practical lessons. No spam.')}<br><br><a href="${esc(confirmLink)}" style="display:inline-block;background:#4338CA;color:#ffffff;text-decoration:none;font-weight:bold;padding:12px 20px;border-radius:999px">${tr('Sí, quiero recibirla', 'Yes, sign me up')}</a></td></tr></table></td></tr>` : ''}
+<tr><td style="padding:18px 28px 10px;font-size:15px;font-weight:bold">${tr('Mientras tanto, date una vuelta por el plaiground:', 'Meanwhile, take a tour of the plaiground:')}</td></tr>
+${card('/barometer/', 'Franchise Brand Barometer', tr('41 grandes franquicias del cine medidas con 8 indicadores.', '41 big film franchises measured with 8 indicators.'), '#4338CA')}
+${card('/data/', 'Data plaiground (beta)', tr('Sube tu Excel y recibe un dashboard interactivo con insights y plan de acción.', 'Upload your Excel and get an interactive dashboard with insights and an action plan.'), '#FF7A59')}
+${card('/cv/', 'Olivero Fest CV', tr('Una carrera profesional contada como un festival de música.', 'A career told as a music festival.'), '#19B5A5')}
+${card('/#servicios', tr('Servicios', 'Services'), tr('Estrategia de IA, datos, growth B2B y estudios de marca.', 'AI strategy, data, B2B growth and brand research.'), '#E0A100')}
+<tr><td style="padding:16px 28px 26px;font-size:12px;color:#8A8EAD;line-height:1.5;border-top:1px solid #E6E8F5">${tr('Recibes este email porque has enviado el formulario de plaigroundmarketing.com.', 'You’re receiving this email because you submitted the form on plaigroundmarketing.com.')} ${tr('Matías Julián Olivero · Madrid.', 'Matías Julián Olivero · Madrid.')} <a href="${base}/legal/privacidad/" style="color:#8A8EAD">${tr('Privacidad', 'Privacy')}</a></td></tr>`;
+  return { subject: tr(`Tu pase al plaiground (${l.code})`, `Your plaiground pass (${l.code})`), html: emailShell(inner), text: tr(`¡Gracias, ${l.name}! Te escribiré en menos de 48 horas laborables.`, `Thanks, ${l.name}! I’ll get back to you within 48 working hours.`) + (confirmLink ? '\n\n' + tr('Confirma la newsletter: ', 'Confirm the newsletter: ') + confirmLink : '') + `\n\n${base}/barometer/\n${base}/data/\n${base}/cv/` };
+}
+
+function notifyEmail(l) {
+  const row = (k, v) => v ? `<tr><td style="padding:8px 12px;color:#555A7A;font-size:13px;width:140px;vertical-align:top">${k}</td><td style="padding:8px 12px;font-size:14px"><b>${esc(v)}</b></td></tr>` : '';
+  const inner = `<tr><td style="background:#14162E;color:#fff;padding:22px 26px"><div style="font-size:12px;letter-spacing:2px;text-transform:uppercase;opacity:.7">Nuevo lead · ${esc(l.code)}</div><div style="font-size:24px;font-weight:bold;margin-top:6px">${esc(l.name)}${l.company ? ' · ' + esc(l.company) : ''}</div></td></tr>
+<tr><td style="padding:14px 14px 4px"><table role="presentation" width="100%" style="border-collapse:collapse">
+${row('Email', l.email)}${row('Empresa', l.company)}${row('Rol', l.roleText)}${row('Le interesa', l.interestsEs)}${row('Urgencia', l.urgencyText + ' (' + l.urgency + '/100)')}${row('Mensaje', l.message)}${row('Newsletter', l.newsletter ? 'Sí (pendiente de confirmar)' : 'No')}${row('Idioma', l.lang)}${row('Fecha', new Date(l.created_at).toLocaleString('es-ES', { timeZone: 'Europe/Madrid' }))}
+</table></td></tr><tr><td style="padding:10px 26px 24px;font-size:13px;color:#555A7A">Responde a este email para escribir directamente a ${esc(l.email)}.</td></tr>`;
+  return { subject: `🎟️ Nuevo lead: ${l.name}${l.company ? ' (' + l.company + ')' : ''} · ${l.interestsEs}`.slice(0, 180), html: emailShell(inner), text: JSON.stringify(l, null, 2), replyTo: l.email };
+}
+
+async function createLead(req, env, url, ctx) {
+  if (!env.RESEND_API_KEY) return json({ error: 'email_not_configured' }, 503);
+  const b = await readJson(req);
+  if (b.website) return json({ ok: true, code: 'PLG-OK' }); // trampa antispam (campo oculto)
+  if (Number(b.elapsed) < 2500) return json({ error: 'too_fast' }, 400);
+  const lang = b.lang === 'en' ? 'en' : 'es';
+  const email = clean(b.email, 254).toLowerCase(), name = clean(b.name, 80);
+  if (!validEmail(email)) return json({ error: 'invalid_email' }, 400);
+  if (name.length < 2) return json({ error: 'invalid_name' }, 400);
+  if (b.privacy !== true) return json({ error: 'privacy_required' }, 400);
+  const interests = (Array.isArray(b.interests) ? b.interests : []).filter(k => INTERESTS[k]).slice(0, 6);
+  if (!interests.length) return json({ error: 'interests_required' }, 400);
+  const now = Date.now(), ip = req.headers.get('cf-connecting-ip') || '';
+  const [byIp, byEmail] = await Promise.all([
+    env.DB.prepare('SELECT COUNT(*) AS n FROM leads WHERE ip = ? AND created_at > ?').bind(ip, now - 3600e3).first(),
+    env.DB.prepare('SELECT COUNT(*) AS n FROM leads WHERE email = ? AND created_at > ?').bind(email, now - 864e5).first()
+  ]);
+  if (byIp.n >= 5 || byEmail.n >= 3) return json({ error: 'too_many_requests' }, 429);
+  const code = 'PLG-' + randomToken(3).toUpperCase();
+  const urgency = Math.max(0, Math.min(100, Math.round(Number(b.urgency) || 0)));
+  const role = ROLES[b.role] ? b.role : '';
+  const l = { id: crypto.randomUUID(), code, created_at: now, name, email, company: clean(b.company, 100), role, roleText: role ? ROLES[role].es : '',
+    interests: interests.join(','), interestsText: interests.map(k => INTERESTS[k][lang]).join(', '), interestsEs: interests.map(k => INTERESTS[k].es).join(', '), urgency, urgencyText: urgencyLabel(urgency, 'es'),
+    message: clean(b.message, 1000), newsletter: b.newsletter === true ? 1 : 0, lang };
+  await env.DB.prepare('INSERT INTO leads (id, code, created_at, name, email, company, role, interests, urgency, message, newsletter, lang, ip, privacy_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)')
+    .bind(l.id, code, now, name, email, l.company, role, l.interests, urgency, l.message, l.newsletter, lang, ip, now).run();
+  const base = (env.APP_URL || url.origin).replace(/\/$/, '');
+  let confirmLink = null;
+  if (l.newsletter) {
+    const sub = await env.DB.prepare('SELECT status, token FROM subscribers WHERE email = ?').bind(email).first();
+    if (sub && sub.status === 'confirmed') confirmLink = null;
+    else {
+      const token = sub ? sub.token : randomToken(16);
+      if (sub) await env.DB.prepare("UPDATE subscribers SET status = 'pending', consent_at = ?, name = ?, lang = ?, unsubscribed_at = NULL WHERE email = ?").bind(now, name, lang, email).run();
+      else await env.DB.prepare("INSERT INTO subscribers (email, name, lang, status, token, created_at, consent_at, source) VALUES (?,?,?,'pending',?,?,?,'pase')").bind(email, name, lang, token, now, now).run();
+      confirmLink = `${base}/api/newsletter/confirm?t=${token}`;
+    }
+  }
+  const owner = env.LEAD_NOTIFY_EMAIL || 'matiasjulianolivero@gmail.com';
+  const jobs = Promise.all([sendEmail(env, email, Object.assign(thanksEmail(l, base, confirmLink), { from: env.LEAD_FROM, replyTo: owner })), sendEmail(env, owner, Object.assign(notifyEmail(l), { from: env.LEAD_FROM }))]).catch(e => console.error('lead emails', e));
+  if (ctx && ctx.waitUntil) ctx.waitUntil(jobs); else await jobs;
+  return json({ ok: true, code });
+}
+
+async function newsletterAction(env, url, action) {
+  const t = url.searchParams.get('t') || '';
+  const base = (env.APP_URL || url.origin).replace(/\/$/, '');
+  if (!/^[a-f0-9]{32}$/.test(t)) return Response.redirect(`${base}/newsletter/?s=error`, 302);
+  const sub = await env.DB.prepare('SELECT email, lang FROM subscribers WHERE token = ?').bind(t).first();
+  if (!sub) return Response.redirect(`${base}/newsletter/?s=error`, 302);
+  const now = Date.now();
+  if (action === 'confirm') await env.DB.prepare("UPDATE subscribers SET status = 'confirmed', confirmed_at = ?, unsubscribed_at = NULL WHERE token = ?").bind(now, t).run();
+  else await env.DB.prepare("UPDATE subscribers SET status = 'unsubscribed', unsubscribed_at = ? WHERE token = ?").bind(now, t).run();
+  return Response.redirect(`${base}/newsletter/?s=${action === 'confirm' ? 'ok' : 'bye'}&t=${t}&l=${sub.lang || 'es'}`, 302);
 }
 
 /* ---------- handlers ---------- */
@@ -405,6 +520,9 @@ async function api(req, env, url, ctx) {
   if (pathname === '/api/auth/verify' && m === 'POST') return verifyLogin(req, env);
   if (pathname === '/api/auth/logout' && m === 'POST') return logout(req, env);
 
+  if (pathname === '/api/lead' && m === 'POST') return createLead(req, env, url, ctx);
+  if (pathname === '/api/newsletter/confirm' && m === 'GET') return newsletterAction(env, url, 'confirm');
+  if (pathname === '/api/newsletter/unsubscribe' && m === 'GET') return newsletterAction(env, url, 'unsubscribe');
   const pub = pathname.match(/^\/api\/share\/([a-f0-9]{36})$/);
   if (pub && m === 'GET') {
     const row = await env.DB.prepare('SELECT d.data, s.expires_at FROM shares s JOIN dashboards d ON d.user_id = s.user_id AND d.id = s.dash_id WHERE s.token = ? AND s.expires_at > ?').bind(pub[1], Date.now()).first();

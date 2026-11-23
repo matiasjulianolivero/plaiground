@@ -53,7 +53,7 @@ PAGES_EN["privacidad"] = dict(
 title="Privacy policy",
 intro="How personal data is processed on plaiground, in accordance with Regulation (EU) 2016/679 (GDPR) and Spanish Organic Law 3/2018 (LOPDGDD).",
 body="""
-<div class="callout"><p><strong>In short:</strong> this site uses no analytics or advertising tools. Only if you create a Data plaiground account do we store your email and dashboards. Only the data strictly needed for the site to work, and whatever you choose to send by email, is processed.</p></div>
+<div class="callout"><p><strong>In short:</strong> this site uses no analytics or advertising tools. Only if you create a Data plaiground account do we store your email and dashboards, and only if you fill in the contact form do we store what you write in it. Only the data strictly needed for the site to work, and whatever you choose to send by email, is processed.</p></div>
 
 <h2 id="responsable">1. Data controller</h2>
 <ul class="kv">
@@ -70,6 +70,8 @@ body="""
 <tr><td>Browsing the site</td><td>IP address, browser, date and time of access (server technical logs)</td><td>Serve the site, keep it secure and prevent abuse</td><td>Legitimate interest (Art. 6(1)(f) GDPR)</td><td>As set by the hosting provider for its technical logs</td></tr>
 <tr><td>Contact by email or LinkedIn</td><td>Name, email and whatever you include in your message</td><td>Reply to your enquiry and, where relevant, prepare a proposal</td><td>Your request and pre-contractual steps (Art. 6(1)(b)) and legitimate interest in replying (Art. 6(1)(f))</td><td>For the duration of the conversation and up to 2 years afterwards, unless the law requires otherwise</td></tr>
 <tr><td>Preferences in your browser</td><td>Language, light/dark theme and cookie choice</td><td>Remember your preferences</td><td>Necessary for the service you request; see the <a href="/legal/cookies/">cookie policy</a></td><td>Stored only on your device; cookie choice, 12 months</td></tr>
+<tr><td>Contact form (“plaiground pass”)</td><td>Name, email, company and role (optional), interests, urgency, message, language, IP address and date you accepted this policy</td><td>Reply to your request, send you the confirmation email with your pass and prevent abusive submissions</td><td>Your request and pre-contractual steps (Art. 6(1)(b)); the IP, legitimate interest in preventing abuse (Art. 6(1)(f))</td><td>Up to 2 years from the last contact, unless the law requires otherwise; you can ask for deletion at any time</td></tr>
+<tr><td>Monthly newsletter (optional)</td><td>Email, name, language and dates of sign-up, confirmation and unsubscription</td><td>Send you plaiground news and experiments once a month</td><td>Your consent (Art. 6(1)(a) GDPR and Art. 21 of Spain’s LSSI), which you confirm with one click in the email we send you (double opt-in). Ticking the box is optional and conditions nothing else</td><td>While you stay subscribed. You can unsubscribe at any time via the link in every email or by writing to matiasjulianolivero@gmail.com; after unsubscribing only proof of consent and unsubscription is kept for the limitation period of possible claims</td></tr>
 <tr><td>Data plaiground account</td><td>Email, date you accepted the terms, last sign-in date, language and the dashboards you create</td><td>Give you access via an email link (no password), save your dashboards and tell you about important service changes</td><td>Performance of the <a href="/legal/terminos/">terms of use</a> (Art. 6(1)(b))</td><td>While you keep the account. You can delete it yourself at any time from the platform; accounts inactive for 24 months are deleted</td></tr>
 <tr><td>Using interactive tools</td><td>The data you enter into them</td><td>Provide the functionality you ask for</td><td>Performance of the <a href="/legal/terminos/">terms of use</a> (Art. 6(1)(b))</td><td>See section 3</td></tr>
 </tbody></table></div>
@@ -91,7 +93,7 @@ body="""
 <ul>
 <li><strong>Cloudflare, Inc.</strong>: hosting and delivery of the site, protection against attacks, and the database for Data plaiground accounts and dashboards.</li>
 <li><strong>Google LLC</strong>: fonts (Google Fonts), loaded from Google servers, which receive your IP address; and email (Gmail) when you write.</li>
-<li><strong>Resend</strong>: sending Data plaiground sign-in emails and notices.</li>
+<li><strong>Resend</strong>: sending Data plaiground sign-in emails and notices, contact-form emails and the newsletter.</li>
 <li><strong>Anthropic, PBC</strong>: artificial intelligence models (Claude) for AI tools, once available.</li>
 <li><strong>LinkedIn</strong>: only if you choose to get in touch there, under its own privacy policy.</li>
 </ul>

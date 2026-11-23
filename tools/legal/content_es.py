@@ -54,7 +54,7 @@ PAGES_ES["privacidad"] = dict(
 title="Política de privacidad",
 intro="Cómo se tratan tus datos personales en plaiground, conforme al Reglamento (UE) 2016/679 (RGPD) y la Ley Orgánica 3/2018 (LOPDGDD).",
 body="""
-<div class="callout"><p><strong>En resumen:</strong> esta web no usa herramientas de analítica ni de publicidad. Solo si creas una cuenta en Data plaiground guardamos tu email y tus dashboards. Solo se tratan los datos imprescindibles para que la web funcione y los que tú decidas enviar por email.</p></div>
+<div class="callout"><p><strong>En resumen:</strong> esta web no usa herramientas de analítica ni de publicidad. Solo si creas una cuenta en Data plaiground guardamos tu email y tus dashboards, y solo si rellenas el formulario de contacto guardamos lo que escribas en él. Solo se tratan los datos imprescindibles para que la web funcione y los que tú decidas enviar por email.</p></div>
 
 <h2 id="responsable">1. Responsable del tratamiento</h2>
 <ul class="kv">
@@ -70,6 +70,8 @@ body="""
 <tbody>
 <tr><td>Navegación por la web</td><td>Dirección IP, navegador, fecha y hora de acceso (registros técnicos del servidor)</td><td>Servir la web, mantener su seguridad y evitar abusos</td><td>Interés legítimo (art. 6.1.f RGPD)</td><td>El tiempo que fije el proveedor de alojamiento para sus registros técnicos</td></tr>
 <tr><td>Contacto por email o LinkedIn</td><td>Nombre, email y lo que incluyas en tu mensaje</td><td>Responder a tu consulta y, en su caso, preparar una propuesta</td><td>Tu solicitud y medidas precontractuales (art. 6.1.b) e interés legítimo en responder (art. 6.1.f)</td><td>Mientras dure la conversación y hasta 2 años después, salvo obligación legal</td></tr>
+<tr><td>Formulario de contacto (“pase al plaiground”)</td><td>Nombre, email, empresa y rol (opcionales), intereses, urgencia, mensaje, idioma, dirección IP y fecha de aceptación de esta política</td><td>Responder a tu solicitud, enviarte el email de confirmación con tu pase y evitar envíos abusivos</td><td>Tu solicitud y medidas precontractuales (art. 6.1.b); la IP, interés legítimo en prevenir abusos (art. 6.1.f)</td><td>Hasta 2 años desde el último contacto, salvo obligación legal; puedes pedir su borrado en cualquier momento</td></tr>
+<tr><td>Newsletter mensual (opcional)</td><td>Email, nombre, idioma y fechas de alta, confirmación y baja</td><td>Enviarte una vez al mes novedades y experimentos del plaiground</td><td>Tu consentimiento (art. 6.1.a RGPD y art. 21 LSSI), que confirmas con un clic en el email que te enviamos (doble confirmación). Marcar la casilla es opcional y no condiciona nada más</td><td>Mientras sigas suscrito. Puedes darte de baja en cualquier momento con el enlace incluido en cada email o escribiendo a matiasjulianolivero@gmail.com; tras la baja se conserva solo la prueba del consentimiento y de la baja durante el plazo de prescripción de posibles reclamaciones</td></tr>
 <tr><td>Preferencias en tu navegador</td><td>Idioma, tema claro/oscuro y elección de cookies</td><td>Recordar tus preferencias</td><td>Necesario para el servicio que solicitas; ver <a href="/legal/cookies/">política de cookies</a></td><td>Se guardan solo en tu dispositivo; la elección de cookies, 12 meses</td></tr>
 <tr><td>Cuenta en Data plaiground</td><td>Email, fecha de aceptación de los términos, fecha del último acceso, idioma y los dashboards que crees</td><td>Darte acceso con un enlace por email (sin contraseña), guardar tus dashboards y avisarte de cambios importantes del servicio</td><td>Ejecución de los <a href="/legal/terminos/">términos de uso</a> (art. 6.1.b)</td><td>Mientras tengas la cuenta. Puedes borrarla tú mismo en cualquier momento desde la plataforma; las cuentas sin actividad durante 24 meses se eliminan</td></tr>
 <tr><td>Uso de herramientas interactivas</td><td>Los datos que introduzcas en ellas</td><td>Prestar la funcionalidad que pides</td><td>Ejecución de los <a href="/legal/terminos/">términos de uso</a> (art. 6.1.b)</td><td>Ver apartado 3</td></tr>
@@ -92,7 +94,7 @@ body="""
 <ul>
 <li><strong>Cloudflare, Inc.</strong>: alojamiento y entrega de la web, protección frente a ataques y base de datos de las cuentas y dashboards de Data plaiground.</li>
 <li><strong>Google LLC</strong>: tipografías (Google Fonts), que se cargan desde servidores de Google y reciben tu dirección IP; y correo electrónico (Gmail) cuando escribes.</li>
-<li><strong>Resend</strong>: envío de los emails de acceso y avisos de Data plaiground.</li>
+<li><strong>Resend</strong>: envío de los emails de acceso y avisos de Data plaiground, de los emails del formulario de contacto y de la newsletter.</li>
 <li><strong>Anthropic, PBC</strong>: modelos de inteligencia artificial (Claude) para las herramientas con IA, cuando estén disponibles.</li>
 <li><strong>LinkedIn</strong>: solo si decides contactar a través de esa red, conforme a su propia política de privacidad.</li>
 </ul>
