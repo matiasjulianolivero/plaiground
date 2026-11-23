@@ -32,7 +32,7 @@
   css.textContent = `
 #leadPass{--lp-glass:rgba(255,255,255,.06);--lp-line:rgba(236,238,255,.14)}
 .lp{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);gap:44px;align-items:center}
-@media (max-width:960px){.lp{grid-template-columns:minmax(0,1fr);gap:28px}.lp-tk-wrap{order:-1}}
+@media (max-width:960px){.lp{grid-template-columns:minmax(0,1fr);gap:28px}}
 .lp-form{background:var(--lp-glass);border:1px solid var(--lp-line);border-radius:28px;padding:clamp(20px,3vw,32px);color:#ECEEFF;position:relative}
 .lp-prog{display:flex;gap:8px;margin-bottom:22px}
 .lp-prog span{flex:1;height:6px;border-radius:99px;background:rgba(236,238,255,.14);overflow:hidden;position:relative}
@@ -104,8 +104,16 @@
 .lp-tk .code{font:800 18px var(--display);letter-spacing:.04em;white-space:nowrap}
 .lp-tk .tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
 .lp-tk .tags span{font-size:11.5px;font-weight:700;background:rgba(255,255,255,.2);border-radius:999px;padding:4px 9px}
-.lp-stamp{position:absolute;right:18px;top:92px;transform:rotate(-14deg) scale(2.4);opacity:0;border:4px solid #fff;color:#fff;border-radius:14px;padding:6px 14px;font:800 22px var(--display);letter-spacing:.08em;text-transform:uppercase;transition:transform .45s cubic-bezier(.2,1.6,.4,1),opacity .2s;background:rgba(20,22,46,.18)}
-.lp-tk.issued .lp-stamp{transform:rotate(-14deg) scale(1);opacity:1}
+.lp-sweep{position:absolute;top:-25%;bottom:-25%;left:-55%;width:42%;pointer-events:none;z-index:3;opacity:0;transform:translateX(0) skewX(-18deg);background:linear-gradient(90deg,transparent,rgba(184,185,255,.35) 25%,rgba(255,255,255,.8) 50%,rgba(255,170,140,.4) 68%,rgba(95,224,207,.3) 82%,transparent);filter:blur(3px)}
+.lp-tk.issued .lp-sweep{animation:lpSweep 1.4s cubic-bezier(.45,0,.2,1) .15s 2}
+@keyframes lpSweep{0%{opacity:1;transform:translateX(0) skewX(-18deg)}100%{opacity:1;transform:translateX(420%) skewX(-18deg)}}
+.lp-tk.issued{animation:lpGlow 3.4s ease-out .1s both}
+@keyframes lpGlow{0%{box-shadow:0 40px 80px rgba(0,0,0,.45),inset 0 0 0 1px rgba(255,255,255,.25)}35%{box-shadow:0 40px 90px rgba(0,0,0,.45),0 0 70px rgba(184,185,255,.55),inset 0 0 0 1px rgba(255,255,255,.6)}100%{box-shadow:0 40px 80px rgba(0,0,0,.45),0 0 40px rgba(184,185,255,.25),inset 0 0 0 1px rgba(255,255,255,.35)}}
+.lp-stamp{position:absolute;left:50%;top:50%;z-index:4;transform:translate(-50%,-50%) scale(.92);opacity:0;filter:blur(8px);white-space:nowrap;display:flex;align-items:center;gap:10px;padding:12px 20px;border-radius:999px;font:800 17px var(--display);letter-spacing:-.01em;color:#fff;background:rgba(20,22,46,.62);border:1px solid rgba(255,255,255,.55);box-shadow:0 0 0 4px rgba(255,255,255,.08),0 10px 40px rgba(20,22,46,.35),0 0 30px rgba(184,185,255,.45);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.lp-stamp svg{width:20px;height:20px;flex:none}
+.lp-tk.issued .lp-stamp{animation:lpIn .7s cubic-bezier(.2,.9,.3,1.2) 2.4s forwards}
+@keyframes lpIn{to{opacity:1;filter:blur(0);transform:translate(-50%,-50%) scale(1)}}
+@media (prefers-reduced-motion:reduce){.lp-tk.issued .lp-sweep,.lp-tk.issued,.lp-tk.issued .lp-stamp{animation:none}.lp-tk.issued .lp-stamp{opacity:1;filter:none;transform:translate(-50%,-50%)}}
 .lp-done{color:#ECEEFF}
 .lp-done h3{font:800 clamp(28px,3vw,38px)/1.05 var(--display);letter-spacing:-.035em;color:#fff;margin:8px 0 10px}
 .lp-done p{color:#C9CCEA;margin:0 0 18px}
@@ -113,8 +121,7 @@
 .lp-links a{display:flex;justify-content:space-between;align-items:center;gap:10px;text-decoration:none;color:#fff;background:rgba(255,255,255,.06);border:1px solid var(--lp-line);border-radius:16px;padding:14px 16px;font-weight:600;transition:transform .15s,background .15s}
 .lp-links a:hover{transform:translateX(4px);background:rgba(255,255,255,.1)}
 .lp-links a small{display:block;color:#A3A8CC;font-weight:500;font-size:13px}
-.lp-confetti{position:fixed;inset:0;pointer-events:none;z-index:999}
-@media (prefers-reduced-motion:reduce){.lp-tk,.lp-chip,.lp-stamp,.lp-prog span i{transition:none!important}}
+@media (prefers-reduced-motion:reduce){.lp-tk,.lp-chip,.lp-prog span i{transition:none!important}}
 `;
   document.head.appendChild(css);
 
@@ -138,12 +145,12 @@
   function ticketHtml() {
     var ints = S.interests.map(function (k) { var i = INT.filter(function (x) { return x[0] === k; })[0]; return tr(i[1], i[2]); });
     var role = ROLES.filter(function (r) { return r[0] === S.role; })[0];
-    return '<div class="lp-tk' + (S.done ? ' issued' : '') + '" id="lp-tk" aria-label="' + tr('Vista previa de tu pase', 'Preview of your pass') + '"><span class="shine"></span><div class="top"><div class="brand"><b>plaiground</b><span>' + tr('Pase', 'Pass') + ' · 2026</span></div>' +
+    return '<div class="lp-tk' + (S.done ? ' issued' : '') + '" id="lp-tk" aria-label="' + tr('Vista previa de tu pase', 'Preview of your pass') + '"><span class="shine"></span><span class="lp-sweep" aria-hidden="true"></span><div class="top"><div class="brand"><b>plaiground</b><span>' + tr('Pase', 'Pass') + ' · 2026</span></div>' +
       '<div class="who">' + (S.name ? esc(S.name) : '<span class="ph">' + tr('Tu nombre', 'Your name') + '</span>') + '</div><div class="team">' + (S.company ? esc(S.company) : '') + (role ? (S.company ? ' · ' : '') + tr(role[1], role[2]) : '') + '</div>' +
       '<div class="grid"><div style="grid-column:1/-1"><div class="lbl">' + tr('Misión', 'Mission') + '</div><div class="tags">' + (ints.length ? ints.map(function (x) { return '<span>' + esc(x) + '</span>'; }).join('') : '<span style="opacity:.6">' + tr('Elige tu reto', 'Pick your challenge') + '</span>') + '</div></div>' +
       '<div><div class="lbl">' + tr('Prioridad', 'Priority') + '</div><div class="val">' + esc(urgencyLabel(S.urgency)) + '</div><div class="meter"><i style="width:' + S.urgency + '%"></i></div></div>' +
       '<div><div class="lbl">' + tr('Acceso', 'Access') + '</div><div class="val">' + (S.newsletter ? tr('Todo incluido + newsletter', 'All-access + newsletter') : tr('Todo incluido', 'All-access')) + '</div></div></div>' +
-      '<div class="lp-stamp">' + tr('Emitido', 'Issued') + ' ✓</div></div><div class="perf"></div><div class="stub">' + barcode() + '<div><div class="lbl">Nº</div><div class="code">' + esc(code()) + '</div></div></div></div>';
+      '<div class="lp-stamp" role="status"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m4 7 8 6 8-6"/></svg>' + tr('En tu bandeja de entrada', 'In your inbox') + '</div></div><div class="perf"></div><div class="stub">' + barcode() + '<div><div class="lbl">Nº</div><div class="code">' + esc(code()) + '</div></div></div></div>';
   }
   function doneHtml() {
     return '<div class="lp-done"><div class="lp-kick">' + tr('Pase emitido', 'Pass issued') + ' · ' + esc(S.done) + '</div><h3>' + tr('¡Ya estás dentro, ', 'You’re in, ') + esc((S.name || '').split(' ')[0]) + '!</h3><p>' + tr('Te he enviado tu pase a ', 'I’ve sent your pass to ') + '<b>' + esc(S.email) + '</b>' + (S.newsletter ? tr('. Confirma ahí la newsletter con un clic.', '. Confirm the newsletter there with one click.') : '.') + ' ' + tr('Te escribo en menos de 48 h laborables. Mientras tanto:', 'I’ll write back within 48 working hours. Meanwhile:') + '</p>' +
@@ -184,15 +191,6 @@
     tk.onpointermove = function (e) { var r = tk.getBoundingClientRect(), x = (e.clientX - r.left) / r.width - .5, y = (e.clientY - r.top) / r.height - .5; tk.style.transform = 'rotateY(' + (x * 14) + 'deg) rotateX(' + (-y * 12) + 'deg)'; sh.style.transform = 'translate(' + (x * 60) + '%,' + (y * 60) + '%)'; };
     tk.onpointerleave = function () { tk.style.transform = ''; };
   }
-  function confetti() {
-    if (reduce) return;
-    var c = document.createElement('canvas'); c.className = 'lp-confetti'; document.body.appendChild(c);
-    var ctx = c.getContext('2d'), W = c.width = innerWidth, Hh = c.height = innerHeight, cols = ['#8B8CF8', '#FF7A59', '#19B5A5', '#E0A100', '#ffffff'];
-    var tk = document.getElementById('lp-tk'), r = tk ? tk.getBoundingClientRect() : { left: W / 2, top: Hh / 2, width: 0, height: 0 };
-    var ps = Array.from({ length: 140 }, function () { return { x: r.left + r.width / 2, y: r.top + r.height / 3, vx: (Math.random() - .5) * 14, vy: -Math.random() * 14 - 4, s: 4 + Math.random() * 6, c: cols[Math.floor(Math.random() * cols.length)], a: Math.random() * 6, va: (Math.random() - .5) * .3 }; });
-    var t = 0;
-    (function frame() { ctx.clearRect(0, 0, W, Hh); ps.forEach(function (p) { p.vy += .35; p.x += p.vx; p.y += p.vy; p.a += p.va; ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.a); ctx.fillStyle = p.c; ctx.fillRect(-p.s / 2, -p.s / 4, p.s, p.s / 2); ctx.restore(); }); if (++t < 150) requestAnimationFrame(frame); else c.remove(); })();
-  }
   function submit() {
     if (S.sending) return; S.sending = true; S.err = ''; render();
     var body = { name: S.name, email: S.email, company: S.company, role: S.role, interests: S.interests, urgency: S.urgency, message: S.message, newsletter: S.newsletter, privacy: S.privacy, lang: L(), website: (document.getElementById('lp-w') || {}).value || '', elapsed: Date.now() - S.t0 };
@@ -200,7 +198,7 @@
       .then(function (r) { return r.json().catch(function () { return {}; }).then(function (d) { return { ok: r.ok, status: r.status, d: d }; }); })
       .then(function (res) {
         S.sending = false;
-        if (res.ok && res.d.code) { S.done = res.d.code; render(); setTimeout(confetti, 120); return; }
+        if (res.ok && res.d.code) { S.done = res.d.code; render(); return; }
         S.err = res.status === 429 ? tr('Has enviado varios pases seguidos. Espera un rato o escríbeme a matiasjulianolivero@gmail.com.', 'You’ve sent several passes in a row. Wait a bit or email matiasjulianolivero@gmail.com.')
           : res.d.error === 'invalid_email' ? tr('Revisa tu email.', 'Check your email.')
           : tr('No se pudo enviar. Inténtalo de nuevo o escríbeme a matiasjulianolivero@gmail.com.', 'Couldn’t send it. Try again or email matiasjulianolivero@gmail.com.');
