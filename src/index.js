@@ -73,7 +73,9 @@ async function ensureSchema(db) {
     db.prepare(`CREATE TABLE IF NOT EXISTS subscribers (
       email TEXT PRIMARY KEY, name TEXT, lang TEXT, status TEXT NOT NULL, token TEXT NOT NULL, created_at INTEGER NOT NULL,
       consent_at INTEGER, confirmed_at INTEGER, unsubscribed_at INTEGER, source TEXT)`),
-    db.prepare(`CREATE INDEX IF NOT EXISTS idx_subs_token ON subscribers(token)`)
+    db.prepare(`CREATE INDEX IF NOT EXISTS idx_subs_token ON subscribers(token)`),
+    db.prepare(`CREATE TABLE IF NOT EXISTS newsletter_sends (issue TEXT NOT NULL, email TEXT NOT NULL, sent_at INTEGER NOT NULL, ok INTEGER, PRIMARY KEY (issue, email))`),
+    db.prepare(`CREATE TABLE IF NOT EXISTS newsletter_votes (issue TEXT NOT NULL, voter TEXT NOT NULL, opt TEXT NOT NULL, created_at INTEGER NOT NULL, PRIMARY KEY (issue, voter))`)
   ]);
   schemaReady = true;
 }
@@ -286,6 +288,93 @@ async function newsletterAction(env, url, action) {
   if (action === 'confirm') await env.DB.prepare("UPDATE subscribers SET status = 'confirmed', confirmed_at = ?, unsubscribed_at = NULL WHERE token = ?").bind(now, t).run();
   else await env.DB.prepare("UPDATE subscribers SET status = 'unsubscribed', unsubscribed_at = ? WHERE token = ?").bind(now, t).run();
   return Response.redirect(`${base}/newsletter/?s=${action === 'confirm' ? 'ok' : 'bye'}&t=${t}&l=${sub.lang || 'es'}`, 302);
+}
+
+/* ---------- envío de la newsletter (solo el titular) ---------- */
+const NL_BATCH = 90; // Resend gratis: 100 emails/día
+const isOwner = (env, user) => !!user && !!env.LEAD_NOTIFY_EMAIL && user.email.toLowerCase() === env.LEAD_NOTIFY_EMAIL.toLowerCase();
+async function nlIssues(env, base) {
+  const r = await env.ASSETS.fetch(new Request(`${base}/newsletter/issues.json`));
+  return r.ok ? r.json() : [];
+}
+async function nlTemplate(env, base, id, lang) {
+  const r = await env.ASSETS.fetch(new Request(`${base}/newsletter/${id}/email-${lang}.html`));
+  return r.ok ? r.text() : null;
+}
+function nlFill(tpl, base, id, sub) {
+  const t = sub.token, web = `${base}/newsletter/${id}/?l=${sub.lang === 'en' ? 'en' : 'es'}`;
+  let h = tpl.replace(/ ?\{\{NAME\}\}/g, sub.name ? ' ' + esc(String(sub.name).split(' ')[0]) : '')
+    .replace(/\{\{UNSUB\}\}/g, `${base}/api/newsletter/unsubscribe?t=${t}`).replace(/\{\{WEB\}\}/g, web);
+  for (const k of ['a', 'b', 'c', 'd']) h = h.split(`{{VOTE_${k}}}`).join(`${base}/api/newsletter/vote?i=${id}&o=${k}&t=${t}`);
+  return h;
+}
+async function nlAdmin(env, url) {
+  const base = (env.APP_URL || url.origin).replace(/\/$/, '');
+  const counts = await env.DB.prepare("SELECT status, lang, COUNT(*) AS n FROM subscribers GROUP BY status, lang").all();
+  const issues = await nlIssues(env, base);
+  for (const i of issues) {
+    const r = await env.DB.prepare('SELECT COUNT(*) AS n FROM newsletter_sends WHERE issue = ? AND ok = 1').bind(i.id).first();
+    i.sent = r ? r.n : 0;
+  }
+  return json({ counts: counts.results || [], issues, batch: NL_BATCH });
+}
+async function nlSend(req, env, url, user) {
+  const b = await req.json().catch(() => ({}));
+  const base = (env.APP_URL || url.origin).replace(/\/$/, '');
+  const issue = (await nlIssues(env, base)).find(i => i.id === String(b.issue || ''));
+  if (!issue) return json({ error: 'issue_not_found' }, 404);
+  const tpl = { es: await nlTemplate(env, base, issue.id, 'es'), en: await nlTemplate(env, base, issue.id, 'en') };
+  if (!tpl.es || !tpl.en) return json({ error: 'template_missing' }, 500);
+  let list;
+  if (b.mode === 'test') {
+    const own = await env.DB.prepare('SELECT token, name FROM subscribers WHERE email = ?').bind(user.email).first();
+    const tk = own ? own.token : '0'.repeat(32);
+    list = ['es', 'en'].map(l => ({ email: user.email, name: own ? own.name : '', lang: l, token: tk, test: true }));
+  } else if (b.mode === 'all') {
+    if (b.confirm !== 'ENVIAR') return json({ error: 'confirm_required' }, 400);
+    list = (await env.DB.prepare(`SELECT s.email, s.name, s.lang, s.token FROM subscribers s WHERE s.status = 'confirmed'
+      AND NOT EXISTS (SELECT 1 FROM newsletter_sends n WHERE n.issue = ? AND n.email = s.email AND n.ok = 1) ORDER BY s.confirmed_at LIMIT ?`).bind(issue.id, NL_BATCH).all()).results || [];
+  } else return json({ error: 'bad_mode' }, 400);
+  if (!list.length) return json({ sent: 0, remaining: 0 });
+  const from = env.LEAD_FROM || env.EMAIL_FROM, owner = env.LEAD_NOTIFY_EMAIL;
+  const payload = list.map(sub => {
+    const L = sub.lang === 'en' ? 'en' : 'es', unsub = `${base}/api/newsletter/unsubscribe?t=${sub.token}`;
+    return Object.assign({ from, to: [sub.email], subject: (sub.test ? '[PRUEBA ' + L.toUpperCase() + '] ' : '') + issue.subject[L], html: nlFill(tpl[L], base, issue.id, Object.assign({}, sub, { lang: L })),
+      headers: { 'List-Unsubscribe': `<${unsub}>`, 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' } }, owner ? { reply_to: owner } : {});
+  });
+  const r = await fetch('https://api.resend.com/emails/batch', { method: 'POST', headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+  if (!r.ok) { console.error('Resend batch error', r.status, await r.text()); return json({ error: 'send_failed', status: r.status }, 502); }
+  if (b.mode === 'all') {
+    const now = Date.now();
+    await env.DB.batch(list.map(sub => env.DB.prepare('INSERT OR REPLACE INTO newsletter_sends (issue, email, sent_at, ok) VALUES (?,?,?,1)').bind(issue.id, sub.email, now)));
+  }
+  const rem = b.mode === 'all' ? (await env.DB.prepare(`SELECT COUNT(*) AS n FROM subscribers s WHERE s.status = 'confirmed' AND NOT EXISTS (SELECT 1 FROM newsletter_sends n WHERE n.issue = ? AND n.email = s.email AND n.ok = 1)`).bind(issue.id).first()).n : 0;
+  return json({ sent: list.length, remaining: rem });
+}
+async function nlVote(env, url) {
+  const base = (env.APP_URL || url.origin).replace(/\/$/, '');
+  const i = url.searchParams.get('i') || '', o = url.searchParams.get('o') || '', t = url.searchParams.get('t') || '';
+  if (!/^\d{2}$/.test(i) || !/^[a-d]$/.test(o)) return Response.redirect(`${base}/newsletter/`, 302);
+  if (/^[a-f0-9]{32}$/.test(t) && t !== '0'.repeat(32)) {
+    await env.DB.prepare('INSERT OR REPLACE INTO newsletter_votes (issue, voter, opt, created_at) VALUES (?,?,?,?)').bind(i, 'sub:' + t, o, Date.now()).run();
+  }
+  const sub = /^[a-f0-9]{32}$/.test(t) ? await env.DB.prepare('SELECT lang FROM subscribers WHERE token = ?').bind(t).first() : null;
+  return Response.redirect(`${base}/newsletter/${i}/?l=${sub && sub.lang === 'en' ? 'en' : 'es'}&voted=${o}#jefe`, 302);
+}
+async function nlWebVote(req, env, url) {
+  const b = await req.json().catch(() => ({}));
+  const i = String(b.i || ''), o = String(b.o || ''), v = String(b.v || '');
+  if (!/^\d{2}$/.test(i) || !/^[a-d]$/.test(o) || !/^[a-f0-9]{32}$/.test(v)) return json({ error: 'bad_request' }, 400);
+  const ip = req.headers.get('cf-connecting-ip') || '';
+  const ipVoter = 'ip:' + (await sha256(ip + ':' + i)).slice(0, 32);
+  await env.DB.prepare('INSERT OR REPLACE INTO newsletter_votes (issue, voter, opt, created_at) VALUES (?,?,?,?)').bind(i, ipVoter, o, Date.now()).run();
+  return nlPoll(env, i);
+}
+async function nlPoll(env, i) {
+  if (!/^\d{2}$/.test(i)) return json({ error: 'bad_request' }, 400);
+  const r = await env.DB.prepare('SELECT opt, COUNT(*) AS n FROM newsletter_votes WHERE issue = ? GROUP BY opt').bind(i).all();
+  const c = { a: 0, b: 0, c: 0, d: 0 }; for (const x of r.results || []) c[x.opt] = x.n;
+  return json({ counts: c, total: c.a + c.b + c.c + c.d });
 }
 
 /* ---------- handlers ---------- */
@@ -514,6 +603,12 @@ async function api(req, env, url, ctx) {
   if (!env.DB) return json({ error: 'database_not_configured', configured: false }, 503);
   await ensureSchema(env.DB);
   const { pathname } = url, m = req.method;
+  // Baja con un clic desde el propio cliente de correo (RFC 8058): llega por POST desde otro origen
+  if (pathname === '/api/newsletter/unsubscribe' && m === 'POST') {
+    const t = url.searchParams.get('t') || '';
+    if (/^[a-f0-9]{32}$/.test(t)) await env.DB.prepare("UPDATE subscribers SET status = 'unsubscribed', unsubscribed_at = ? WHERE token = ?").bind(Date.now(), t).run();
+    return new Response('ok', { status: 200 });
+  }
   if (m !== 'GET' && !sameOrigin(req, url)) return json({ error: 'forbidden' }, 403);
 
   if (pathname === '/api/auth/request' && m === 'POST') return requestLogin(req, env, url);
@@ -523,6 +618,16 @@ async function api(req, env, url, ctx) {
   if (pathname === '/api/lead' && m === 'POST') return createLead(req, env, url, ctx);
   if (pathname === '/api/newsletter/confirm' && m === 'GET') return newsletterAction(env, url, 'confirm');
   if (pathname === '/api/newsletter/unsubscribe' && m === 'GET') return newsletterAction(env, url, 'unsubscribe');
+  if (pathname === '/api/newsletter/vote' && m === 'GET') return nlVote(env, url);
+  if (pathname === '/api/newsletter/vote' && m === 'POST') return nlWebVote(req, env, url);
+  if (pathname === '/api/newsletter/poll' && m === 'GET') return nlPoll(env, url.searchParams.get('i') || '');
+  if (pathname.startsWith('/api/newsletter/admin') || pathname === '/api/newsletter/send') {
+    const u = await currentUser(req, env);
+    if (!u) return json({ error: 'unauthorized' }, 401);
+    if (!isOwner(env, u)) return json({ error: 'forbidden' }, 403);
+    if (pathname === '/api/newsletter/admin' && m === 'GET') return nlAdmin(env, url);
+    if (pathname === '/api/newsletter/send' && m === 'POST') return nlSend(req, env, url, u);
+  }
   const pub = pathname.match(/^\/api\/share\/([a-f0-9]{36})$/);
   if (pub && m === 'GET') {
     const row = await env.DB.prepare('SELECT d.data, s.expires_at FROM shares s JOIN dashboards d ON d.user_id = s.user_id AND d.id = s.dash_id WHERE s.token = ? AND s.expires_at > ?').bind(pub[1], Date.now()).first();

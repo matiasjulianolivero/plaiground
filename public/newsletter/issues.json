@@ -1,0 +1,57 @@
+[
+ {
+  "id": "01",
+  "subject": {
+   "es": "Nivel 01 · Tu marca ya no se busca. Se pregunta.",
+   "en": "Level 01 · Your brand isn’t searched anymore. It’s asked."
+  },
+  "date": {
+   "es": "Noviembre 2026",
+   "en": "November 2026"
+  },
+  "poll": {
+   "es": {
+    "q": "¿Tu marca aparece cuando le preguntas a una IA por tu categoría?",
+    "opts": [
+     [
+      "a",
+      "Sí, en el top 3"
+     ],
+     [
+      "b",
+      "Salgo, pero abajo"
+     ],
+     [
+      "c",
+      "No aparezco"
+     ],
+     [
+      "d",
+      "Ni lo he mirado"
+     ]
+    ]
+   },
+   "en": {
+    "q": "Does your brand show up when you ask an AI about your category?",
+    "opts": [
+     [
+      "a",
+      "Yes, top 3"
+     ],
+     [
+      "b",
+      "I show up, but low"
+     ],
+     [
+      "c",
+      "I don’t show up"
+     ],
+     [
+      "d",
+      "Haven’t checked"
+     ]
+    ]
+   }
+  }
+ }
+]

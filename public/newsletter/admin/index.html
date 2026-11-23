@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><meta name="referrer" content="no-referrer">
+<title>Envío de newsletter · plaiground</title><link rel="icon" href="/favicon.ico" sizes="any">
+<style>
+*{box-sizing:border-box}body{margin:0;background:#0B0D1F;color:#ECEEFF;font:16px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif;padding:32px 18px}
+.w{max-width:760px;margin:0 auto}h1{font-size:30px;letter-spacing:-.03em;margin:0 0 4px}.m{color:#A3A8CC}
+.card{background:#15183A;border:1px solid rgba(236,238,255,.12);border-radius:20px;padding:22px;margin-top:18px}
+.k{display:flex;gap:12px;flex-wrap:wrap}.k div{flex:1;min-width:140px;background:#1C1F47;border-radius:14px;padding:14px}.k b{display:block;font-size:28px}
+button,a.b{border:0;border-radius:999px;padding:12px 18px;font:700 15px system-ui;cursor:pointer;text-decoration:none;display:inline-block}
+.p{background:linear-gradient(100deg,#4338CA,#7C5CFF 50%,#FF7A59);color:#fff}.g{background:#ECEEFF;color:#14162E}
+input{background:#0B0D1F;border:1.5px solid rgba(236,238,255,.2);color:#fff;border-radius:12px;padding:11px 12px;font:600 15px system-ui;width:140px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:12px}.msg{margin-top:12px;min-height:22px;color:#5FE0CF}.err{color:#FF9B7E}
+a{color:#B8B9FF}
+</style></head><body><div class="w">
+<h1>Envío de newsletter</h1><p class="m">Solo para el titular de plaiground. Las suscripciones solo cuentan cuando la persona confirma por email (doble opt-in).</p>
+<div id="app"><div class="card">Cargando…</div></div></div>
+<script>
+(function(){
+var app=document.getElementById('app'),esc=function(s){return String(s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})};
+function load(){fetch('/api/newsletter/admin',{credentials:'same-origin'}).then(function(r){return r.json().then(function(d){return{s:r.status,d:d}})}).then(function(x){
+ if(x.s===401){app.innerHTML='<div class="card"><p>Para entrar, inicia sesión en Data plaiground con <b>tu email de titular</b> y vuelve a esta página.</p><a class="b g" href="/data/app/">Iniciar sesión</a></div>';return}
+ if(x.s===403){app.innerHTML='<div class="card err">Esta cuenta no es la del titular.</div>';return}
+ var c={},d=x.d;(d.counts||[]).forEach(function(r){c[r.status+'_'+(r.lang||'es')]=r.n});
+ var conf=(c.confirmed_es||0)+(c.confirmed_en||0),pend=(c.pending_es||0)+(c.pending_en||0),bye=(c.unsubscribed_es||0)+(c.unsubscribed_en||0);
+ var h='<div class="card k"><div><b>'+conf+'</b>confirmados<br><span class="m">ES '+(c.confirmed_es||0)+' · EN '+(c.confirmed_en||0)+'</span></div><div><b>'+pend+'</b>pendientes de confirmar</div><div><b>'+bye+'</b>bajas</div></div>';
+ (d.issues||[]).forEach(function(i){h+='<div class="card" data-i="'+esc(i.id)+'"><div class="m">Nivel '+esc(i.id)+' · '+esc(i.date.es)+'</div><h2 style="margin:4px 0 6px;font-size:21px">'+esc(i.subject.es)+'</h2><p class="m" style="margin:0">Enviada a '+i.sent+' de '+conf+' confirmados · <a href="/newsletter/'+esc(i.id)+'/" target="_blank">ver versión web</a> · <a href="/newsletter/'+esc(i.id)+'/email-es.html" target="_blank">email ES</a> · <a href="/newsletter/'+esc(i.id)+'/email-en.html" target="_blank">email EN</a></p>'+
+  '<div class="row"><button class="g" data-a="test">Enviarme una prueba (ES + EN)</button></div>'+
+  '<div class="row"><input placeholder="Escribe ENVIAR" aria-label="Confirmación"><button class="p" data-a="all">Enviar a los suscriptores</button></div><p class="m" style="font-size:13px;margin:8px 0 0">Se envía en tandas de '+d.batch+' (límite gratuito de Resend: 100 emails al día). Quien ya la recibió no la vuelve a recibir.</p><div class="msg"></div></div>'});
+ app.innerHTML=h;
+ app.querySelectorAll('[data-a]').forEach(function(b){b.onclick=function(){var card=b.closest('.card'),msg=card.querySelector('.msg'),body={issue:card.dataset.i,mode:b.dataset.a};
+  if(body.mode==='all'){body.confirm=card.querySelector('input').value.trim();if(body.confirm!=='ENVIAR'){msg.className='msg err';msg.textContent='Escribe ENVIAR para confirmar.';return}}
+  b.disabled=true;msg.className='msg';msg.textContent='Enviando…';
+  fetch('/api/newsletter/send',{method:'POST',credentials:'same-origin',headers:{'content-type':'application/json'},body:JSON.stringify(body)}).then(function(r){return r.json()}).then(function(r){b.disabled=false;
+   if(r.error){msg.className='msg err';msg.textContent='Error: '+r.error;return}
+   msg.textContent=body.mode==='test'?'Prueba enviada a tu email (ES y EN).':'Enviados '+r.sent+'. Pendientes: '+r.remaining+(r.remaining?' (vuelve mañana para la siguiente tanda).':'. ¡Listo!');if(body.mode==='all')setTimeout(load,1500)}).catch(function(){b.disabled=false;msg.className='msg err';msg.textContent='Sin conexión.'})}})
+}).catch(function(){app.innerHTML='<div class="card err">No se pudo cargar.</div>'})}
+load();})();
+</script></body></html>
