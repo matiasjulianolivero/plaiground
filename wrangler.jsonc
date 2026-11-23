@@ -27,8 +27,12 @@
     "EMAIL_FROM": "Data plaiground <data@plaigroundmarketing.com>",
     // Formulario de contacto (pase): remitente y a quién avisar de cada lead
     "LEAD_FROM": "Matías · plaiground <hola@plaigroundmarketing.com>",
-    "LEAD_NOTIFY_EMAIL": "matiasjulianolivero@gmail.com"
+    "LEAD_NOTIFY_EMAIL": "matiasjulianolivero@gmail.com",
+    // Número que se envía solo, al día siguiente de confirmar la suscripción (vacío = desactivado)
+    "WELCOME_ISSUE": "01"
   },
-  "observability": { "enabled": true }
+  "observability": { "enabled": true },
   // Secreto necesario (no va aquí): RESEND_API_KEY → Workers → plaiground → Settings → Variables and Secrets
+  // Cada día a las 09:00 UTC (10:00 en Madrid en invierno, 11:00 en verano): newsletter de bienvenida
+  "triggers": { "crons": ["0 9 * * *"] }
 }
