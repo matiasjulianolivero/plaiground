@@ -245,6 +245,39 @@ section{padding:110px 0}
 .go{margin-top:8px;display:inline-flex;align-items:center;gap:10px;font-weight:700;font-size:15px;color:#F4F5FB}
 .go i{display:inline-grid;place-items:center;width:34px;height:34px;border-radius:50%;background:var(--ind);transition:transform .25s;font-style:normal}
 .proj:hover .go i{transform:translateX(4px) rotate(-45deg)}
+/* Data plaiground promo */
+.navnew{font:700 10px var(--body);letter-spacing:.08em;text-transform:uppercase;color:#fff;background:var(--coral);border-radius:999px;padding:2px 7px;margin-left:4px;vertical-align:2px}
+#data{padding-top:0}
+.dp{position:relative;overflow:hidden;background:#14162E;color:#ECEEFF;border-radius:32px;padding:clamp(28px,4.5vw,56px);display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);gap:44px;align-items:center}
+html[data-theme="dark"] .dp{background:#191C45}
+.dp::before{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(45% 70% at 100% 0,rgba(139,140,248,.35),transparent 70%),radial-gradient(40% 60% at 0 100%,rgba(255,122,89,.22),transparent 70%)}
+.dp>*{position:relative}
+@media (max-width:960px){.dp{grid-template-columns:minmax(0,1fr)}}
+.dp .eyebrow{color:#B8B9FF}
+.dp h2{font-size:clamp(32px,3.8vw,50px);line-height:1.02;font-weight:800;color:#fff;margin:14px 0 14px}
+.dp h2 em{font-style:normal;background:linear-gradient(100deg,#8B8CF8,#FF7A59);-webkit-background-clip:text;background-clip:text;color:transparent}
+.dp p{color:#C9CCEA;font-size:17px;margin:0 0 22px;max-width:520px}
+.dp-list{list-style:none;padding:0;margin:0 0 28px;display:grid;grid-template-columns:1fr 1fr;gap:10px 18px}
+.dp-list li{display:flex;gap:10px;align-items:flex-start;font-size:15px;color:#ECEEFF}
+.dp-list i{flex:none;width:10px;height:10px;border-radius:3px;margin-top:7px}
+@media (max-width:520px){.dp-list{grid-template-columns:1fr}}
+.dp .btn.ghost{background:transparent;color:#ECEEFF;border-color:rgba(236,238,255,.3)}
+.dp-shot{background:#F4F5FB;color:#14162E;border-radius:22px;padding:18px;box-shadow:0 30px 70px rgba(0,0,0,.35);transform:rotate(-1.2deg)}
+html[data-theme="dark"] .dp-shot{background:#0B0D1F;color:#ECEEFF}
+.dp-shot .k{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:10px}
+.dp-shot .k div{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:9px 11px}
+.dp-shot small{display:block;font-size:11px;color:var(--muted);font-weight:600}.dp-shot b{font:800 19px var(--display);letter-spacing:-.03em}
+.dp-shot .k em{display:block;font-style:normal;font-size:11px;font-weight:700;color:#0F8A5F}
+.dp-shot .row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px}
+.dp-shot .bx{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:12.5px}
+.dp-shot .bx h5{margin:0 0 6px;font:700 12px var(--body);display:flex;align-items:center;gap:6px}
+.dp-shot .bx h5 i{width:16px;height:16px;border-radius:5px;display:inline-block}
+.dp-shot .bx ul{margin:0;padding-left:16px}.dp-shot .bx li{margin:3px 0}
+.dp-shot .bars{display:flex;align-items:flex-end;gap:4px;height:56px;margin-bottom:8px}
+.dp-shot .bars i{flex:1;border-radius:3px 3px 0 0;background:#4338CA}.dp-shot .bars i:nth-child(3n+2){background:#19B5A5}
+.dp-shot .act{grid-column:1/-1}
+.dp-shot .act div{display:flex;justify-content:space-between;gap:8px;padding:5px 0;border-top:1px solid var(--line)}.dp-shot .act div:first-of-type{border-top:0}
+.dp-shot .act span{font-size:11px;color:var(--muted);white-space:nowrap}
 .soon{border:1.5px dashed rgba(244,245,251,.18);border-radius:var(--r);padding:28px;display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;color:#A3A8CC}
 .soon strong{color:#F4F5FB;font-family:var(--display);font-size:22px;letter-spacing:-.02em}
 
@@ -356,6 +389,7 @@ footer{background:var(--ink);color:#A3A8CC;padding:64px 0 40px;font-size:14px}
     <ul>
       <li><a href="#servicios"><span lang="es">Servicios</span><span lang="en">Services</span></a></li>
       <li><a href="#lab"><span lang="es">Proyectos</span><span lang="en">Projects</span></a></li>
+      <li><a href="/data/">Data <span class="navnew">beta</span></a></li>
       <li><a href="#sobre-mi"><span lang="es">Sobre mí</span><span lang="en">About</span></a></li>
       <li><a class="cta" href="#contacto"><span lang="es">Hablemos</span><span lang="en">Let’s talk</span></a></li>
     </ul>
@@ -434,6 +468,44 @@ footer{background:var(--ink);color:#A3A8CC;padding:64px 0 40px;font-size:14px}
           <h3><span lang="es">Captación y growth B2B</span><span lang="en">B2B acquisition and growth</span></h3><p><span lang="es">Campañas segmentadas por sector y mercado, conectadas con CRM y automatización.</span><span lang="en">Campaigns segmented by sector and market, wired into CRM and automation.</span></p><ul><li><span lang="es">Campañas en buscadores, redes y LinkedIn</span><span lang="en">Search, social and LinkedIn campaigns</span></li><li><span lang="es">Email marketing y segmentación CRM</span><span lang="en">Email marketing and CRM segmentation</span></li><li><span lang="es">Gestión de presupuestos y resultados</span><span lang="en">Budget and performance management</span></li></ul></article><article class="svc rv" style="--c:var(--gold)">
           <div class="svc-top"><span class="n">04</span><span class="dot"></span></div>
           <h3><span lang="es">Estudios de marca interactivos</span><span lang="en">Interactive brand research</span></h3><p><span lang="es">Barómetros, rankings e índices de marca convertidos en experiencias digitales que se comparten.</span><span lang="en">Brand barometers, rankings and indices turned into digital experiences people share.</span></p><ul><li><span lang="es">Metodología e índice propio</span><span lang="en">Proprietary methodology and index</span></li><li><span lang="es">Visualización y storytelling de datos</span><span lang="en">Data visualization and storytelling</span></li><li><span lang="es">Entrega digital lista para lanzar</span><span lang="en">Launch-ready digital delivery</span></li></ul></article></div>
+    </div>
+  </section>
+
+  <section id="data">
+    <div class="wrap">
+      <div class="dp rv">
+        <div>
+          <div class="eyebrow"><span lang="es">Nuevo · Data plaiground (beta)</span><span lang="en">New · Data plaiground (beta)</span></div>
+          <h2><span lang="es">Sube tus datos. Recibe <em>decisiones</em>, no solo gráficos.</span><span lang="en">Upload your data. Get <em>decisions</em>, not just charts.</span></h2>
+          <p><span lang="es">Sube tu Excel, PDF o Google Sheets. La IA entiende tu empresa, tus datos y a quién se lo vas a presentar, y en unos minutos te devuelve un dashboard interactivo. También te llega por email con link y PDF.</span><span lang="en">Upload your Excel, PDF or Google Sheets. The AI understands your business, your data and who you’ll present it to, and within minutes returns an interactive dashboard. It also lands in your inbox with a link and PDF.</span></p>
+          <ul class="dp-list">
+            <li><i style="background:#8B8CF8"></i><span lang="es">Insights clave</span><span lang="en">Key insights</span></li>
+            <li><i style="background:#19B5A5"></i><span lang="es">Relaciones entre tus datos</span><span lang="en">Relationships in your data</span></li>
+            <li><i style="background:#4ADE9B"></i><span lang="es">Oportunidades de crecimiento</span><span lang="en">Growth opportunities</span></li>
+            <li><i style="background:#FF7A59"></i><span lang="es">Plan de acción priorizado</span><span lang="en">Prioritised action plan</span></li>
+          </ul>
+          <div class="btns">
+            <a class="btn primary" href="/data/app/"><span lang="es">Subir mis datos</span><span lang="en">Upload my data</span></a>
+            <a class="btn ghost" href="/data/"><span lang="es">Ver cómo funciona</span><span lang="en">See how it works</span></a>
+          </div>
+        </div>
+        <a class="dp-shot" href="/data/#demo" aria-label="Data plaiground demo" style="text-decoration:none">
+          <div class="k">
+            <div><small><span lang="es">Ingresos</span><span lang="en">Revenue</span></small><b>190k €</b><em>▲ 38%</em></div>
+            <div><small>ROAS</small><b>5,5</b><em>▲ 0,4</em></div>
+            <div><small>CAC</small><b>18 €</b><em>▼ 27%</em></div>
+          </div>
+          <div class="row">
+            <div class="bx"><div class="bars" aria-hidden="true"><i style="height:55%"></i><i style="height:42%"></i><i style="height:45%"></i><i style="height:50%"></i><i style="height:52%"></i><i style="height:58%"></i><i style="height:60%"></i><i style="height:55%"></i><i style="height:56%"></i><i style="height:64%"></i><i style="height:68%"></i><i style="height:100%"></i></div>
+              <h5><i style="background:#4338CA"></i><span lang="es">Insights</span><span lang="en">Insights</span></h5><ul><li><span lang="es">SEO aporta el 22% con el 9% de la inversión</span><span lang="en">SEO brings 22% with 9% of spend</span></li></ul></div>
+            <div class="bx"><h5><i style="background:#19B5A5"></i><span lang="es">Relaciones</span><span lang="en">Relationships</span></h5><ul><li><span lang="es">Paid Social: inversión y ventas van de la mano (r = 0,91)</span><span lang="en">Paid Social: spend and sales move together (r = 0.91)</span></li><li><span lang="es">Pico en noviembre: +35%</span><span lang="en">November peak: +35%</span></li></ul></div>
+            <div class="bx act"><h5><i style="background:#FF7A59"></i><span lang="es">Plan de acción</span><span lang="en">Action plan</span></h5>
+              <div><span style="color:inherit;font-size:12.5px;white-space:normal"><span lang="es">Mover el 15% de Paid Social a SEO</span><span lang="en">Shift 15% of Paid Social to SEO</span></span><span><span lang="es">Impacto alto</span><span lang="en">High impact</span></span></div>
+              <div><span style="color:inherit;font-size:12.5px;white-space:normal"><span lang="es">Calendario para el pico de noviembre</span><span lang="en">Calendar for the November peak</span></span><span><span lang="es">Este trimestre</span><span lang="en">This quarter</span></span></div>
+            </div>
+          </div>
+        </a>
+      </div>
     </div>
   </section>
 
@@ -564,7 +636,7 @@ footer{background:var(--ink);color:#A3A8CC;padding:64px 0 40px;font-size:14px}
   <div class="wrap">
     <div class="fgrid">
       <div><a class="brand" href="#">pl<span class="ai">ai</span>ground</a><p style="max-width:320px;margin:10px 0 0"><span lang="es">Marketing lúdico con IA: estrategia, datos y experiencias interactivas.</span><span lang="en">AI-driven playful marketing: strategy, data and interactive experiences.</span></p></div>
-      <div><h5><span lang="es">Proyectos</span><span lang="en">Projects</span></h5><a href="/barometer/">Franchise Brand Barometer</a><a href="/barometer/metodologia/"><span lang="es">Metodología del Barometer</span><span lang="en">Barometer methodology</span></a><a href="/cv/">Olivero Fest CV</a></div>
+      <div><h5><span lang="es">Proyectos</span><span lang="en">Projects</span></h5><a href="/barometer/">Franchise Brand Barometer</a><a href="/barometer/metodologia/"><span lang="es">Metodología del Barometer</span><span lang="en">Barometer methodology</span></a><a href="/cv/">Olivero Fest CV</a><a href="/data/">Data plaiground <span lang="es">(beta)</span><span lang="en">(beta)</span></a></div>
       <div><h5><span lang="es">Contacto</span><span lang="en">Contact</span></h5><a href="mailto:matiasjulianolivero@gmail.com">matiasjulianolivero@gmail.com</a><a href="https://www.linkedin.com/in/oliveromatias/" target="_blank" rel="noopener">LinkedIn ↗</a></div>
     </div>
     <div class="fbot"><span>© <span id="y"></span> Matías Olivero · plaiground</span><nav class="flegal" aria-label="Legal"><a href="/legal/aviso-legal/"><span lang="es">Aviso legal</span><span lang="en">Legal notice</span></a><a href="/legal/privacidad/"><span lang="es">Privacidad</span><span lang="en">Privacy</span></a><a href="/legal/cookies/">Cookies</a><a href="/legal/terminos/"><span lang="es">Términos</span><span lang="en">Terms</span></a><a href="/legal/ia/"><span lang="es">Transparencia IA</span><span lang="en">AI transparency</span></a><button type="button" data-cookie-settings><span lang="es">Configurar cookies</span><span lang="en">Cookie settings</span></button></nav><span>Madrid · Buenos Aires · Online</span></div>
