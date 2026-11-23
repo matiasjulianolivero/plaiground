@@ -22,6 +22,9 @@
   var S = { step: 0, interests: [], urgency: 40, name: '', email: '', company: '', role: '', message: '', newsletter: false, privacy: false, sending: false, done: null, err: '', t0: Date.now() };
   var urgencyLabel = function (u) { return u < 25 ? tr('Explorando ideas', 'Exploring ideas') : u < 50 ? tr('Este trimestre', 'This quarter') : u < 75 ? tr('Este mes', 'This month') : tr('¡Lo necesitábamos ayer!', 'We needed it yesterday!'); };
   function hash(s) { var h = 2166136261; for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
+  var DOMS = ['gmail.com', 'hotmail.com', 'hotmail.es', 'outlook.com', 'outlook.es', 'yahoo.com', 'yahoo.es', 'icloud.com', 'live.com', 'msn.com', 'protonmail.com', 'telefonica.net'];
+  function lev(a, b) { var m = [], i, j; for (i = 0; i <= a.length; i++) { m[i] = [i]; } for (j = 1; j <= b.length; j++) m[0][j] = j; for (i = 1; i <= a.length; i++) for (j = 1; j <= b.length; j++) m[i][j] = Math.min(m[i - 1][j] + 1, m[i][j - 1] + 1, m[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)); return m[a.length][b.length]; }
+  function suggest(email) { var at = email.lastIndexOf('@'); if (at < 1) return ''; var d = email.slice(at + 1).toLowerCase(); if (DOMS.indexOf(d) >= 0) return ''; var best = '', bd = 3; DOMS.forEach(function (x) { var k = lev(d, x); if (k < bd) { bd = k; best = x; } }); return best && bd <= 2 ? email.slice(0, at + 1) + best : ''; }
   function code() { return S.done ? S.done : 'PLG-' + (S.email ? hash(S.email.toLowerCase()).toString(36).toUpperCase().slice(0, 6) : '······'); }
   function barcode() { var h = hash((S.email || 'plaiground') + S.name), x = 0, out = ''; for (var i = 0; i < 46; i++) { h = Math.imul(h ^ (h >>> 13), 2654435761) >>> 0; var w = 1 + (h % 3); if (i % 2 === 0) out += '<rect x="' + x + '" y="0" width="' + w + '" height="34" rx=".5"/>'; x += w + 1; } return '<svg viewBox="0 0 ' + x + ' 34" preserveAspectRatio="none" aria-hidden="true">' + out + '</svg>'; }
 
@@ -72,6 +75,7 @@
 .lp-nav .nx{border:0;border-radius:999px;padding:15px 26px;font:700 16px var(--body);cursor:pointer;color:#fff;background:linear-gradient(100deg,#4338CA,#7C5CFF 50%,#FF7A59);box-shadow:0 14px 34px rgba(124,92,255,.4);transition:transform .15s}
 .lp-nav .nx:hover{transform:translateY(-2px)}.lp-nav .nx[disabled]{opacity:.5;cursor:wait}
 .lp-err{color:#FF9B7E;font-size:14px;min-height:20px;margin-top:10px}
+.lp-sug{background:none;border:0;padding:0;color:#FFB8A6;font:inherit;text-align:left;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
 .lp-hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
 /* ticket */
 .lp-tk-wrap{perspective:1200px;display:flex;justify-content:center}
@@ -146,7 +150,7 @@
       '<div class="lp-links"><a href="/barometer/"><span>Franchise Brand Barometer<small>' + tr('¿Qué saga es la marca más fuerte?', 'Which saga is the strongest brand?') + '</small></span>→</a><a href="/data/"><span>Data plaiground<small>' + tr('Tu Excel convertido en un dashboard interactivo', 'Your Excel turned into an interactive dashboard') + '</small></span>→</a><a href="/cv/"><span>Olivero Fest CV<small>' + tr('Una carrera contada como un festival', 'A career told as a festival') + '</small></span>→</a></div></div>';
   }
   function render() {
-    root.innerHTML = '<div class="lp"><div class="lp-form">' + (S.done ? doneHtml() : '<div class="lp-prog" aria-hidden="true">' + [0, 1, 2, 3].map(function (i) { return '<span class="' + (i <= S.step ? 'on' : '') + '"><i></i></span>'; }).join('') + '</div><form id="lp-form" novalidate>' + stepHtml() + '<div class="lp-err" id="lp-err" role="alert">' + esc(S.err) + '</div><div class="lp-nav">' + (S.step ? '<button type="button" class="bk" id="lp-bk">← ' + tr('Atrás', 'Back') + '</button>' : '<span></span>') + '<button type="submit" class="nx" id="lp-nx"' + (S.sending ? ' disabled' : '') + '>' + (S.step < STEPS - 1 ? tr('Siguiente', 'Next') + ' →' : S.sending ? tr('Emitiendo…', 'Issuing…') : tr('Emitir mi pase', 'Issue my pass') + ' ✦') + '</button></div></form>') + '</div><div class="lp-tk-wrap">' + ticketHtml() + '</div></div>';
+    root.innerHTML = '<div class="lp"><div class="lp-form">' + (S.done ? doneHtml() : '<div class="lp-prog" aria-hidden="true">' + [0, 1, 2, 3].map(function (i) { return '<span class="' + (i <= S.step ? 'on' : '') + '"><i></i></span>'; }).join('') + '</div><form id="lp-form" novalidate>' + stepHtml() + '<div class="lp-err" id="lp-err" role="alert">' + (S.sug && S.step === 2 ? '<button type="button" id="lp-sug" class="lp-sug">' + esc(S.err) + '</button>' : esc(S.err)) + '</div><div class="lp-nav">' + (S.step ? '<button type="button" class="bk" id="lp-bk">← ' + tr('Atrás', 'Back') + '</button>' : '<span></span>') + '<button type="submit" class="nx" id="lp-nx"' + (S.sending ? ' disabled' : '') + '>' + (S.step < STEPS - 1 ? tr('Siguiente', 'Next') + ' →' : S.sending ? tr('Emitiendo…', 'Issuing…') : tr('Emitir mi pase', 'Issue my pass') + ' ✦') + '</button></div></form>') + '</div><div class="lp-tk-wrap">' + ticketHtml() + '</div></div>';
     bind();
   }
   function refreshTicket() { var w = root.querySelector('.lp-tk-wrap'); if (w) { w.innerHTML = ticketHtml(); tilt(); } }
@@ -157,13 +161,14 @@
   }
   function validate() {
     if (S.step === 0 && !S.interests.length) return tr('Elige al menos una opción para tu misión.', 'Pick at least one option for your mission.');
-    if (S.step === 2) { if (S.name.length < 2) return tr('Escribe tu nombre.', 'Enter your name.'); if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(S.email)) return tr('Escribe un email válido.', 'Enter a valid email.'); }
+    if (S.step === 2) { if (S.name.length < 2) return tr('Escribe tu nombre.', 'Enter your name.'); if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(S.email)) return tr('Escribe un email válido.', 'Enter a valid email.'); var sg = suggest(S.email); if (sg && S.okEmail !== S.email) { S.sug = sg; S.okEmail = S.email; return tr('¿Querías decir ', 'Did you mean ') + sg + '? ' + tr('Pulsa aquí para corregirlo, o «Siguiente» si está bien.', 'Tap here to fix it, or “Next” if it’s right.'); } }
     if (S.step === 3 && !S.privacy) return tr('Necesito que aceptes la política de privacidad para poder responderte.', 'Please accept the privacy policy so I can reply.');
     return '';
   }
   function bind() {
     var f = document.getElementById('lp-form');
-    if (f) f.onsubmit = function (e) { e.preventDefault(); readFields(); S.err = validate(); if (S.err) { render(); var fe = root.querySelector('input:not([type=checkbox]),button.lp-chip'); return; } if (S.step < STEPS - 1) { S.step++; render(); focusFirst(); } else submit(); };
+    if (f) f.onsubmit = function (e) { e.preventDefault(); readFields(); S.sug = ''; S.err = validate(); if (S.err) { render(); var fe = root.querySelector('input:not([type=checkbox]),button.lp-chip'); return; } if (S.step < STEPS - 1) { S.step++; render(); focusFirst(); } else submit(); };
+    var sb = document.getElementById('lp-sug'); if (sb) sb.onclick = function () { S.email = S.sug; S.okEmail = S.sug; S.sug = ''; S.err = ''; render(); };
     var bk = document.getElementById('lp-bk'); if (bk) bk.onclick = function () { readFields(); S.err = ''; S.step--; render(); focusFirst(); };
     root.querySelectorAll('.lp-chip').forEach(function (b) { b.onclick = function () { var k = b.dataset.i, i = S.interests.indexOf(k); if (i >= 0) S.interests.splice(i, 1); else S.interests.push(k); b.setAttribute('aria-pressed', i < 0); S.err = ''; var er = document.getElementById('lp-err'); if (er) er.textContent = ''; refreshTicket(); }; });
     root.querySelectorAll('.lp-roles button').forEach(function (b) { b.onclick = function () { S.role = S.role === b.dataset.r ? '' : b.dataset.r; root.querySelectorAll('.lp-roles button').forEach(function (x) { x.setAttribute('aria-pressed', x.dataset.r === S.role); }); refreshTicket(); }; });
