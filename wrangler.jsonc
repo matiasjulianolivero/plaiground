@@ -1,6 +1,8 @@
 {
   "name": "plaiground",
   "compatibility_date": "2026-11-20",
+  // Código del servidor: solo atiende /api/* (Data plaiground). El resto es la web estática de public/
+  "main": "src/index.js",
   // La web real solo se sirve en plaigroundmarketing.com
   "workers_dev": false,
   // Activa las URLs de vista previa (rama staging → staging-plaiground.<cuenta>.workers.dev)
@@ -9,6 +11,21 @@
   "previews": {},
   "assets": {
     "directory": "./public",
-    "not_found_handling": "404-page"
-  }
+    "not_found_handling": "404-page",
+    "binding": "ASSETS",
+    // Solo las rutas /api/ pasan por el código; las páginas se sirven directamente
+    "run_worker_first": ["/api/*"]
+  },
+  // Base de datos de Data plaiground (usuarios, sesiones y dashboards).
+  // Sin database_id: Cloudflare la crea automáticamente en el primer despliegue.
+  "d1_databases": [
+    { "binding": "DB", "database_name": "plaiground-data" }
+  ],
+  "vars": {
+    "APP_URL": "https://plaigroundmarketing.com",
+    // Remitente de los emails. Requiere el dominio verificado en Resend.
+    "EMAIL_FROM": "Data plaiground <data@plaigroundmarketing.com>"
+  },
+  "observability": { "enabled": true }
+  // Secreto necesario (no va aquí): RESEND_API_KEY → Workers → plaiground → Settings → Variables and Secrets
 }

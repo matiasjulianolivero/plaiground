@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-UPDATED_EN = "20 November 2026"
+UPDATED_EN = "23 November 2026"
 PAGES_EN = {}
 
 PAGES_EN["aviso-legal"] = dict(
@@ -53,7 +53,7 @@ PAGES_EN["privacidad"] = dict(
 title="Privacy policy",
 intro="How personal data is processed on plaiground, in accordance with Regulation (EU) 2016/679 (GDPR) and Spanish Organic Law 3/2018 (LOPDGDD).",
 body="""
-<div class="callout"><p><strong>In short:</strong> this site has no user accounts, forms, analytics or advertising tools. Only the data strictly needed for the site to work, and whatever you choose to send by email, is processed.</p></div>
+<div class="callout"><p><strong>In short:</strong> this site uses no analytics or advertising tools. Only if you create a Data plaiground account do we store your email and dashboards. Only the data strictly needed for the site to work, and whatever you choose to send by email, is processed.</p></div>
 
 <h2 id="responsable">1. Data controller</h2>
 <ul class="kv">
@@ -70,6 +70,7 @@ body="""
 <tr><td>Browsing the site</td><td>IP address, browser, date and time of access (server technical logs)</td><td>Serve the site, keep it secure and prevent abuse</td><td>Legitimate interest (Art. 6(1)(f) GDPR)</td><td>As set by the hosting provider for its technical logs</td></tr>
 <tr><td>Contact by email or LinkedIn</td><td>Name, email and whatever you include in your message</td><td>Reply to your enquiry and, where relevant, prepare a proposal</td><td>Your request and pre-contractual steps (Art. 6(1)(b)) and legitimate interest in replying (Art. 6(1)(f))</td><td>For the duration of the conversation and up to 2 years afterwards, unless the law requires otherwise</td></tr>
 <tr><td>Preferences in your browser</td><td>Language, light/dark theme and cookie choice</td><td>Remember your preferences</td><td>Necessary for the service you request; see the <a href="/legal/cookies/">cookie policy</a></td><td>Stored only on your device; cookie choice, 12 months</td></tr>
+<tr><td>Data plaiground account</td><td>Email, date you accepted the terms, last sign-in date, language and the dashboards you create</td><td>Give you access via an email link (no password), save your dashboards and tell you about important service changes</td><td>Performance of the <a href="/legal/terminos/">terms of use</a> (Art. 6(1)(b))</td><td>While you keep the account. You can delete it yourself at any time from the platform; accounts inactive for 24 months are deleted</td></tr>
 <tr><td>Using interactive tools</td><td>The data you enter into them</td><td>Provide the functionality you ask for</td><td>Performance of the <a href="/legal/terminos/">terms of use</a> (Art. 6(1)(b))</td><td>See section 3</td></tr>
 </tbody></table></div>
 <p>No automated decisions with legal effects are made about you and no profiles are built for commercial purposes. Your data is never sold or shared with third parties.</p>
@@ -86,8 +87,9 @@ body="""
 <h2 id="destinatarios">4. Providers involved</h2>
 <p>The following providers are used to run the site and may process data on the owner’s behalf:</p>
 <ul>
-<li><strong>Cloudflare, Inc.</strong>: hosting and delivery of the site, and protection against attacks.</li>
+<li><strong>Cloudflare, Inc.</strong>: hosting and delivery of the site, protection against attacks, and the database for Data plaiground accounts and dashboards.</li>
 <li><strong>Google LLC</strong>: fonts (Google Fonts), loaded from Google servers, which receive your IP address; and email (Gmail) when you write.</li>
+<li><strong>Resend</strong>: sending Data plaiground sign-in emails and notices.</li>
 <li><strong>Anthropic, PBC</strong>: artificial intelligence models (Claude) for AI tools, once available.</li>
 <li><strong>LinkedIn</strong>: only if you choose to get in touch there, under its own privacy policy.</li>
 </ul>
@@ -114,7 +116,7 @@ PAGES_EN["cookies"] = dict(
 title="Cookie policy",
 intro="Which cookies and similar technologies plaiground uses and how you can manage them.",
 body="""
-<div class="callout"><p><strong>In short:</strong> right now this site uses no analytics or advertising cookies. It only stores your preferences (language, theme and cookie choice) in your browser. If others are added in the future, they will only run if you accept them.</p>
+<div class="callout"><p><strong>In short:</strong> this site uses no analytics or advertising cookies. It only stores your preferences (language, theme and cookie choice) and, if you sign in to Data plaiground, the session cookie. If others are added in the future, they will only run if you accept them.</p>
 <p><button type="button" class="btn-cc" data-cookie-settings>Cookie settings</button></p></div>
 
 <h2 id="que-son">1. What are cookies?</h2>
@@ -126,6 +128,7 @@ body="""
 <div class="table"><table>
 <thead><tr><th>Name</th><th>Type</th><th>Owner</th><th>Purpose</th><th>Duration</th></tr></thead>
 <tbody>
+<tr><td><code>plg_session</code></td><td>Cookie</td><td>First party</td><td>Keep you signed in to Data plaiground (only if you create an account)</td><td>30 days</td></tr>
 <tr><td><code>plg-consent</code></td><td>localStorage</td><td>First party</td><td>Store your cookie choice</td><td>12 months</td></tr>
 <tr><td><code>plg-lang</code>, <code>plg-theme</code></td><td>localStorage</td><td>First party</td><td>Remember language and theme on the main site</td><td>Until you delete it</td></tr>
 <tr><td><code>fbb-lang</code>, <code>fbb-theme</code></td><td>localStorage</td><td>First party</td><td>Remember language and theme on the Franchise Brand Barometer</td><td>Until you delete it</td></tr>
