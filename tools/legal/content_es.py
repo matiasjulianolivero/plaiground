@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # Contenido legal en español. {NIF} y {DOM} son marcadores de datos pendientes.
-UPDATED_ES = "20 de noviembre de 2026"
+UPDATED_ES = "23 de noviembre de 2026"
 
 PAGES_ES = {}
 
@@ -54,7 +54,7 @@ PAGES_ES["privacidad"] = dict(
 title="Política de privacidad",
 intro="Cómo se tratan tus datos personales en plaiground, conforme al Reglamento (UE) 2016/679 (RGPD) y la Ley Orgánica 3/2018 (LOPDGDD).",
 body="""
-<div class="callout"><p><strong>En resumen:</strong> esta web no tiene registro de usuarios, formularios ni herramientas de analítica o publicidad. Solo se tratan los datos imprescindibles para que la web funcione y los que tú decidas enviar por email.</p></div>
+<div class="callout"><p><strong>En resumen:</strong> esta web no usa herramientas de analítica ni de publicidad. Solo si creas una cuenta en Data plaiground guardamos tu email y tus dashboards. Solo se tratan los datos imprescindibles para que la web funcione y los que tú decidas enviar por email.</p></div>
 
 <h2 id="responsable">1. Responsable del tratamiento</h2>
 <ul class="kv">
@@ -71,6 +71,7 @@ body="""
 <tr><td>Navegación por la web</td><td>Dirección IP, navegador, fecha y hora de acceso (registros técnicos del servidor)</td><td>Servir la web, mantener su seguridad y evitar abusos</td><td>Interés legítimo (art. 6.1.f RGPD)</td><td>El tiempo que fije el proveedor de alojamiento para sus registros técnicos</td></tr>
 <tr><td>Contacto por email o LinkedIn</td><td>Nombre, email y lo que incluyas en tu mensaje</td><td>Responder a tu consulta y, en su caso, preparar una propuesta</td><td>Tu solicitud y medidas precontractuales (art. 6.1.b) e interés legítimo en responder (art. 6.1.f)</td><td>Mientras dure la conversación y hasta 2 años después, salvo obligación legal</td></tr>
 <tr><td>Preferencias en tu navegador</td><td>Idioma, tema claro/oscuro y elección de cookies</td><td>Recordar tus preferencias</td><td>Necesario para el servicio que solicitas; ver <a href="/legal/cookies/">política de cookies</a></td><td>Se guardan solo en tu dispositivo; la elección de cookies, 12 meses</td></tr>
+<tr><td>Cuenta en Data plaiground</td><td>Email, fecha de aceptación de los términos, fecha del último acceso, idioma y los dashboards que crees</td><td>Darte acceso con un enlace por email (sin contraseña), guardar tus dashboards y avisarte de cambios importantes del servicio</td><td>Ejecución de los <a href="/legal/terminos/">términos de uso</a> (art. 6.1.b)</td><td>Mientras tengas la cuenta. Puedes borrarla tú mismo en cualquier momento desde la plataforma; las cuentas sin actividad durante 24 meses se eliminan</td></tr>
 <tr><td>Uso de herramientas interactivas</td><td>Los datos que introduzcas en ellas</td><td>Prestar la funcionalidad que pides</td><td>Ejecución de los <a href="/legal/terminos/">términos de uso</a> (art. 6.1.b)</td><td>Ver apartado 3</td></tr>
 </tbody></table></div>
 <p>No se toman decisiones automatizadas con efectos jurídicos sobre ti ni se elaboran perfiles con fines comerciales. No se venden ni se ceden tus datos a terceros.</p>
@@ -87,8 +88,9 @@ body="""
 <h2 id="destinatarios">4. Proveedores que intervienen</h2>
 <p>Para que la web funcione se usan estos proveedores, que pueden tratar datos por cuenta del titular:</p>
 <ul>
-<li><strong>Cloudflare, Inc.</strong>: alojamiento y entrega de la web, y protección frente a ataques.</li>
+<li><strong>Cloudflare, Inc.</strong>: alojamiento y entrega de la web, protección frente a ataques y base de datos de las cuentas y dashboards de Data plaiground.</li>
 <li><strong>Google LLC</strong>: tipografías (Google Fonts), que se cargan desde servidores de Google y reciben tu dirección IP; y correo electrónico (Gmail) cuando escribes.</li>
+<li><strong>Resend</strong>: envío de los emails de acceso y avisos de Data plaiground.</li>
 <li><strong>Anthropic, PBC</strong>: modelos de inteligencia artificial (Claude) para las herramientas con IA, cuando estén disponibles.</li>
 <li><strong>LinkedIn</strong>: solo si decides contactar a través de esa red, conforme a su propia política de privacidad.</li>
 </ul>
@@ -114,7 +116,7 @@ PAGES_ES["cookies"] = dict(
 title="Política de cookies",
 intro="Qué cookies y tecnologías similares usa plaiground y cómo puedes gestionarlas.",
 body="""
-<div class="callout"><p><strong>En resumen:</strong> ahora mismo esta web no usa cookies de analítica ni de publicidad. Solo guarda en tu navegador tus preferencias (idioma, tema y elección de cookies). Si en el futuro se añaden otras, solo se activarán si las aceptas.</p>
+<div class="callout"><p><strong>En resumen:</strong> esta web no usa cookies de analítica ni de publicidad. Solo guarda tus preferencias (idioma, tema y elección de cookies) y, si entras en Data plaiground, la cookie de sesión. Si en el futuro se añaden otras, solo se activarán si las aceptas.</p>
 <p><button type="button" class="btn-cc" data-cookie-settings>Configurar cookies</button></p></div>
 
 <h2 id="que-son">1. ¿Qué son las cookies?</h2>
@@ -126,6 +128,7 @@ body="""
 <div class="table"><table>
 <thead><tr><th>Nombre</th><th>Tipo</th><th>Titular</th><th>Finalidad</th><th>Duración</th></tr></thead>
 <tbody>
+<tr><td><code>plg_session</code></td><td>Cookie</td><td>Propia</td><td>Mantener tu sesión iniciada en Data plaiground (solo si creas una cuenta)</td><td>30 días</td></tr>
 <tr><td><code>plg-consent</code></td><td>localStorage</td><td>Propia</td><td>Guardar tu elección sobre cookies</td><td>12 meses</td></tr>
 <tr><td><code>plg-lang</code>, <code>plg-theme</code></td><td>localStorage</td><td>Propia</td><td>Recordar idioma y tema en la web principal</td><td>Hasta que lo borres</td></tr>
 <tr><td><code>fbb-lang</code>, <code>fbb-theme</code></td><td>localStorage</td><td>Propia</td><td>Recordar idioma y tema en el Franchise Brand Barometer</td><td>Hasta que lo borres</td></tr>
