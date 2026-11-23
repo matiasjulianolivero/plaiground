@@ -419,13 +419,13 @@ V.proc=()=>`<div class="proc card"><h2>${tr('Preparando tu dashboard…','Prepar
  tr('Leyendo','Reading')+' '+esc(draft.source),tr('Calculando tendencias, repartos, correlaciones y anomalías','Computing trends, splits, correlations and outliers'),
  AI?tr('Claude está eligiendo KPIs y gráficos para','Claude is choosing KPIs and charts for')+' '+AUD[draft.aud][L()].toLowerCase():tr('Eligiendo KPIs y gráficos','Choosing KPIs and charts'),
  AI?tr('Claude está redactando insights, oportunidades y plan de acción','Claude is writing insights, opportunities and the action plan'):tr('Resumiendo los hallazgos','Summarising the findings'),
- tr('Calculando las cifras del dashboard con código','Computing the dashboard figures with code'),tr('Guardando en tu cuenta','Saving to your account')].map(s=>`<li><i></i>${s}</li>`).join('')}</ol><div class="err" id="procErr"></div></div>`;
+ tr('Calculando las cifras del dashboard con código','Computing the dashboard figures with code'),tr('Guardando en tu cuenta y enviándote el email','Saving to your account and emailing you')].map(s=>`<li><i></i>${s}</li>`).join('')}</ol><div class="err" id="procErr"></div></div>`;
 
 V.dash=()=>cur&&cur.v===2?V.dash2():V.dash1();
 V.dash2=()=>{const d=cur,r=d.result||{};
  return `<div class="bar"><button class="btn sec" type="button" data-act="home">← ${tr('Mis dashboards','My dashboards')}</button><h1>${esc(d.title)}</h1>
   <button class="btn sec" type="button" id="pdf">${tr('Descargar PDF','Download PDF')}</button><button class="btn pri" type="button" id="share">${tr('Compartir','Share')}</button></div>
- <div class="review" role="note"><span>⚠︎</span><span>${tr('Revisa los datos antes de presentarlo: la IA puede equivocarse y los datos de origen pueden tener errores. Las cifras se calculan con código a partir de tu archivo.','Review the data before presenting it: the AI can make mistakes and the source data may contain errors. Figures are computed with code from your file.')}</span></div>
+ <div class="review" role="note"><span>⚠︎</span><span>${r.mode==='ai'?tr('Revisa los datos antes de presentarlo: la IA puede equivocarse y los datos de origen pueden tener errores. Las cifras se calculan con código a partir de tu archivo.','Review the data before presenting it: the AI can make mistakes and the source data may contain errors. Figures are computed with code from your file.'):tr('Revisa los datos antes de presentarlo: el análisis automático puede interpretar mal alguna columna y los datos de origen pueden tener errores.','Review the data before presenting it: the automatic analysis may misread a column and the source data may contain errors.')}</span></div>
  <div class="understood"><span class="tag">${tr('Contexto','Context')}</span>${d.company||d.bizType?`<span>${tr('Empresa','Business')}: <b>${esc(d.company||'')}</b>${d.bizType?` (${esc(d.bizType)})`:''}</span>`:''}<span>${tr('Datos','Data')}: <b>${esc(d.data||'')}</b></span><span>${tr('Para','For')}: <b>${AUD[d.aud][L()]}</b></span>${d.goal?`<span>${tr('Objetivo','Goal')}: <b>${esc(d.goal)}</b></span>`:''}</div>
  ${r.summary?`<p style="font-size:17px;margin:0 0 14px;max-width:900px">${esc(r.summary)}</p>`:''}
  ${(r.warnings||[]).length?`<div class="review" style="background:var(--soft);border-color:var(--line)"><span>ℹ︎</span><span>${r.warnings.map(esc).join(' · ')}</span></div>`:''}
@@ -441,6 +441,19 @@ function paintDash2(){const r=cur.result||{},lang=cur.lang||L();
  $('charts2').innerHTML=(r.charts||[]).map((c,i)=>`<div class="ch"><h4>${esc(c.title)}</h4><p class="sub">${c.type==='line'?tr('Evolución mensual','Monthly trend'):(c.by?tr('Por','By')+' '+esc(c.by):'')} · ${esc(c.sheet||'')}</p><svg id="c${i}" role="img" aria-label="${esc(c.title)}"></svg><div class="tip" id="t${i}"></div></div>`).join('');
  (r.charts||[]).forEach((c,i)=>PLGEngine.drawChart($('c'+i),$('t'+i),c,L()));
  $('analysis').innerHTML=window.PLGAnalysis.render({insights:r.insights,opps:r.opportunities,rels:r.relationships,actions:r.actions,ideas:r.ideas,note:tr('Las relaciones muestran correlación, no causalidad. Revisa siempre las conclusiones con tu conocimiento del negocio.','Relationships show correlation, not causation. Always check conclusions against your business knowledge.')},L(),esc,r.mode==='ai'?'✦ '+tr('Redactado por IA a partir de cifras calculadas','Written by AI from computed figures'):tr('Calculado automáticamente','Computed automatically'));}
+
+async function openShare(){
+ if(MODE!=='live'||cur.v!==2){modal(`<h3 id="mTitle">${tr('Compartir dashboard','Share dashboard')}</h3><p class="muted">${MODE!=='live'?tr('Los enlaces para compartir están disponibles al iniciar sesión.','Share links are available once signed in.'):tr('Este dashboard de ejemplo no se puede compartir. Crea uno con tus datos.','This sample dashboard can’t be shared. Create one with your own data.')}</p><div class="actions" style="justify-content:flex-end"><button class="btn sec" type="button" data-close>${tr('Cerrar','Close')}</button></div>`);return;}
+ modal(`<h3 id="mTitle">${tr('Compartir dashboard','Share dashboard')}</h3><p class="muted">${tr('Creando enlace…','Creating link…')}</p>`);
+ const r=await api('/api/dashboards/'+cur.id+'/share',{method:'POST'});
+ if(!r.ok){$('mBox').innerHTML=`<h3 id="mTitle">${tr('Compartir dashboard','Share dashboard')}</h3><p class="err">${tr('No se pudo crear el enlace. Inténtalo de nuevo.','Could not create the link. Please try again.')}</p><div class="actions" style="justify-content:flex-end"><button class="btn sec" type="button" data-close>${tr('Cerrar','Close')}</button></div>`;return;}
+ const link=r.data.url,exp=fmtDate(r.data.expires_at);
+ $('mBox').innerHTML=`<h3 id="mTitle">${tr('Compartir dashboard','Share dashboard')}</h3><p class="muted">${tr('Cualquiera con este enlace podrá ver el dashboard (no editarlo) hasta el','Anyone with this link can view the dashboard (not edit it) until')} ${exp}. ${tr('No necesitan cuenta.','No account needed.')}</p>
+  <div class="copyrow"><input type="text" id="lnk" value="${esc(link)}" readonly aria-label="${tr('Enlace','Link')}"><button class="btn pri" type="button" id="cp">${tr('Copiar','Copy')}</button></div>
+  <p class="hint">${tr('Ojo: comparte el enlace solo con quien deba ver estos datos.','Note: only share the link with people who should see this data.')}</p>
+  <div class="actions" style="margin-top:12px"><button class="btn link" type="button" id="revoke" style="color:var(--bad)">${tr('Revocar enlace','Revoke link')}</button><button class="btn sec" type="button" data-close>${tr('Cerrar','Close')}</button></div>`;
+ $('cp').onclick=async()=>{try{await navigator.clipboard.writeText(link);toast(tr('Enlace copiado','Link copied'));}catch(e){$('lnk').select();toast(tr('Selecciona y copia el enlace','Select and copy the link'));}};
+ $('revoke').onclick=async()=>{const x=await api('/api/dashboards/'+cur.id+'/share',{method:'DELETE'});closeModal();toast(x.ok?tr('Enlace revocado: ya no funciona','Link revoked: it no longer works'):tr('No se pudo revocar','Could not revoke'));};}
 
 async function loadSource(kind,payload){draft.err='';draft.wb=null;draft.ctxDone=false;
  try{
@@ -496,9 +509,9 @@ async function runProc(){const lis=[...document.querySelectorAll('#plist li')];l
    actions:(spec.actions||[]).map(a=>({t:a.t,est:a.est||'',impact:a.impact||'',effort:a.effort||'',when:a.when||''})),ideas:spec.ideas||[],warnings:(spec.warnings||[]).concat(draft.warnings||[]).slice(0,4)};
   await wait(300);step();
   const d={v:2,id:Math.random().toString(36).slice(2,10),ts:Date.now(),title:draft.title||spec.title||tr('Mi dashboard','My dashboard'),aud:draft.aud,company:draft.company||'',bizType:draft.bizType||'',data:draft.data||'',goal:draft.goal||'',source:draft.source,lang,result};
-  if(MODE==='live'){const r=await api('/api/dashboards',{method:'POST',body:JSON.stringify(d)});if(!r.ok)toast(tr('No se pudo guardar en tu cuenta','Could not save to your account'));}
+  let emailed=false;if(MODE==='live'){const r=await api('/api/dashboards',{method:'POST',body:JSON.stringify(d)});if(!r.ok)toast(tr('No se pudo guardar en tu cuenta','Could not save to your account'));else emailed=!!r.data.emailed;}
   S.dash=S.dash.filter(x=>x.id!==d.id);S.dash.push(d);save();step();await wait(250);
-  cur=d;draft=null;go('dash');toast(MODE==='live'?tr('Dashboard guardado en tu cuenta','Dashboard saved to your account'):tr('Dashboard creado','Dashboard created'));
+  cur=d;draft=null;go('dash');toast(emailed?tr('Guardado. Te hemos enviado un email con el enlace.','Saved. We’ve emailed you the link.'):MODE==='live'?tr('Dashboard guardado en tu cuenta','Dashboard saved to your account'):tr('Dashboard creado','Dashboard created'));
  }catch(e){console.error(e);if($('procErr'))$('procErr').textContent=tr('Algo ha fallado al analizar el archivo. Inténtalo de nuevo o prueba con otro archivo.','Something went wrong analysing the file. Try again or use another file.');}}
 
 /* ===== render y eventos ===== */
@@ -543,12 +556,7 @@ function bind(){
   app.querySelectorAll('[data-aud]').forEach(b=>b.onclick=()=>{keep();const old=draft.aud;draft.aud=b.dataset.aud;if(!draft.goal||draft.goal===GOAL[old][L()])draft.goal=GOAL[draft.aud][L()];render();});
   $('back2').onclick=()=>{keep();go('new1');};
   $('gen').onclick=()=>{keep();if(!draft.title)draft.title=tr('Mi dashboard','My dashboard');go('proc');runProc();};}
- if(view==='dash'){$('share').onclick=()=>{const link='https://plaigroundmarketing.com/d/'+cur.id;
-   modal(`<h3 id="mTitle">${tr('Compartir dashboard','Share dashboard')}</h3><p class="muted">${tr('Cualquiera con este enlace privado podrá verlo (no editarlo). Puedes revocarlo cuando quieras.','Anyone with this private link can view it (not edit). You can revoke it at any time.')}</p>
-    <div class="copyrow"><input type="text" id="lnk" value="${link}" readonly aria-label="${tr('Enlace','Link')}"><button class="btn pri" type="button" id="cp">${tr('Copiar','Copy')}</button></div>
-    <label class="check"><input type="checkbox" checked><span>${tr('Caduca en 30 días','Expires in 30 days')}</span></label><label class="check"><input type="checkbox"><span>${tr('Proteger con contraseña','Protect with a password')}</span></label>
-    <p class="hint">${tr('Prototipo: el enlace todavía no funciona.','Prototype: the link doesn’t work yet.')}</p><div class="actions" style="justify-content:flex-end;margin-top:12px"><button class="btn sec" type="button" data-close>${tr('Cerrar','Close')}</button></div>`);
-   $('cp').onclick=async()=>{try{await navigator.clipboard.writeText(link);toast(tr('Enlace copiado','Link copied'));}catch(e){$('lnk').select();toast(tr('Selecciona y copia el enlace','Select and copy the link'));}};};
+ if(view==='dash'){if($('share'))$('share').onclick=()=>openShare();
   $('pdf').onclick=()=>{try{window.print()}catch(e){toast(tr('Usa Imprimir → Guardar como PDF en tu navegador','Use Print → Save as PDF in your browser'));}};
   if($('tblBtn'))$('tblBtn').onclick=()=>{tblOpen=!tblOpen;render();};
   if($('seeMail'))$('seeMail').onclick=()=>modal(`<h3 id="mTitle">${tr('Tu dashboard está listo','Your dashboard is ready')}</h3><p class="muted" style="margin:0 0 10px">${tr('De','From')}: noreply@plaigroundmarketing.com · ${tr('Para','To')}: ${esc(S.email)}</p>
@@ -571,10 +579,13 @@ async function boot(){
  try{const r=await fetch('/api/me',{credentials:'same-origin'});const d=await r.json().catch(()=>null);
   if(d&&(r.ok||(d.error==='unauthorized'&&d.configured!==false))){MODE='live';if(r.ok){me=d;AI=!!d.ai;}}}catch(e){}
  if(MODE==='live'){
-  if(tok){history.replaceState(null,'',location.pathname);app.innerHTML=`<div class="proc card"><h2>${tr('Entrando…','Signing in…')}</h2></div>`;
+  if(tok){const op0=qp.get('open');if(op0){try{localStorage.setItem('plg-open',op0)}catch(e){}}history.replaceState(null,'',location.pathname);app.innerHTML=`<div class="proc card"><h2>${tr('Entrando…','Signing in…')}</h2></div>`;
    const r=await api('/api/auth/verify',{method:'POST',body:JSON.stringify({token:tok})});
    if(r.ok){const m2=await api('/api/me');me=m2.ok?m2.data:{email:r.data.email};AI=!!(m2.ok&&m2.data.ai);toast(tr('Sesión iniciada','Signed in'));}else flash=tr('El enlace ha caducado o ya se usó. Pide uno nuevo.','The link has expired or was already used. Request a new one.');}
-  if(me){S.email=me.email;const r=await api('/api/dashboards');S.dash=r.ok?r.data.dashboards:[];view='home';}
+  const op=qp.get('open');if(op){try{localStorage.setItem('plg-open',op)}catch(e){}history.replaceState(null,'',location.pathname);}
+  if(me){S.email=me.email;const r=await api('/api/dashboards');S.dash=r.ok?r.data.dashboards:[];view='home';
+   let want=null;try{want=localStorage.getItem('plg-open');localStorage.removeItem('plg-open');}catch(e){}
+   const hit=want&&S.dash.find(x=>x.id===want);if(hit){cur=hit;view='dash';}}
   else{S.email='';S.dash=[];view='login';}
   save();
  }

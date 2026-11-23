@@ -11,6 +11,9 @@
  *   GET    /api/dashboards                                 → lista de dashboards del usuario
  *   POST   /api/dashboards     { id, title, ... }          → crea o actualiza un dashboard
  *   DELETE /api/dashboards/:id                             → borra un dashboard
+ *   POST   /api/dashboards/:id/share                       → crea (o devuelve) el enlace público de solo lectura (30 días)
+ *   DELETE /api/dashboards/:id/share                       → revoca el enlace público
+ *   GET    /api/share/:token                               → dashboard compartido (sin sesión)
  *   GET    /api/sheets?url=                                → descarga una Google Sheet pública como .xlsx
  *   POST   /api/ai/context   { profile, lang }            → la IA propone el contexto (empresa, datos, público, objetivo)
  *   POST   /api/ai/analyze   { context, profile, facts }  → la IA propone KPIs, gráficos y el análisis escrito
@@ -29,6 +32,8 @@ const MAX_REQUESTS_PER_EMAIL_HOUR = 5;
 const MAX_REQUESTS_PER_IP_HOUR = 20;
 const MAX_DASHBOARDS = 50;
 const MAX_AI_CALLS_PER_DAY = 30;
+const SHARE_TTL_DAYS = 30;
+const MAX_READY_EMAILS_PER_DAY = 15;
 const DEFAULT_MODEL = 'claude-sonnet-5-5';
 
 let schemaReady = false;
@@ -51,7 +56,12 @@ async function ensureSchema(db) {
       PRIMARY KEY (user_id, id))`),
     db.prepare(`CREATE TABLE IF NOT EXISTS ai_usage (
       user_id TEXT NOT NULL, ts INTEGER NOT NULL, kind TEXT, input_tokens INTEGER, output_tokens INTEGER, ok INTEGER)`),
-    db.prepare(`CREATE INDEX IF NOT EXISTS idx_ai_user ON ai_usage(user_id, ts)`)
+    db.prepare(`CREATE INDEX IF NOT EXISTS idx_ai_user ON ai_usage(user_id, ts)`),
+    db.prepare(`CREATE TABLE IF NOT EXISTS shares (
+      token TEXT PRIMARY KEY, user_id TEXT NOT NULL, dash_id TEXT NOT NULL, created_at INTEGER NOT NULL, expires_at INTEGER NOT NULL)`),
+    db.prepare(`CREATE INDEX IF NOT EXISTS idx_shares_dash ON shares(user_id, dash_id)`),
+    db.prepare(`CREATE TABLE IF NOT EXISTS email_log (
+      user_id TEXT NOT NULL, ts INTEGER NOT NULL, kind TEXT)`)
   ]);
   schemaReady = true;
 }
@@ -129,6 +139,40 @@ async function sendEmail(env, to, { subject, html, text }) {
   return true;
 }
 
+function readyEmail(d, link, lang) {
+  const en = lang === 'en', r = d.result || {};
+  const tr = (es, e) => en ? e : es;
+  const li = arr => (arr || []).slice(0, 3).map(x => `<li style="margin:0 0 6px">${esc(x)}</li>`).join('');
+  const kpis = (r.kpis || []).slice(0, 4).map(k => `<td style="padding:10px 12px;background:#F4F5FB;border-radius:10px;font-size:12px;color:#555A7A;vertical-align:top">${esc(k.label)}<br><b style="font-size:18px;color:#14162E">${esc(k.text)}</b></td>`).join('<td style="width:8px"></td>');
+  const act = (r.actions || [])[0];
+  const subject = tr(`Tu dashboard «${d.title}» está listo`, `Your dashboard “${d.title}” is ready`);
+  const html = `<!DOCTYPE html><html><body style="margin:0;background:#F4F5FB;font-family:Arial,Helvetica,sans-serif;color:#14162E">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F4F5FB;padding:28px 12px"><tr><td align="center">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background:#ffffff;border-radius:18px;padding:28px">
+<tr><td style="font-size:20px;font-weight:bold">pl<span style="color:#4338CA">ai</span>ground <span style="font-size:13px;color:#555A7A;font-weight:normal">Data</span></td></tr>
+<tr><td style="padding:18px 0 6px;font-size:22px;font-weight:bold">${esc(d.title)}</td></tr>
+${r.summary ? `<tr><td style="font-size:15px;line-height:1.55;color:#333">${esc(r.summary)}</td></tr>` : ''}
+${kpis ? `<tr><td style="padding:16px 0"><table role="presentation" cellpadding="0" cellspacing="0" width="100%"><tr>${kpis}</tr></table></td></tr>` : ''}
+${(r.insights || []).length ? `<tr><td style="font-size:14px;font-weight:bold;padding-top:4px">${tr('Insights clave', 'Key insights')}</td></tr><tr><td><ul style="padding-left:18px;margin:8px 0;font-size:14px;line-height:1.5">${li(r.insights)}</ul></td></tr>` : ''}
+${act ? `<tr><td style="font-size:14px;padding:6px 0"><b>${tr('Acción prioritaria', 'Top action')}:</b> ${esc(act.t)}</td></tr>` : ''}
+<tr><td style="padding:22px 0 10px"><a href="${esc(link)}" style="display:inline-block;background:#4338CA;color:#ffffff;text-decoration:none;font-weight:bold;padding:14px 24px;border-radius:999px">${tr('Abrir el dashboard completo', 'Open the full dashboard')}</a></td></tr>
+<tr><td style="font-size:13px;color:#555A7A;line-height:1.5">${tr('En el dashboard puedes ver todos los gráficos, el plan de acción, descargarlo en PDF y compartirlo con tu equipo.', 'In the dashboard you can see every chart and the action plan, download it as a PDF and share it with your team.')}</td></tr>
+<tr><td style="padding-top:18px;font-size:12px;color:#8A8EAD;border-top:1px solid #E6E8F5;margin-top:12px">${tr('Revisa los datos antes de presentarlos: el análisis puede contener errores.', 'Review the data before presenting it: the analysis may contain errors.')} · plaigroundmarketing.com</td></tr>
+</table></td></tr></table></body></html>`;
+  const text = `${d.title}\n\n${r.summary || ''}\n\n${tr('Abrir el dashboard', 'Open the dashboard')}: ${link}`;
+  return { subject, html, text };
+}
+
+async function sendReadyEmail(env, user, d, url) {
+  if (!env.RESEND_API_KEY) return;
+  const since = Date.now() - 864e5;
+  const n = await env.DB.prepare("SELECT COUNT(*) AS n FROM email_log WHERE user_id = ? AND ts > ? AND kind = 'ready'").bind(user.id, since).first();
+  if (n.n >= MAX_READY_EMAILS_PER_DAY) return;
+  const base = (env.APP_URL || url.origin).replace(/\/$/, '');
+  const ok = await sendEmail(env, user.email, readyEmail(d, `${base}/data/app/?open=${d.id}`, d.lang || user.lang));
+  if (ok) await env.DB.prepare("INSERT INTO email_log (user_id, ts, kind) VALUES (?,?, 'ready')").bind(user.id, Date.now()).run();
+}
+
 /* ---------- handlers ---------- */
 async function requestLogin(req, env, url) {
   if (!env.RESEND_API_KEY) return json({ error: 'email_not_configured' }, 503);
@@ -196,6 +240,9 @@ async function logout(req, env) {
 async function deleteAccount(env, user) {
   await env.DB.batch([
     env.DB.prepare('DELETE FROM dashboards WHERE user_id = ?').bind(user.id),
+    env.DB.prepare('DELETE FROM shares WHERE user_id = ?').bind(user.id),
+    env.DB.prepare('DELETE FROM email_log WHERE user_id = ?').bind(user.id),
+    env.DB.prepare('DELETE FROM ai_usage WHERE user_id = ?').bind(user.id),
     env.DB.prepare('DELETE FROM sessions WHERE user_id = ?').bind(user.id),
     env.DB.prepare('DELETE FROM login_tokens WHERE email = ?').bind(user.email),
     env.DB.prepare('DELETE FROM users WHERE id = ?').bind(user.id)
@@ -348,7 +395,7 @@ Reglas estrictas:
   return json({ spec: res.input, model: env.AI_MODEL || DEFAULT_MODEL });
 }
 
-async function api(req, env, url) {
+async function api(req, env, url, ctx) {
   if (!env.DB) return json({ error: 'database_not_configured', configured: false }, 503);
   await ensureSchema(env.DB);
   const { pathname } = url, m = req.method;
@@ -357,6 +404,14 @@ async function api(req, env, url) {
   if (pathname === '/api/auth/request' && m === 'POST') return requestLogin(req, env, url);
   if (pathname === '/api/auth/verify' && m === 'POST') return verifyLogin(req, env);
   if (pathname === '/api/auth/logout' && m === 'POST') return logout(req, env);
+
+  const pub = pathname.match(/^\/api\/share\/([a-f0-9]{36})$/);
+  if (pub && m === 'GET') {
+    const row = await env.DB.prepare('SELECT d.data, s.expires_at FROM shares s JOIN dashboards d ON d.user_id = s.user_id AND d.id = s.dash_id WHERE s.token = ? AND s.expires_at > ?').bind(pub[1], Date.now()).first();
+    if (!row) return json({ error: 'not_found' }, 404);
+    const d = JSON.parse(row.data);
+    return json({ dashboard: { title: d.title, aud: d.aud, company: d.company, bizType: d.bizType, data: d.data, goal: d.goal, lang: d.lang, ts: d.ts, result: d.result }, expires_at: row.expires_at });
+  }
 
   const user = await currentUser(req, env);
   if (pathname === '/api/me' && m === 'GET') {
@@ -379,24 +434,49 @@ async function api(req, env, url) {
     await env.DB.prepare(`INSERT INTO dashboards (id, user_id, data, created_at, updated_at) VALUES (?,?,?,?,?)
       ON CONFLICT(user_id, id) DO UPDATE SET data = excluded.data, updated_at = excluded.updated_at`)
       .bind(d.id, user.id, JSON.stringify(d), now, now).run();
-    return json({ ok: true, dashboard: d });
+    let emailed = false;
+    if (!exists && d.v === 2) {
+      const job = sendReadyEmail(env, user, d, url).catch(e => console.error('ready email', e));
+      if (ctx && ctx.waitUntil) ctx.waitUntil(job); else await job;
+      emailed = !!env.RESEND_API_KEY;
+    }
+    return json({ ok: true, dashboard: d, emailed });
   }
   if (pathname === '/api/sheets' && m === 'GET') return fetchSheet(url);
   if (pathname === '/api/ai/context' && m === 'POST') return aiContext(req, env, user);
   if (pathname === '/api/ai/analyze' && m === 'POST') return aiAnalyze(req, env, user);
+  const sm = pathname.match(/^\/api\/dashboards\/([a-z0-9]{4,24})\/share$/i);
+  if (sm && m === 'POST') {
+    const dash = await env.DB.prepare('SELECT data FROM dashboards WHERE user_id = ? AND id = ?').bind(user.id, sm[1]).first();
+    if (!dash) return json({ error: 'not_found' }, 404);
+    if (JSON.parse(dash.data).v !== 2) return json({ error: 'not_shareable' }, 400);
+    const now = Date.now();
+    let sh = await env.DB.prepare('SELECT token, expires_at FROM shares WHERE user_id = ? AND dash_id = ? AND expires_at > ?').bind(user.id, sm[1], now).first();
+    if (!sh) {
+      sh = { token: randomToken(18), expires_at: now + SHARE_TTL_DAYS * 864e5 };
+      await env.DB.prepare('INSERT INTO shares (token, user_id, dash_id, created_at, expires_at) VALUES (?,?,?,?,?)').bind(sh.token, user.id, sm[1], now, sh.expires_at).run();
+    }
+    const base = (env.APP_URL || url.origin).replace(/\/$/, '');
+    return json({ url: `${base}/data/d/?t=${sh.token}`, expires_at: sh.expires_at });
+  }
+  if (sm && m === 'DELETE') {
+    await env.DB.prepare('DELETE FROM shares WHERE user_id = ? AND dash_id = ?').bind(user.id, sm[1]).run();
+    return json({ ok: true });
+  }
   const dm = pathname.match(/^\/api\/dashboards\/([a-z0-9]{4,24})$/i);
   if (dm && m === 'DELETE') {
     await env.DB.prepare('DELETE FROM dashboards WHERE user_id = ? AND id = ?').bind(user.id, dm[1]).run();
+    await env.DB.prepare('DELETE FROM shares WHERE user_id = ? AND dash_id = ?').bind(user.id, dm[1]).run();
     return json({ ok: true });
   }
   return json({ error: 'not_found' }, 404);
 }
 
 export default {
-  async fetch(req, env) {
+  async fetch(req, env, ctx) {
     const url = new URL(req.url);
     if (url.pathname.startsWith('/api/')) {
-      try { return await api(req, env, url); }
+      try { return await api(req, env, url, ctx); }
       catch (e) { console.error(e); return json({ error: 'server_error' }, 500); }
     }
     return env.ASSETS.fetch(req);

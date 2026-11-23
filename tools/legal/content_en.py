@@ -80,6 +80,8 @@ body="""
 <ul>
 <li><strong>You are responsible for the data you upload.</strong> You must have the right to use it and must not include third-party personal data (customer names, emails, phone numbers, etc.) or special categories of data (health, beliefs, etc.). We recommend uploading only aggregated or anonymised data.</li>
 <li>Data is used only to provide the requested functionality, never to train AI models or for any other purpose.</li>
+<li>Your file is read in your browser: the full data is not sent to our servers. Only the dashboard result (aggregated figures and text) is stored.</li>
+<li>When a dashboard is ready we email you the link. If you share it, anyone with the link can view it (not edit it) until it expires after 30 days or you revoke it.</li>
 <li>It is kept for the minimum time necessary. Specific retention periods and providers will be published before any such tool goes live.</li>
 <li>If a company uses these tools with personal data, the owner will act as data processor and a data processing agreement will be signed (Art. 28 GDPR).</li>
 </ul>

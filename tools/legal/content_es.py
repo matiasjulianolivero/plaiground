@@ -81,6 +81,8 @@ body="""
 <ul>
 <li><strong>Tú eres responsable de los datos que subes.</strong> Debes tener derecho a usarlos y no debes incluir datos personales de terceros (nombres, emails, teléfonos de clientes, etc.) ni categorías especiales de datos (salud, ideología, etc.). Recomendamos subir solo datos agregados o anonimizados.</li>
 <li>Los datos se usan solo para prestarte la funcionalidad solicitada, no para entrenar modelos de IA ni para otros fines.</li>
+<li>Tu archivo se lee en tu navegador: los datos completos no se envían a nuestros servidores. Solo se guarda el resultado del dashboard (cifras agregadas y textos).</li>
+<li>Cuando un dashboard está listo te enviamos un email con el enlace. Si lo compartes, cualquier persona con el enlace podrá verlo (sin editarlo) hasta que caduque, a los 30 días, o hasta que lo revoques.</li>
 <li>Se conservarán el mínimo tiempo necesario. Antes de activar cualquier herramienta de este tipo se informará de los plazos concretos y de los proveedores implicados.</li>
 <li>Si una empresa usa estas herramientas con datos personales, el titular actuará como encargado del tratamiento y se firmará el correspondiente contrato (art. 28 RGPD).</li>
 </ul>

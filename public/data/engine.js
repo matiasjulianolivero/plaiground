@@ -410,7 +410,7 @@
       var x = function (i) { return pl + i * (W - pl - pr) / Math.max(1, n - 1); }, y = function (v) { return pt + (1 - (v - min) / (max - min)) * (H - pt - pb); };
       for (var k = 0; k <= 4; k++) { var v = min + (max - min) * k / 4; g += '<line x1="' + pl + '" x2="' + (W - pr) + '" y1="' + y(v) + '" y2="' + y(v) + '" stroke="' + css('--grid') + '"/><text x="' + (pl - 8) + '" y="' + (y(v) + 4) + '" text-anchor="end">' + fmt(v, ch.unit, lang).replace(/ ?[€$]$/, '') + '</text>'; }
       var step = Math.ceil(n / (W < 420 ? 4 : 7));
-      ch.labels.forEach(function (l, i) { if ((i % step === 0 && n - 1 - i >= step * 0.6) || i === n - 1) g += '<text x="' + x(i) + '" y="' + (H - 8) + '" text-anchor="middle">' + monthName(l, lang) + '</text>'; });
+      ch.labels.forEach(function (l, i) { if ((i % step === 0 && x(n - 1) - x(i) >= 72) || i === n - 1) g += '<text x="' + x(i) + '" y="' + (H - 8) + '" text-anchor="middle">' + monthName(l, lang) + '</text>'; });
       var col = css('--c1');
       g += '<path d="M' + x(0) + ',' + y(Math.max(min, 0)) + ' L' + ys.map(function (v, i) { return x(i) + ',' + y(v); }).join(' L') + ' L' + x(n - 1) + ',' + y(Math.max(min, 0)) + ' Z" fill="' + col + '" opacity=".08"/>';
       g += '<polyline points="' + ys.map(function (v, i) { return x(i) + ',' + y(v); }).join(' ') + '" fill="none" stroke="' + col + '" stroke-width="2.25" stroke-linejoin="round" stroke-linecap="round"/>';
