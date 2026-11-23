@@ -46,7 +46,7 @@ a{color:var(--ind)}:focus-visible{outline:3px solid var(--ind);outline-offset:3p
 .icon-btn{width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:var(--paper);color:var(--ink);display:grid;place-items:center;cursor:pointer;flex:none}
 .icon-btn svg{width:17px;height:17px}
 @media (max-width:640px){.chip{display:none}.brand small{display:none}}
-main{max-width:1180px;margin:0 auto;padding:36px 24px 80px}
+main{max-width:1280px;margin:0 auto;padding:36px 24px 80px}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:46px;padding:12px 20px;border-radius:999px;font:600 15px var(--body);text-decoration:none;border:1.5px solid transparent;cursor:pointer;transition:transform .15s,background .15s}
 .btn.pri{background:#4338CA;color:#fff}.btn.pri:hover{background:#3730A3}
 .btn.pri[disabled]{opacity:.45;cursor:not-allowed}
@@ -192,6 +192,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--ind)}
 <main id="app" aria-live="polite"><div class="proc card"><h2>…</h2></div></main>
 <script src="/data/engine.js"></script>
 <script src="/data/analysis.js"></script>
+<script src="/data/dashboard.js"></script>
 <script>
 {
 const H=document.documentElement,$=id=>document.getElementById(id),app=$('app');
@@ -204,22 +205,13 @@ let D=null,EXP=0,ERR='';
 function render(){
  document.querySelectorAll('.lang button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.l===L()));
  if(ERR){app.innerHTML=`<div class="sent card"><h2 style="font-size:26px">${tr('Este enlace ya no está disponible','This link is no longer available')}</h2><p class="muted">${tr('Puede que haya caducado o que su autor lo haya revocado.','It may have expired or been revoked by its author.')}</p><a class="btn pri" href="/data/">${tr('Conocer Data plaiground','Discover Data plaiground')}</a></div>`;return;}
- if(!D)return;const r=D.result||{};
+ if(!D)return;
  document.title=D.title+' · Data plaiground';
- app.innerHTML=`<div class="bar"><h1>${esc(D.title)}</h1><span class="shared-tag">🔗 ${tr('Compartido · solo lectura · disponible hasta el','Shared · view only · available until')} ${fmtDate(EXP)}</span><button class="btn sec" type="button" id="pdf">${tr('Descargar PDF','Download PDF')}</button></div>
- <div class="review" role="note"><span>⚠︎</span><span>${tr('Análisis generado automáticamente a partir de los datos de su autor. Puede contener errores: contrasta las conclusiones antes de decidir.','Analysis generated automatically from its author’s data. It may contain errors: check the conclusions before deciding.')}</span></div>
- <div class="understood"><span class="tag">${tr('Contexto','Context')}</span>${D.company||D.bizType?`<span>${tr('Empresa','Business')}: <b>${esc(D.company||'')}</b>${D.bizType?` (${esc(D.bizType)})`:''}</span>`:''}<span>${tr('Datos','Data')}: <b>${esc(D.data||'')}</b></span><span>${tr('Para','For')}: <b>${(AUD[D.aud]||AUD.ceo)[L()]}</b></span>${D.goal?`<span>${tr('Objetivo','Goal')}: <b>${esc(D.goal)}</b></span>`:''}</div>
- ${r.summary?`<p style="font-size:17px;margin:0 0 14px;max-width:900px">${esc(r.summary)}</p>`:''}
- <div class="tiles">${(r.kpis||[]).map(t=>{let dd='';if(t.delta!==null&&t.delta!==undefined&&isFinite(t.delta)){const good=t.invert?t.delta<0:t.delta>=0;dd=`<span class="d ${good?'up':'down'}">${t.delta>=0?'▲':'▼'} ${nf(Math.abs(t.delta)*100,1)}% <span>${tr('vs. mes anterior','vs. last month')}</span></span>`;}if(t.note)dd+=`<span class="d"><span>${esc(t.note)}</span></span>`;return `<div class="tile"><small>${esc(t.label)}</small><b>${esc(t.text)}</b>${dd}</div>`;}).join('')}</div>
- <div class="charts">${(r.charts||[]).map((c,i)=>`<div class="ch"><h4>${esc(c.title)}</h4><p class="sub">${c.type==='line'?tr('Evolución mensual','Monthly trend'):(c.by?tr('Por','By')+' '+esc(c.by):'')} · ${esc(c.sheet||'')}</p><svg id="c${i}" role="img" aria-label="${esc(c.title)}"></svg><div class="tip" id="t${i}"></div></div>`).join('')}</div>
- <div id="analysis">${window.PLGAnalysis.render({insights:r.insights,opps:r.opportunities,rels:r.relationships,actions:r.actions,ideas:r.ideas,note:tr('Las relaciones muestran correlación, no causalidad.','Relationships show correlation, not causation.')},L(),esc,r.mode==='ai'?'✦ '+tr('Redactado por IA a partir de cifras calculadas','Written by AI from computed figures'):tr('Calculado automáticamente','Computed automatically'))}</div>
- <p class="foot">${tr('Creado el','Created on')} ${fmtDate(D.ts)} ${tr('con','with')} Data plaiground</p>
+ app.innerHTML=`<div class="shared-tag" style="margin:-10px 0 14px">🔗 ${tr('Compartido · solo lectura · disponible hasta el','Shared · view only · available until')} ${fmtDate(EXP)}</div><div id="pdroot"></div>
  <div class="viewer-cta"><div><b>${tr('¿Quieres un dashboard así con tus datos?','Want a dashboard like this with your data?')}</b><p>${tr('Sube tu Excel o Google Sheets y recíbelo en minutos. Gratis durante la beta.','Upload your Excel or Google Sheets and get it in minutes. Free during the beta.')}</p></div><a class="btn pri" href="/data/">${tr('Probar Data plaiground','Try Data plaiground')}</a></div>`;
- (r.charts||[]).forEach((c,i)=>PLGEngine.drawChart($('c'+i),$('t'+i),c,L()));
- $('pdf').onclick=()=>{try{window.print()}catch(e){}};}
+ window.PLGDash.mount($('pdroot'),D,{lang:L(),mode:'viewer',onPdf:()=>{try{window.print()}catch(e){}},footer:tr('Creado el','Created on')+' '+fmtDate(D.ts)+' '+tr('con','with')+' Data plaiground'});}
 document.querySelectorAll('.lang button').forEach(b=>b.addEventListener('click',()=>{H.setAttribute('data-lang',b.dataset.l);H.lang=b.dataset.l;try{localStorage.setItem('plg-lang',b.dataset.l)}catch(e){}render();}));
 $('themeBtn').onclick=()=>{const t=H.getAttribute('data-theme')==='dark'?'light':'dark';H.setAttribute('data-theme',t);try{localStorage.setItem('plg-theme',t)}catch(e){}render();};
-let rt;addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(render,150);});
 (async()=>{const t=new URLSearchParams(location.search).get('t')||'';
  if(!/^[a-f0-9]{36}$/.test(t)){ERR='bad';render();return;}
  try{const r=await fetch('/api/share/'+t);if(!r.ok)throw 0;const d=await r.json();D=d.dashboard;EXP=d.expires_at;}catch(e){ERR='gone';}

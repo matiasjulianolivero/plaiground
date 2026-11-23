@@ -57,7 +57,7 @@
     }
     return best;
   }
-  var MONEY = /(€|eur\b|euros|\$|usd|£|ingres|venta|factur|coste|cost|precio|price|gasto|spend|inversi|valor|revenue|margen \(|ebitda|beneficio|profit|presupuesto|budget|importe|amount|salario|pipeline|mrr|arr)/i;
+  var MONEY = /(€|eur\b|euros|\$|usd|£|ingres|venta|factur|coste|cost|precio|price|gasto|spend|inversi|valor(?!aci)|revenue|margen \(|ebitda|beneficio|profit|presupuesto|budget|importe|amount|salario|pipeline|mrr|arr)/i;
   var PCTH = /(%|tasa|rate|ratio|porcentaje|conversi|win|oee|retenci|churn|ctr|share|cuota)/i;
   var RATIO = /( por | per |\/|medio|media|promedio|average|avg|ratio|retorno|return|precio|price|ticket|valoración|rating|nps|enps|satisfac|días de|plazo|probabilidad|%)/i;
   function typeColumn(name, vals) {
@@ -336,6 +336,7 @@
         var ser = monthly(s, c.name, agg === 'last' ? 'sum' : agg, filter); if (!ser.length) return;
         var last = ser[ser.length - 1], prev = ser[ser.length - 2];
         item.value = last.v; item.delta = prev && prev.v ? last.v / prev.v - 1 : null; item.note = monthName(last.k, lang);
+        item.spark = ser.slice(-12).map(function (p) { return round4(p.v); });
       } else {
         item.value = aggregate(filterRows(s, filter).map(function (r) { return r[c.name]; }), agg === 'last' ? 'sum' : agg); item.delta = null; item.note = '';
       }
@@ -446,5 +447,53 @@
   }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 
-  window.PLGEngine = { importance: importance, readWorkbook: readWorkbook, profile: profile, facts: facts, compute: compute, heuristicSpec: heuristicSpec, drawChart: drawChart, fmt: fmt, pctTxt: pctTxt, monthName: monthName };
+  /* ---------------- cubo agregado para el explorador interactivo ---------------- */
+  function round4(v) { return typeof v === 'number' && isFinite(v) ? +v.toPrecision(4) : null; }
+  function buildCube(wb, factsList) {
+    var need = {}; // métricas que aparecen en relaciones: incluirlas siempre
+    (factsList || []).forEach(function (f) { if (f.kind === 'corr' && f.data && f.data.as) { (need[f.data.as] = need[f.data.as] || {})[f.data.a] = 1; (need[f.data.bs] = need[f.data.bs] || {})[f.data.b] = 1; } });
+    var out = { sheets: [], rels: [] };
+    wb.sheets.forEach(function (s, si) {
+      var ms = measures(s); if (!ms.length) return;
+      ms = ms.map(function (m) { return { m: m, w: importance(m, si) + (need[s.name] && need[s.name][m.name] ? 5 : 0) }; }).sort(function (a, b) { return b.w - a.w; }).slice(0, 7).map(function (x) { return x.m; });
+      var dc = dateCol(s), cats = catCols(s).slice(0, 3);
+      if (dc) {
+        var months = Object.keys(s.rows.reduce(function (a, r) { if (r[dc.name] instanceof Date) a[monthKey(r[dc.name])] = 1; return a; }, {})).sort().slice(-36);
+        if (months.length < 2) return;
+        var idx = {}; months.forEach(function (k, i) { idx[k] = i; });
+        var sh = { name: s.name, kind: 'time', months: months, cats: cats.map(function (c) { return c.name; }), measures: [] };
+        ms.forEach(function (m) {
+          var agg = aggFor(m), tot = months.map(function () { return []; });
+          s.rows.forEach(function (r) { var d = r[dc.name]; if (d instanceof Date && idx[monthKey(d)] !== undefined && typeof r[m.name] === 'number') tot[idx[monthKey(d)]].push(r[m.name]); });
+          var mm = { name: m.name, unit: m.unit, agg: agg, total: tot.map(function (a) { return a.length ? round4(aggregate(a, agg)) : null; }), by: {} };
+          cats.forEach(function (c) {
+            var g = {};
+            s.rows.forEach(function (r) { var d = r[dc.name], k = norm(r[c.name]); if (!k || !(d instanceof Date) || idx[monthKey(d)] === undefined || typeof r[m.name] !== 'number') return; var gg = g[k] = g[k] || months.map(function () { return []; }); gg[idx[monthKey(d)]].push(r[m.name]); });
+            var keys = Object.keys(g); if (keys.length < 2) return;
+            var tot2 = function (k) { return sum(g[k].map(function (a) { return a.length ? aggregate(a, agg) : 0; })); };
+            keys.sort(function (a, b) { return tot2(b) - tot2(a); });
+            var top = keys.slice(0, 8), rest = keys.slice(8);
+            var series = top.map(function (k) { return g[k].map(function (a) { return a.length ? round4(aggregate(a, agg)) : null; }); });
+            if (rest.length && agg === 'sum') { top = top.concat(['Otros']); series.push(months.map(function (_, i) { var v = 0, any = false; rest.forEach(function (k) { g[k][i].forEach(function (x) { v += x; any = true; }); }); return any ? round4(v) : null; })); }
+            mm.by[c.name] = { cats: top, series: series };
+          });
+          sh.measures.push(mm);
+        });
+        out.sheets.push(sh);
+      } else {
+        var lc = labelCol(s); if (!lc) return;
+        var rows = s.rows.filter(function (r) { return r[lc.name]; }).slice();
+        rows.sort(function (a, b) { return (b[ms[0].name] || 0) - (a[ms[0].name] || 0); });
+        rows = rows.slice(0, 60);
+        var extra = cats.filter(function (c) { return c.name !== lc.name; })[0];
+        out.sheets.push({ name: s.name, kind: 'table', label: lc.name, group: extra ? extra.name : null,
+          columns: ms.map(function (m) { return { name: m.name, unit: m.unit }; }),
+          rows: rows.map(function (r) { return [String(r[lc.name]).slice(0, 60), extra ? String(r[extra.name] || '').slice(0, 40) : ''].concat(ms.map(function (m) { return round4(r[m.name]); })); }) });
+      }
+    });
+    (factsList || []).filter(function (f) { return f.kind === 'corr' && f.data && f.data.as; }).slice(0, 4).forEach(function (f) { out.rels.push({ a: f.data.a, as: f.data.as, b: f.data.b, bs: f.data.bs, r: round4(f.data.r), cross: f.data.cross }); });
+    return out;
+  }
+
+  window.PLGEngine = { buildCube: buildCube, importance: importance, readWorkbook: readWorkbook, profile: profile, facts: facts, compute: compute, heuristicSpec: heuristicSpec, drawChart: drawChart, fmt: fmt, pctTxt: pctTxt, monthName: monthName };
 })();

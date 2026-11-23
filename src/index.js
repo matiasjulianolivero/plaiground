@@ -260,7 +260,7 @@ function cleanDashboard(d) {
     // Dashboard real: guarda solo el resultado calculado (cifras agregadas y textos), nunca los datos originales
     if (!d.result || typeof d.result !== 'object') return null;
     const r = JSON.stringify(d.result);
-    if (r.length > 400000) return null;
+    if (r.length > 900000) return null;
     out.result = JSON.parse(r);
   } else if (!['ecom', 'saas', 'fran'].includes(out.biz)) return null;
   out.ts = Number(out.ts) || Date.now();
