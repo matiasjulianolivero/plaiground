@@ -229,7 +229,7 @@ function notifyEmail(l) {
 <tr><td style="padding:14px 14px 4px"><table role="presentation" width="100%" style="border-collapse:collapse">
 ${row('Email', l.email)}${row('Empresa', l.company)}${row('Rol', l.roleText)}${row('Le interesa', l.interestsEs)}${row('Urgencia', l.urgencyText + ' (' + l.urgency + '/100)')}${row('Mensaje', l.message)}${row('Newsletter', l.newsletter ? 'Sí (pendiente de confirmar)' : 'No')}${row('Idioma', l.lang)}${row('Fecha', new Date(l.created_at).toLocaleString('es-ES', { timeZone: 'Europe/Madrid' }))}
 </table></td></tr><tr><td style="padding:10px 26px 24px;font-size:13px;color:#555A7A">Responde a este email para escribir directamente a ${esc(l.email)}.</td></tr>`;
-  return { subject: `🎟️ Nuevo lead: ${l.name}${l.company ? ' (' + l.company + ')' : ''} · ${l.interestsEs}`.slice(0, 180), html: emailShell(inner), text: JSON.stringify(l, null, 2), replyTo: l.email };
+  return { subject: `🎟️ Nuevo lead: ${l.name}${l.company ? ' (' + l.company + ')' : ''} · ${l.interestsEs}`.slice(0, 180), html: emailShell(inner), text: [`Nuevo lead · ${l.code}`, `Nombre: ${l.name}`, `Email: ${l.email}`, `Empresa: ${l.company || '-'}`, `Rol: ${l.roleText || '-'}`, `Le interesa: ${l.interestsEs}`, `Urgencia: ${l.urgencyText} (${l.urgency}/100)`, `Mensaje: ${l.message || '-'}`, `Newsletter: ${l.newsletter ? 'Sí (pendiente de confirmar)' : 'No'}`, `Idioma: ${l.lang}`].join('\n'), replyTo: l.email };
 }
 
 async function createLead(req, env, url, ctx) {
