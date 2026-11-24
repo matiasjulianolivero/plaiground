@@ -24,7 +24,7 @@
   }
 
   /* ---------- cabecera ---------- */
-  document.querySelectorAll('.pill button').forEach(function (b) { b.onclick = function () { H.setAttribute('data-lang', b.dataset.l); H.lang = b.dataset.l; try { localStorage.setItem('plg-lang', b.dataset.l); } catch (e) { } rerender(); }; });
+  document.querySelectorAll('.pill button').forEach(function (b) { b.onclick = function () { H.setAttribute('data-lang', b.dataset.l); H.lang = b.dataset.l; try { localStorage.setItem('plg-lang', b.dataset.l); } catch (e) { } (function(l){try{var u=new URL(location.href);if(l==='en')u.searchParams.set('lang','en');else u.searchParams.delete('lang');history.replaceState(history.state,'',u.pathname+u.search+u.hash)}catch(e){}})(b.dataset.l); rerender(); }; });
   $('themeBtn').onclick = function () { var t = dark() ? 'light' : 'dark'; H.setAttribute('data-theme', t); try { localStorage.setItem('plg-theme', t); } catch (e) { } rerender(); };
   function ph() { $('url').placeholder = tr('tuempresa.com', 'yourcompany.com'); }
   ph();

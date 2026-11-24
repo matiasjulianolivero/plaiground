@@ -4,14 +4,17 @@
 <meta charset="utf-8">
 <script>
 (function(){var l;try{l=localStorage.getItem('plg-lang')}catch(e){}
+var q=new URLSearchParams(location.search).get('lang');if(q==='es'||q==='en'){l=q;try{localStorage.setItem('plg-lang',q)}catch(e){}}
 if(l!=='es'&&l!=='en'){l=((navigator.language||'es').toLowerCase().indexOf('es')===0)?'es':'en'}
-document.documentElement.setAttribute('data-lang',l);document.documentElement.lang=l;
+document.documentElement.setAttribute('data-lang',l);
+if(l==='en'&&q!=='en'){try{var u=new URL(location.href);u.searchParams.set('lang','en');history.replaceState(history.state,'',u.pathname+u.search+u.hash)}catch(e){}}document.documentElement.lang=l;
 var t;try{t=localStorage.getItem('plg-theme')}catch(e){}
 if(t!=='dark'&&t!=='light'){t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}
 document.documentElement.setAttribute('data-theme',t);})();
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Data plaiground · Tus datos, convertidos en decisiones con IA</title>
+<link rel="alternate" hreflang="es" href="https://plaigroundmarketing.com/data/"><link rel="alternate" hreflang="en" href="https://plaigroundmarketing.com/data/?lang=en"><link rel="alternate" hreflang="x-default" href="https://plaigroundmarketing.com/data/">
 <meta name="description" content="Data plaiground: sube tu Excel, CSV o Google Sheets y en unos minutos recibe un dashboard interactivo con insights, oportunidades, relaciones y un plan de acción. Con IA, en beta.">
 <link rel="canonical" href="https://plaigroundmarketing.com/data/">
 <link rel="icon" href="/favicon.ico" sizes="any">
@@ -19,8 +22,9 @@ document.documentElement.setAttribute('data-theme',t);})();
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <meta name="theme-color" content="#14162E">
 <meta property="og:type" content="website">
+<meta property="og:locale" content="es_ES">
 <meta property="og:title" content="Data plaiground · Tus datos, convertidos en un dashboard con IA">
-<meta property="og:description" content="Upload your Excel, CSV or Google Sheets and get an interactive dashboard built for your business and your audience.">
+<meta property="og:description" content="Sube tu Excel, CSV o Google Sheets y recibe un dashboard interactivo pensado para tu negocio y tu audiencia.">
 <meta property="og:url" content="https://plaigroundmarketing.com/data/">
 <meta property="og:image" content="https://plaigroundmarketing.com/og-data.jpg">
 <meta name="twitter:card" content="summary_large_image">
@@ -449,7 +453,7 @@ const META={es:'Data plaiground · Tus datos, convertidos en un dashboard con IA
 /* ---------- idioma y tema ---------- */
 function setLang(l,save){H.setAttribute('data-lang',l);H.lang=l;document.title=META[l];
   document.querySelectorAll('.lang button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.l===l));
-  if(save){try{localStorage.setItem('plg-lang',l)}catch(e){}} render();}
+  if(save){try{localStorage.setItem('plg-lang',l)}catch(e){}(function(l){try{var u=new URL(location.href);if(l==='en')u.searchParams.set('lang','en');else u.searchParams.delete('lang');history.replaceState(history.state,'',u.pathname+u.search+u.hash)}catch(e){}})(l)} render();}
 document.querySelectorAll('.lang button').forEach(b=>b.addEventListener('click',()=>setLang(b.dataset.l,true)));
 const tm=document.querySelector('meta[name="theme-color"]');
 $('themeBtn').addEventListener('click',()=>{const t=H.getAttribute('data-theme')==='dark'?'light':'dark';H.setAttribute('data-theme',t);if(tm)tm.content=t==='dark'?'#0B0D1F':'#14162E';try{localStorage.setItem('plg-theme',t)}catch(e){};render();});
