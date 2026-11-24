@@ -110,11 +110,11 @@
 
   /* ---------- paso 3: ejecutar ---------- */
   function runDemo() {
-    S.running = true; renderRun([], 0, 1);
+    S.running = true; $('setup').innerHTML = ''; renderRun([], 0, 1); $('run').scrollIntoView({ behavior: 'smooth', block: 'start' });
     api('/api/aibb/finish', { method: 'POST', body: JSON.stringify({ setup: S.setup, demo: true }) }).then(function (r) {
       S.running = false; $('run').innerHTML = '';
       if (!r.ok) { $('goErr').textContent = tr('No se pudo generar el estudio.', 'Couldn’t generate the study.'); return; }
-      S.study = r.d.study; $('setup').innerHTML = ''; renderResults(); $('results').scrollIntoView({ behavior: 'smooth' });
+      S.study = r.d.study; $('setup').innerHTML = ''; renderResults(); $('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
   }
   function runLive(teaser) {
@@ -123,7 +123,7 @@
     if (!engines.length) return;
     var ps = teaser ? S.setup.prompts.slice(0, (S.cfg && S.cfg.teaser) || 3) : S.setup.prompts;
     var jobs = []; engines.forEach(function (e) { ps.forEach(function (p) { jobs.push({ engine: e, prompt: p, st: '' }); }); });
-    S.running = true; $('setup').innerHTML = ''; renderRun(jobs, 0, jobs.length + 1);
+    S.running = true; $('setup').innerHTML = ''; $('results').innerHTML = ''; renderRun(jobs, 0, jobs.length + 1); $('run').scrollIntoView({ behavior: 'smooth', block: 'start' });
     var answers = [], i = 0;
     (function next() {
       if (i >= jobs.length) return finish();
@@ -140,7 +140,7 @@
       api('/api/aibb/finish', { method: 'POST', body: JSON.stringify({ setup: S.setup, answers: answers }) }).then(function (r) {
         S.running = false; $('run').innerHTML = '';
         if (!r.ok) { $('goErr').textContent = tr('No se pudo calcular el estudio.', 'Couldn’t compute the study.'); return; }
-        S.study = r.d.study; renderResults(); loadHistory(); $('results').scrollIntoView({ behavior: 'smooth' });
+        S.study = r.d.study; renderResults(); loadHistory(); $('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
       });
     }
   }
@@ -261,7 +261,7 @@
       '<svg viewBox="0 0 ' + W + ' ' + Hh + '" role="img" aria-label="' + tr('Evolución del score', 'Score over time') + '">' + grid + (n > 1 ? '<path d="' + line + '" fill="none" stroke="var(--ind)" stroke-width="2.5"/>' : '') + dots + '</svg>' +
       '<div class="hl">' + S.hist.slice(0, 12).map(function (h) { return '<div class="it"><span class="sc">' + h.score + '</span><span class="sp"><b>' + esc(h.brand) + '</b> · ' + esc(h.domain) + ' · ' + new Date(h.created_at).toLocaleDateString() + '</span><button type="button" data-o="' + h.id + '">' + tr('Abrir', 'Open') + '</button><button type="button" data-del="' + h.id + '">' + tr('Borrar', 'Delete') + '</button></div>'; }).join('') + '</div></section>';
     var hs = $('hdom'); if (hs) hs.onchange = function () { var pick = doms[hs.value][0]; api('/api/aibb/studies/' + pick.id).then(function (r) { if (r.ok) { S.study = r.d.study; renderResults(); renderHistory(); } }); };
-    el.querySelectorAll('[data-o]').forEach(function (b) { b.onclick = function () { api('/api/aibb/studies/' + b.dataset.o).then(function (r) { if (r.ok) { S.study = r.d.study; S.exSel = 0; renderResults(); renderHistory(); $('results').scrollIntoView({ behavior: 'smooth' }); } }); }; });
+    el.querySelectorAll('[data-o]').forEach(function (b) { b.onclick = function () { api('/api/aibb/studies/' + b.dataset.o).then(function (r) { if (r.ok) { S.study = r.d.study; S.exSel = 0; renderResults(); renderHistory(); $('results').scrollIntoView({ behavior: 'smooth', block: 'start' }); } }); }; });
     el.querySelectorAll('[data-del]').forEach(function (b) { b.onclick = function () { if (b.dataset.sure) { api('/api/aibb/studies/' + b.dataset.del, { method: 'DELETE' }).then(loadHistory); } else { b.dataset.sure = 1; b.textContent = tr('¿Seguro?', 'Sure?'); } }; });
     tips(el);
   }
