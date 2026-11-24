@@ -220,17 +220,23 @@
       var lb = document.querySelector('#lform button'); if (lb) { lb.disabled = true; lb.textContent = tr('Abriendo tu informe completo…', 'Opening your full report…'); }
     } else { $('results').innerHTML = ''; renderRun(jobs, 0, jobs.length + 1); $('run').scrollIntoView({ behavior: 'smooth', block: 'start' }); }
     // Cola de trabajo: si una pregunta falla (IA saturada), se reintenta una vez al final sin cambiar el orden en pantalla.
-    var queue = jobs.map(function (x, k) { return k; }), done = 0;
+    var queue = jobs.map(function (x, k) { return k; }), done = 0, fails = 0;
     (function next() {
       if (!queue.length) return finish();
       var j = jobs[queue.shift()]; j.st = 'on'; renderRun(jobs, done, jobs.length + 1);
       api('/api/aibb/ask', { method: 'POST', body: JSON.stringify({ setup: S.setup, engine: j.engine, prompt: j.prompt, unlock: teaser ? undefined : S.unlock }) }).then(function (r) {
         if (r.ok && r.d.text) { j.st = 'ok'; answers.push({ engine: j.engine, prompt: j.prompt, text: r.d.text }); if (teaser || !(S.cfg && S.cfg.user)) cachePut(answers.slice()); }
-        else { j.st = 'ko'; if (r.status === 429 && (r.d.error === 'global_limit' || r.d.error === 'teaser_limit')) { S.limitHit = r.d.error; queue = []; return finish(); } if (!j.retried) { j.retried = true; j.st = 'wait'; queue.push(jobs.indexOf(j)); } }
+        else { j.st = 'ko'; if (r.status === 429 && (r.d.error === 'global_limit' || r.d.error === 'teaser_limit')) { S.limitHit = r.d.error; queue = []; return finish(); } if (!j.retried) { j.retried = true; j.st = 'wait'; queue.push(jobs.indexOf(j)); }
+          // Si las 3 primeras preguntas fallan sin ninguna respuesta, la IA gratuita está caída: se para y se avisa en vez de esperar minutos
+          if (++fails >= 3 && !answers.length) { S.running = false; return busyCard(teaser); } }
         if (j.st !== 'wait') done++; renderRun(jobs, done, jobs.length + 1);
         setTimeout(next, queue.length ? 4200 : 0); // respeta el límite por minuto de la capa gratuita
       });
     })();
+    function busyCard(t) {
+      $('run').innerHTML = '<section class="card sec"><div class="eyebrow">' + tr('IA saturada', 'AI overloaded') + '</div><h2 style="font-size:28px;margin-top:8px">' + tr('La IA gratuita está saturada ahora mismo', 'The free AI is overloaded right now') + '</h2><p style="color:var(--muted);margin:10px 0 18px">' + tr('Google Gemini no está respondiendo por exceso de demanda. No es un problema de tu web. Prueba de nuevo en un rato: tu estudio está preparado.', 'Google Gemini isn’t answering due to high demand. It’s not a problem with your website. Try again in a while: your study is ready to go.') + '</p><button class="btn" id="busyRetry">' + tr('Reintentar ahora', 'Try again now') + '</button></section>';
+      var br = $('busyRetry'); if (br) br.onclick = function () { runLive(t); };
+    }
     function finish() {
       if (!answers.length) { S.running = false; $('run').innerHTML = '<div class="card sec"><b>' + (S.limitHit === 'teaser_limit' ? tr('Ya has usado las vistas previas gratuitas de hoy. Entra con tu email para ver el informe completo:', 'You’ve used today’s free previews. Sign in with your email to see the full report:') + '</b>' + loginFormHtml() : tr('Las IA no han respondido ahora mismo (cupo gratuito saturado). Prueba en unos minutos.', 'The AIs didn’t answer right now (free quota busy). Try again in a few minutes.') + '</b>') + '</div>'; bindLogin(); return; }
       api('/api/aibb/finish', { method: 'POST', body: JSON.stringify({ setup: S.setup, answers: answers, unlock: teaser ? undefined : S.unlock }) }).then(function (r) {
