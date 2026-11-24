@@ -14,7 +14,7 @@ const MAX_PROMPTS = 8, MAX_COMPETITORS = 7; // más de 7 competidores: informe P
 const TEASER_PROMPTS = 3, TEASER_ASKS_PER_IP_DAY = 16; // sin registro: vista previa de 3 preguntas + preparación del resto en segundo plano (2 estudios al día por IP)
 
 const ENGINES = [
-  { id: 'gemini', name: 'Gemini', key: 'GEMINI_API_KEY', model: 'GEMINI_MODEL', def: 'gemini-3.5-flash-lite' },
+  { id: 'gemini', name: 'Gemini', key: 'GEMINI_API_KEY', model: 'GEMINI_MODEL', def: 'gemini-3.5-flash-lite', alt: ['gemini-3.1-flash-lite', 'gemini-flash-lite-latest'] },
   { id: 'chatgpt', name: 'ChatGPT', key: 'OPENAI_API_KEY', model: 'OPENAI_MODEL' },
   { id: 'claude', name: 'Claude', key: 'ANTHROPIC_API_KEY', model: 'AIBB_ANTHROPIC_MODEL' },
   { id: 'perplexity', name: 'Perplexity', key: 'PERPLEXITY_API_KEY', model: 'PERPLEXITY_MODEL' }
@@ -41,6 +41,7 @@ export function createAibb(h) {
       env.DB.prepare(`CREATE INDEX IF NOT EXISTS idx_aibb_user ON aibb_studies(user_id, created_at)`),
       env.DB.prepare(`CREATE TABLE IF NOT EXISTS aibb_shares (token TEXT PRIMARY KEY, study_id TEXT NOT NULL, user_id TEXT NOT NULL, created_at INTEGER NOT NULL, expires_at INTEGER NOT NULL, revoked_at INTEGER)`),
       env.DB.prepare(`CREATE INDEX IF NOT EXISTS idx_aibb_shares_study ON aibb_shares(study_id)`),
+      env.DB.prepare(`CREATE TABLE IF NOT EXISTS aibb_log (ts INTEGER NOT NULL, msg TEXT)`),
       env.DB.prepare(`CREATE TABLE IF NOT EXISTS aibb_unlocks (token TEXT PRIMARY KEY, email TEXT NOT NULL, created_at INTEGER NOT NULL, ip TEXT, uses INTEGER DEFAULT 0)`)
     ]);
   }
@@ -57,22 +58,31 @@ export function createAibb(h) {
   const logUse = (env, user, engine, kind, ok) => env.DB.prepare('INSERT INTO aibb_usage (ts, user_id, engine, kind, ok) VALUES (?,?,?,?,?)').bind(Date.now(), user ? user.id : null, engine, kind, ok ? 1 : 0).run();
 
   /* ---------- llamadas a los LLM ---------- */
-  async function callEngine(env, id, prompt, { json: wantJson = false, temperature = 0.7, system = '' } = {}) {
+  async function callEngine(env, id, prompt, { json: wantJson = false, temperature = 0.7, system = '' } = {}, retried = false) {
     const e = ENGINES.find(x => x.id === id); if (!e || !engineActive(env, e)) return { error: 'engine_off' };
     const model = env[e.model] || e.def;
     try {
       if (id === 'gemini') {
-        const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
-          method: 'POST', headers: { 'content-type': 'application/json', 'x-goog-api-key': env[e.key] },
-          body: JSON.stringify(Object.assign({ contents: [{ role: 'user', parts: [{ text: prompt }] }], generationConfig: Object.assign({ temperature, maxOutputTokens: 1500 }, wantJson ? { responseMimeType: 'application/json' } : {}) }, system ? { systemInstruction: { parts: [{ text: system }] } } : {}))
-        });
-        const d = await r.json().catch(() => ({}));
-        if (!r.ok) {
-          console.error('Gemini', r.status, JSON.stringify(d).slice(0, 300));
-          if ((r.status === 429 || r.status >= 500) && !arguments[3]) { await new Promise(res => setTimeout(res, 1500)); return callEngine(env, id, prompt, { json: wantJson, temperature, system }, true); }
+        // Los modelos Gemini 3.5+ no admiten temperature/top_p: no se envían. Si un modelo no existe, se prueba el siguiente.
+        const models = [model].concat(env[e.model] ? [] : (e.alt || []));
+        let last = 'engine_failed';
+        for (const mdl of models) {
+          const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(mdl)}:generateContent`, {
+            method: 'POST', headers: { 'content-type': 'application/json', 'x-goog-api-key': env[e.key] },
+            body: JSON.stringify(Object.assign({ contents: [{ role: 'user', parts: [{ text: prompt }] }], generationConfig: Object.assign({ maxOutputTokens: 4096 }, wantJson ? { responseMimeType: 'application/json' } : {}) }, system ? { systemInstruction: { parts: [{ text: system }] } } : {}))
+          });
+          const d = await r.json().catch(() => ({}));
+          if (r.ok) {
+            const text = ((d.candidates || [])[0]?.content?.parts || []).filter(p => !p.thought).map(p => p.text || '').join('');
+            if (text) return { text };
+            await logErr(env, `gemini ${mdl} empty: ${JSON.stringify(d).slice(0, 300)}`); last = 'engine_failed'; continue;
+          }
+          await logErr(env, `gemini ${mdl} ${r.status}: ${JSON.stringify(d).slice(0, 400)}`);
+          if (r.status === 400 || r.status === 404) { last = 'engine_failed'; continue; }
+          if ((r.status === 429 || r.status >= 500) && !retried) { await new Promise(res => setTimeout(res, 1500)); return callEngine(env, id, prompt, { json: wantJson, temperature, system }, true); }
           return { error: r.status === 429 ? 'rate_limited' : 'engine_failed' };
         }
-        return { text: ((d.candidates || [])[0]?.content?.parts || []).map(p => p.text || '').join('') };
+        return { error: last };
       }
       if (id === 'chatgpt' || id === 'perplexity') {
         const url = id === 'chatgpt' ? 'https://api.openai.com/v1/chat/completions' : 'https://api.perplexity.ai/chat/completions';
@@ -93,6 +103,7 @@ export function createAibb(h) {
     } catch (err) { console.error(id, err); return { error: 'engine_failed' }; }
     return { error: 'engine_off' };
   }
+  async function logErr(env, msg) { console.error(msg); try { await env.DB.prepare('INSERT INTO aibb_log (ts, msg) VALUES (?,?)').bind(Date.now(), String(msg).slice(0, 600)).run(); } catch (e) { } }
   const parseJson = t => { try { return JSON.parse(String(t).replace(/^```(json)?|```$/g, '').trim()); } catch (e) { const m = String(t).match(/\{[\s\S]*\}/); try { return m ? JSON.parse(m[0]) : null; } catch (e2) { return null; } } };
 
   /* ---------- lectura de la web ---------- */
@@ -123,7 +134,8 @@ export function createAibb(h) {
   }
   function manualSetup(domain, site, lang) {
     const es = lang !== 'en', brand = site.siteName || titleCase(rootOf(domain));
-    return { domain, brand, category: '', country: '', language: es ? 'es' : 'en', competitors: [],
+    const cat = clip((site.description || site.title || '').split(/[.|·\-–—:]/)[0].trim(), 70);
+    return { domain, brand, category: cat, country: '', language: es ? 'es' : 'en', competitors: [],
       prompts: es ? [`¿Qué opinan los clientes de ${brand}?`, `¿Cuáles son las mejores alternativas a ${brand}?`, `¿Es ${brand} una buena opción? ¿Qué pros y contras tiene?`, `¿Qué empresas hacen lo mismo que ${brand} y cuál recomiendas?`, `¿Cuánto cuesta trabajar con ${brand} o con empresas similares?`, `¿Qué empresa recomiendas en el sector de ${brand} para una pyme?`]
         : [`What do customers think of ${brand}?`, `What are the best alternatives to ${brand}?`, `Is ${brand} a good choice? What are the pros and cons?`, `Which companies do the same as ${brand} and which do you recommend?`, `How much does it cost to work with ${brand} or similar companies?`, `Which company in ${brand}’s industry do you recommend for a small business?`] };
   }
@@ -265,6 +277,12 @@ Devuelve: {"brand": nombre comercial de la marca, "category": categoría de prod
     const liveOk = !!(env.GEMINI_API_KEY || env.OPENAI_API_KEY || env.ANTHROPIC_API_KEY || env.PERPLEXITY_API_KEY);
     const body = m === 'POST' ? await req.json().catch(() => ({})) : {};
 
+    if (pathname === '/api/aibb/diag' && m === 'GET') {
+      if (!user || !env.LEAD_NOTIFY_EMAIL || user.email.toLowerCase() !== env.LEAD_NOTIFY_EMAIL.toLowerCase()) return json({ error: 'forbidden' }, 403);
+      const t = await callEngine(env, 'gemini', 'Responde solo: OK');
+      const r = await env.DB.prepare('SELECT ts, msg FROM aibb_log ORDER BY ts DESC LIMIT 20').all();
+      return json({ test: t, log: r.results || [] });
+    }
     if (pathname === '/api/aibb/config' && m === 'GET') return json({ teaser: TEASER_PROMPTS, engines: engineList(env), live: liveOk, user: user ? { email: user.email } : null, limits: { perDay: STUDIES_PER_USER_DAY, prompts: MAX_PROMPTS, competitors: MAX_COMPETITORS } });
 
     if (pathname === '/api/aibb/setup' && m === 'POST') {
@@ -299,6 +317,10 @@ Devuelve: {"brand": nombre comercial de la marca, "category": categoría de prod
     }
     if (pathname === '/api/aibb/ask' && m === 'POST') {
       let who = user;
+      if (!who && /^[a-f0-9]{32}$/.test(String(body.unlock || ''))) {
+        const u = await env.DB.prepare('SELECT email FROM aibb_unlocks WHERE token = ? AND created_at > ?').bind(body.unlock, Date.now() - 864e5).first();
+        if (u) who = { id: 'pending:' + u.email };
+      }
       if (!who) {
         who = { id: 'ip:' + (await h.sha256((req.headers.get('cf-connecting-ip') || '') + ':aibb')).slice(0, 24) };
         const n = await env.DB.prepare("SELECT COUNT(*) AS n FROM aibb_usage WHERE ts > ? AND user_id = ? AND kind = 'ask'").bind(Date.now() - 864e5, who.id).first();

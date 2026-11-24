@@ -90,8 +90,8 @@
   function renderSetup() {
     var s = S.setup; if (!s) return;
     var gate = S.mode === 'login', live = S.mode === 'live' || gate, T = (S.cfg && S.cfg.teaser) || 3;
-    var auto = S.reason === 'auto_failed' ? '<div style="margin-top:8px">' + tr('⚠️ Ahora mismo no hemos podido analizar tu web automáticamente. <b>Escribe tu categoría y añade tus competidores</b> abajo, o <a href="#" id="retrySetup">vuelve a intentarlo</a>.', '⚠️ We couldn’t analyze your website automatically right now. <b>Enter your category and add your competitors</b> below, or <a href="#" id="retrySetup">try again</a>.') + '</div>' : '';
-    var why = gate ? tr('<b>Tu estudio está listo</b> con tus competidores y las preguntas de tu categoría. Lánzalo y en unos segundos verás una <b>vista previa gratis</b> con las ' + T + ' primeras preguntas. El informe completo te lo desbloqueamos con tu email.', '<b>Your study is ready</b> with your competitors and your category’s questions. Run it and in a few seconds you’ll see a <b>free preview</b> with the first ' + T + ' questions. We unlock the full report with your email.')
+    var auto = S.reason === 'auto_failed' ? '<div style="margin-top:6px">' + tr('⚠️ No pudimos detectar tus competidores. Añádelos abajo o <a href="#" id="retrySetup">reintenta</a>.', '⚠️ We couldn’t detect your competitors. Add them below or <a href="#" id="retrySetup">try again</a>.') + '</div>' : '';
+    var why = gate ? (S.reason === 'auto_failed' ? '' : tr('<b>Tu estudio está listo.</b> Lánzalo y en segundos verás una vista previa gratis.', '<b>Your study is ready.</b> Run it and see a free preview in seconds.'))
       : S.reason === 'user_limit' ? tr('Has llegado al máximo de estudios preparados hoy, así que te mostramos un <b>ejemplo</b>. Vuelve mañana.', 'You’ve hit today’s limit of prepared studies, so here’s a <b>sample</b>. Come back tomorrow.')
       : S.reason === 'login' ? tr('Este es un <b>estudio de ejemplo</b> (respuestas simuladas) para que veas cómo funciona. Para preguntar de verdad a las IA y guardar tu histórico, entra con tu email:', 'This is a <b>sample study</b> (simulated answers) so you can see how it works. To actually ask the AIs and keep your history, sign in with your email:')
       : S.reason === 'nokey' ? tr('La conexión con las IA todavía no está activada en esta beta, así que verás un <b>estudio de ejemplo</b> con respuestas simuladas.', 'The connection to the AIs isn’t switched on yet in this beta, so you’ll see a <b>sample study</b> with simulated answers.')
@@ -142,12 +142,12 @@
       if ($('sb')) readSetup();
       try { localStorage.setItem('plg-aibb-url', $('url').value.trim() || (S.setup && S.setup.domain) || ''); if (S.setup) localStorage.setItem('plg-aibb-setup', JSON.stringify(S.setup)); localStorage.setItem('plg-aibb-autorun', '1'); } catch (x) { }
       var b = lf.querySelector('button'); b.disabled = true;
-      if (S.study && S.study.partial) {
+      if ((S.study && S.study.partial) || (S.limitHit === 'teaser_limit' && S.setup)) {
         api('/api/aibb/unlock', { method: 'POST', body: JSON.stringify({ email: em, accepted: true, lang: L() }) }).then(function (r) {
           b.disabled = false;
           if (!r.ok) { er.textContent = r.d.error === 'too_many_requests' ? tr('Demasiados intentos. Espera unos minutos.', 'Too many attempts. Wait a few minutes.') : r.d.error === 'invalid_email' ? tr('Revisa tu email.', 'Check your email.') : tr('No se pudo desbloquear. Inténtalo de nuevo.', 'Couldn’t unlock. Try again.'); return; }
           try { localStorage.removeItem('plg-aibb-setup'); localStorage.removeItem('plg-aibb-autorun'); localStorage.removeItem('plg-aibb-url'); } catch (x) { }
-          S.unlock = r.d.unlock; S.unlockEmail = em; runLive();
+          S.unlock = r.d.unlock; S.unlockEmail = em; S.limitHit = null; runLive();
         });
         return;
       }
@@ -199,7 +199,7 @@
     (function next() {
       if (i >= jobs.length) return finish();
       var j = jobs[i]; j.st = 'on'; renderRun(jobs, i, jobs.length + 1);
-      api('/api/aibb/ask', { method: 'POST', body: JSON.stringify({ setup: S.setup, engine: j.engine, prompt: j.prompt }) }).then(function (r) {
+      api('/api/aibb/ask', { method: 'POST', body: JSON.stringify({ setup: S.setup, engine: j.engine, prompt: j.prompt, unlock: teaser ? undefined : S.unlock }) }).then(function (r) {
         if (r.ok && r.d.text) { j.st = 'ok'; answers.push({ engine: j.engine, prompt: j.prompt, text: r.d.text }); if (teaser) cachePut(answers.slice()); }
         else { j.st = 'ko'; if (r.status === 429 && (r.d.error === 'global_limit' || r.d.error === 'teaser_limit')) { S.limitHit = r.d.error; i = jobs.length; return finish(); } }
         i++; renderRun(jobs, i, jobs.length + 1);
