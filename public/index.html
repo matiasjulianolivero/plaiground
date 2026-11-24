@@ -401,8 +401,9 @@ html[data-theme="dark"] header .nav::after{opacity:.18}
 @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){header .nav{background:var(--gl-bg2)}}
 @media (max-width:560px){header{padding:10px 10px 0}header .nav{height:58px;padding:0 6px 0 18px}}
 #ai-barometer{padding:20px 0 40px}
-.ab{display:grid;grid-template-columns:1fr 1.05fr;gap:48px;align-items:center;padding:clamp(26px,4vw,52px);border-radius:32px;background:var(--paper);border:1px solid var(--line)}
-@media (max-width:900px){.ab{grid-template-columns:1fr}}
+.ab{display:grid;grid-template-columns:1fr 1.05fr;grid-template-areas:'vis head' 'vis body';column-gap:48px;row-gap:0;align-items:center;padding:clamp(26px,4vw,52px);border-radius:32px;background:var(--paper);border:1px solid var(--line)}
+@media (max-width:900px){.ab{grid-template-columns:1fr;grid-template-areas:'head' 'vis' 'body';row-gap:22px}}
+.ab-vis{grid-area:vis}.ab-head{grid-area:head;align-self:end}.ab-body{grid-area:body;align-self:start}
 .ab h2{font-size:clamp(32px,4vw,50px);line-height:1.03;font-weight:800;margin:12px 0 14px;letter-spacing:-.035em}.ab h2 em{font-style:normal;background:linear-gradient(100deg,var(--ind),#7C5CFF 45%,var(--coral));-webkit-background-clip:text;background-clip:text;color:transparent}
 .ab p{color:var(--muted);font-size:17.5px}
 .ab-vis{border-radius:24px;padding:22px;background:#14162E;color:#ECEEFF;box-shadow:0 30px 70px rgba(20,22,46,.25)}
@@ -511,16 +512,18 @@ html[data-theme="dark"] header .nav::after{opacity:.18}
         <div class="ab-vis" aria-hidden="true">
           <div class="ab-q"><span lang="es">“¿Cuál es el mejor software de gestión para pymes?”</span><span lang="en">“What’s the best management software for SMEs?”</span></div>
           <div class="ab-rows">
-            <div><b>1</b><span>Marca A</span><i style="width:92%;background:#2a78d6"></i></div>
-            <div><b>2</b><span>Marca B</span><i style="width:74%;background:#eb6834"></i></div>
+            <div><b>1</b><span><span lang="es">Marca A</span><span lang="en">Brand A</span></span><i style="width:92%;background:#2a78d6"></i></div>
+            <div><b>2</b><span><span lang="es">Marca B</span><span lang="en">Brand B</span></span><i style="width:74%;background:#eb6834"></i></div>
             <div class="me"><b>3</b><span lang="es">Tu marca</span><span lang="en">Your brand</span><i style="width:55%;background:linear-gradient(90deg,#4338CA,#7C5CFF,#FF7A59)"></i></div>
-            <div><b>—</b><span>Marca C</span><i style="width:8%;background:#8a8eac"></i></div>
+            <div><b>—</b><span><span lang="es">Marca C</span><span lang="en">Brand C</span></span><i style="width:8%;background:#8a8eac"></i></div>
           </div>
           <div class="ab-eng"><span>Gemini</span><span>ChatGPT</span><span>Claude</span><span>Perplexity</span></div>
         </div>
-        <div>
+        <div class="ab-head">
           <div class="eyebrow"><span lang="es">Nuevo · AI Brand Barometer (beta) · visibilidad de tu marca en la IA</span><span lang="en">New · AI Brand Barometer (beta) · your brand’s visibility in AI</span></div>
           <h2><span lang="es">Tu marca ya no se busca. <em>Se pregunta.</em></span><span lang="en">Your brand isn’t searched anymore. <em>It’s asked.</em></span></h2>
+        </div>
+        <div class="ab-body">
           <p><span lang="es">Pon tu web y descubre qué responden los asistentes de IA cuando un comprador pregunta por tu categoría: si apareces, en qué posición, qué fuentes te citan y cómo quedas frente a tu competencia. Con tu email, guardas el histórico mes a mes.</span><span lang="en">Enter your website and find out what AI assistants answer when a buyer asks about your category: whether you appear, in what position, which sources cite you and how you compare with competitors. With your email, you keep a month-by-month history.</span></p>
           <div class="btns">
             <a class="btn primary" href="/ai-barometer/"><span lang="es">Analizar mi marca</span><span lang="en">Analyze my brand</span></a>
