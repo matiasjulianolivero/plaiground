@@ -485,6 +485,8 @@ async function deleteAccount(env, user) {
     env.DB.prepare('DELETE FROM email_log WHERE user_id = ?').bind(user.id),
     env.DB.prepare('DELETE FROM ai_usage WHERE user_id = ?').bind(user.id),
     env.DB.prepare('CREATE TABLE IF NOT EXISTS aibb_studies (id TEXT PRIMARY KEY, user_id TEXT NOT NULL, created_at INTEGER NOT NULL, domain TEXT, brand TEXT, lang TEXT, score INTEGER, visibility REAL, data TEXT NOT NULL)'),
+    env.DB.prepare('CREATE TABLE IF NOT EXISTS aibb_shares (token TEXT PRIMARY KEY, study_id TEXT NOT NULL, user_id TEXT NOT NULL, created_at INTEGER NOT NULL, expires_at INTEGER NOT NULL, revoked_at INTEGER)'),
+    env.DB.prepare('DELETE FROM aibb_shares WHERE user_id = ?').bind(user.id),
     env.DB.prepare('DELETE FROM aibb_studies WHERE user_id = ?').bind(user.id),
     env.DB.prepare('DELETE FROM sessions WHERE user_id = ?').bind(user.id),
     env.DB.prepare('DELETE FROM login_tokens WHERE email = ?').bind(user.email),
