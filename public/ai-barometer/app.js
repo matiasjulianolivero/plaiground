@@ -395,34 +395,45 @@
   }
   function quadName(q) { return ({ lead: tr('Líderes recomendados', 'Recommended leaders'), gem: tr('Joyas ocultas', 'Hidden gems'), crit: tr('Conocidos pero criticados', 'Known but criticised'), inv: tr('Invisibles', 'Invisible') })[q]; }
   function quadSvg(st, small) {
-    var B = st.result.brands, qi = quadInfo(st);
-    var mob = window.innerWidth < 640, W = mob ? 400 : 680, H = mob ? 380 : small ? 330 : 400, L0 = mob ? 34 : 54, R0 = mob ? 10 : 18, T0 = 30, B0 = 44, pw = W - L0 - R0, ph = H - T0 - B0;
-    var maxV = Math.max.apply(null, B.map(function (b) { return b.visibility; })), xmax = Math.min(1, Math.max(.4, maxV * 1.2));
-    var X = function (v) { return L0 + Math.min(1, v / xmax) * pw; }, Y = function (t) { return T0 + (1 - ((t == null ? 0 : t) + 1) / 2) * ph; };
+    var B = st.result.brands, qi = quadInfo(st), uid = 'q' + Math.random().toString(36).slice(2, 7);
+    var mob = window.innerWidth < 640, W = mob ? 400 : 680, H = mob ? 400 : small ? 340 : 430, L0 = mob ? 30 : 46, R0 = mob ? 10 : 16, T0 = 18, B0 = 46, pw = W - L0 - R0, ph = H - T0 - B0;
+    var maxV = Math.max.apply(null, B.map(function (b) { return b.visibility; })), xmax = Math.min(1, Math.max(.4, maxV * 1.15));
+    var X = function (v) { return L0 + 18 + Math.min(1, v / xmax) * (pw - 36); }, Y = function (t) { return T0 + 18 + (1 - ((t == null ? 0 : t) + 1) / 2) * (ph - 36); };
     var maxT1 = Math.max(.01, Math.max.apply(null, B.map(function (b) { return b.top1; })));
-    var dx = X(qi.div), dy = Y(0), ink = 'var(--muted)';
-    var o = '<svg class="quad" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + tr('Mapa de posicionamiento: visibilidad frente a tono de cada marca', 'Positioning map: visibility vs tone for each brand') + '">' +
-      '<rect x="' + L0 + '" y="' + T0 + '" width="' + pw + '" height="' + ph + '" rx="14" fill="var(--soft)" opacity=".45"/>' +
-      '<rect x="' + dx + '" y="' + T0 + '" width="' + (L0 + pw - dx) + '" height="' + (dy - T0) + '" rx="0" fill="var(--good,#1BAF7A)" opacity=".07"/>' +
-      '<line x1="' + dx + '" y1="' + T0 + '" x2="' + dx + '" y2="' + (T0 + ph) + '" stroke="var(--line)" stroke-width="1.5" stroke-dasharray="5 5"/><line x1="' + L0 + '" y1="' + dy + '" x2="' + (L0 + pw) + '" y2="' + dy + '" stroke="var(--line)" stroke-width="1.5" stroke-dasharray="5 5"/>' +
-      [['gem', L0 + 12, T0 + 20, 'start'], ['lead', L0 + pw - 12, T0 + 20, 'end'], ['inv', L0 + 12, T0 + ph - 12, 'start'], ['crit', L0 + pw - 12, T0 + ph - 12, 'end']].map(function (c) { return '<text x="' + c[1] + '" y="' + c[2] + '" text-anchor="' + c[3] + '" class="ql' + (c[0] === qi.q ? ' on' : '') + '">' + quadName(c[0]) + '</text>'; }).join('') +
+    var dx = X(qi.div), dy = Y(0), rx = 22;
+    // Fondos de cada cuadrante con su propio tono; el tuyo, más marcado
+    var QC = { lead: '#1BAF7A', gem: '#7C5CFF', crit: '#FF7A59', inv: '#8A8FB5' };
+    var quads = [['gem', L0, T0, dx - L0, dy - T0], ['lead', dx, T0, L0 + pw - dx, dy - T0], ['inv', L0, dy, dx - L0, T0 + ph - dy], ['crit', dx, dy, L0 + pw - dx, T0 + ph - dy]];
+    var o = '<svg class="quad" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + tr('Mapa de posicionamiento: visibilidad frente a tono de cada marca', 'Positioning map: visibility vs tone for each brand') + '"><defs>' +
+      '<clipPath id="' + uid + 'c"><rect x="' + L0 + '" y="' + T0 + '" width="' + pw + '" height="' + ph + '" rx="' + rx + '"/></clipPath>' +
+      quads.map(function (q) { return '<linearGradient id="' + uid + q[0] + '" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="' + QC[q[0]] + '" stop-opacity="' + (q[0] === qi.q ? .16 : .06) + '"/><stop offset="1" stop-color="' + QC[q[0]] + '" stop-opacity="' + (q[0] === qi.q ? .05 : .015) + '"/></linearGradient>'; }).join('') +
+      B.map(function (b, k) { var c = col(k); return '<radialGradient id="' + uid + 'b' + k + '" cx=".35" cy=".3" r=".75"><stop offset="0" stop-color="#fff" stop-opacity=".85"/><stop offset=".28" stop-color="' + c + '" stop-opacity=".55"/><stop offset=".75" stop-color="' + c + '" stop-opacity=".82"/><stop offset="1" stop-color="' + c + '" stop-opacity=".95"/></radialGradient>'; }).join('') +
+      '</defs><g clip-path="url(#' + uid + 'c)">' + quads.map(function (q) { return '<rect class="qq' + (q[0] === qi.q ? ' on' : '') + '" x="' + q[1] + '" y="' + q[2] + '" width="' + Math.max(0, q[3]) + '" height="' + Math.max(0, q[4]) + '" fill="url(#' + uid + q[0] + ')"/>'; }).join('') + '</g>' +
+      '<rect x="' + L0 + '" y="' + T0 + '" width="' + pw + '" height="' + ph + '" rx="' + rx + '" fill="none" stroke="var(--line)"/>' +
+      '<line x1="' + dx + '" y1="' + (T0 + 8) + '" x2="' + dx + '" y2="' + (T0 + ph - 8) + '" class="qdiv"/><line x1="' + (L0 + 8) + '" y1="' + dy + '" x2="' + (L0 + pw - 8) + '" y2="' + dy + '" class="qdiv"/>' +
+      [['gem', L0 + 16, T0 + 26, 'start'], ['lead', L0 + pw - 16, T0 + 26, 'end'], ['inv', L0 + 16, T0 + ph - 16, 'start'], ['crit', L0 + pw - 16, T0 + ph - 16, 'end']].map(function (c) { return '<text x="' + c[1] + '" y="' + c[2] + '" text-anchor="' + c[3] + '" class="ql' + (c[0] === qi.q ? ' on' : '') + '" style="--qc:' + QC[c[0]] + '">' + quadName(c[0]) + '</text>'; }).join('') +
       '<text x="' + (L0 + pw / 2) + '" y="' + (H - 8) + '" text-anchor="middle" class="qa">' + tr('Visibilidad en IA →', 'AI visibility →') + '</text>' +
-      '<text transform="translate(' + (mob ? 10 : 16) + ' ' + (T0 + ph / 2) + ') rotate(-90)" text-anchor="middle" class="qa">' + tr('Tono de la IA →', 'AI tone →') + '</text>' +
-      [0, .25, .5, .75, 1].filter(function (v) { return v <= xmax + .001; }).map(function (v) { return '<text x="' + X(v) + '" y="' + (T0 + ph + 16) + '" text-anchor="middle" class="qt">' + Math.round(v * 100) + '%</text>'; }).join('') +
-      '<text x="' + (L0 - 8) + '" y="' + (T0 + 10) + '" text-anchor="end" class="qt">+</text><text x="' + (L0 - 8) + '" y="' + (T0 + ph) + '" text-anchor="end" class="qt">−</text>';
-    // Las burbujas grandes debajo y tu marca siempre encima; si dos coinciden, se separan un poco para que se vean las dos
-    var P = B.map(function (b, k) { return { k: k, b: b, cx: X(b.visibility), cy: Y(b.tone), r: 7 + 17 * Math.sqrt(b.top1 / maxT1) }; }).filter(function (p) { return p.k === 0 || p.b.visibility > 0 || p.b.tone != null; });
-    P.forEach(function (p, i) { P.slice(0, i).forEach(function (q) { var dx0 = p.cx - q.cx, dy0 = p.cy - q.cy; if (Math.sqrt(dx0 * dx0 + dy0 * dy0) < Math.max(10, Math.min(p.r, q.r))) { p.cx = Math.min(L0 + pw - p.r, p.cx + Math.max(p.r, q.r) * .9); } }); });
+      '<text transform="translate(' + (mob ? 11 : 16) + ' ' + (T0 + ph / 2) + ') rotate(-90)" text-anchor="middle" class="qa">' + tr('Tono de la IA →', 'AI tone →') + '</text>' +
+      [0, .25, .5, .75, 1].filter(function (v) { return v <= xmax + .001; }).map(function (v) { return '<text x="' + X(v) + '" y="' + (T0 + ph + 18) + '" text-anchor="middle" class="qt">' + Math.round(v * 100) + '%</text>'; }).join('');
+    // Las burbujas grandes debajo y tu marca siempre encima; si dos coinciden, se separan un poco
+    var P = B.map(function (b, k) { return { k: k, b: b, cx: X(b.visibility), cy: Y(b.tone), r: (mob ? 9 : 11) + (mob ? 15 : 21) * Math.sqrt(b.top1 / maxT1) }; }).filter(function (p) { return p.k === 0 || p.b.visibility > 0 || p.b.tone != null; });
+    P.forEach(function (p, i) { P.slice(0, i).forEach(function (q) { var a = p.cx - q.cx, c = p.cy - q.cy; if (Math.sqrt(a * a + c * c) < Math.max(12, Math.min(p.r, q.r))) p.cx = Math.min(L0 + pw - p.r, p.cx + Math.max(p.r, q.r) * .9); }); });
     P.sort(function (a, c) { return (a.k === 0) - (c.k === 0) || c.r - a.r; });
     var placed = [];
-    P.forEach(function (p) {
+    P.forEach(function (p, n) {
       var b = p.b, k = p.k, cx = p.cx, cy = p.cy, r = p.r;
-      var tip = esc(b.name) + ' · ' + tr('visibilidad ', 'visibility ') + pct(b.visibility) + ' · ' + tr('tono ', 'tone ') + toneWord(b.tone) + ' · ' + tr('1.ª opción en ', '1st pick in ') + pct(b.top1);
-      var ly = cy - r - 7; placed.forEach(function (q) { if (Math.abs(q[0] - cx) < 80 && Math.abs(q[1] - ly) < 14) ly = q[1] - 14; }); placed.push([cx, ly]);
-      o += '<g class="qb' + (b.target ? ' me' : '') + '" data-k="' + k + '" data-tip="' + tip + '" tabindex="0" role="button" aria-label="' + tip + '">' +
-        (b.target ? '<circle cx="' + cx + '" cy="' + cy + '" r="' + (r + 5) + '" fill="none" stroke="var(--ink)" stroke-width="2"/>' : '') +
-        '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="' + col(k) + '" fill-opacity=".88" stroke="var(--paper)" stroke-width="2"' + (b.tone == null ? ' stroke-dasharray="3 3"' : '') + '/>' +
-        '<text x="' + Math.min(L0 + pw - 4, Math.max(L0 + 4, cx)) + '" y="' + Math.max(T0 + 12, ly) + '" text-anchor="middle" class="qn' + (b.target ? ' me' : '') + '">' + esc(b.name) + '</text></g>';
+      var tip = esc(b.name) + ' · ' + tr('visibilidad ', 'visibility ') + pct(b.visibility) + ' · ' + tr('tono ', 'tone ') + toneWord(b.tone);
+      var ly = cy - r - 9; placed.forEach(function (q) { if (Math.abs(q[0] - cx) < 84 && Math.abs(q[1] - ly) < 22) ly = q[1] - 22; });
+      if (ly < T0 + 44) ly = cy + r + 24; // sin sitio arriba (nombre del cuadrante): la etiqueta va debajo
+      placed.push([cx, ly]);
+      var lx = Math.min(L0 + pw - 40, Math.max(L0 + 40, cx)), lw = Math.max(36, b.name.length * (b.target ? 7.6 : 7) + 18);
+      o += '<g class="qb' + (b.target ? ' me' : '') + '" data-k="' + k + '" tabindex="0" role="button" aria-label="' + tip + '" style="--d:' + (n * 90) + 'ms;--fl:' + (5 + (k % 3)) + 's">' +
+        '<g class="qf"><g class="qs" style="transform-origin:' + cx + 'px ' + cy + 'px">' +
+        '<circle cx="' + cx + '" cy="' + (cy + r * .55) + '" r="' + (r * .9) + '" fill="' + col(k) + '" opacity=".22" class="qsh"/>' +
+        (b.target ? '<circle cx="' + cx + '" cy="' + cy + '" r="' + (r + 6) + '" class="qring"/>' : '') +
+        '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="url(#' + uid + 'b' + k + ')" class="qg"' + (b.tone == null ? ' stroke-dasharray="3 3"' : '') + '/>' +
+        '<ellipse cx="' + (cx - r * .3) + '" cy="' + (cy - r * .42) + '" rx="' + (r * .42) + '" ry="' + (r * .22) + '" fill="#fff" opacity=".55" class="qhi"/>' +
+        '</g><g class="qlab' + (b.target ? ' me' : '') + '"><rect x="' + (lx - lw / 2) + '" y="' + (Math.max(T0 + 6, ly) - 14) + '" width="' + lw + '" height="22" rx="11"/><text x="' + lx + '" y="' + (Math.max(T0 + 6, ly) + 1) + '" text-anchor="middle">' + esc(b.name) + '</text></g></g></g>';
     });
     return o + '</svg>';
   }
@@ -434,7 +445,7 @@
       crit: tr('La IA te menciona a menudo, pero con un tono poco favorable. Tu reto es la reputación: lo que se dice de ti.', 'AI mentions you often, but not favourably. Your challenge is reputation: what’s said about you.'),
       inv: tr('Para estas preguntas, la IA apenas te menciona y no tiene una opinión clara de ti. Empieza por existir donde se informa la IA.', 'For these questions, AI barely mentions you and has no clear view of you. Start by existing where AI gets its information.') })[qi.q];
     return '<section class="panel sec"><div class="qhead"><div><h3>' + tr('Mapa de posicionamiento', 'Positioning map') + '</h3><p class="sub">' + tr('Cada burbuja es una marca: a la derecha, más visible en la IA; arriba, mejor tono. El tamaño indica cuántas veces es la primera opción.', 'Each bubble is a brand: further right, more visible in AI; higher up, better tone. Size shows how often it is the first pick.') + '</p></div><div class="qbadge"><span>' + tr('Tu cuadrante', 'Your quadrant') + '</span><b>' + quadName(qi.q) + '</b></div></div>' +
-      '<div class="qwrap">' + quadSvg(st) + '</div>' + (function () { var off = st.result.brands.filter(function (b, k) { return k && !b.visibility && b.tone == null; }); return off.length ? '<p class="small" style="margin:6px 0 0">' + tr('Sin presencia en ninguna respuesta (fuera del mapa): ', 'Not in any answer (off the map): ') + off.map(function (b) { return esc(b.name); }).join(', ') + '.</p>' : ''; })() + '<p class="qmsg"><b>' + esc(me.name) + ':</b> ' + msg + ' <span class="small">' + tr('Pulsa una burbuja para leer sus respuestas.', 'Tap a bubble to read its answers.') + '</span></p></section>';
+      '<div class="qwrap" id="qwrap">' + quadSvg(st) + '<div class="qtip" id="qtip" aria-hidden="true"></div></div>' + '<div class="qchips">' + st.result.brands.map(function (b, k) { return (k && !b.visibility && b.tone == null) ? '' : '<button type="button" class="qchip' + (b.target ? ' me' : '') + '" data-k="' + k + '"><i style="background:' + col(k) + '"></i>' + esc(b.name) + '</button>'; }).join('') + '</div><div class="qdet" id="qdet" hidden></div>' + (function () { var off = st.result.brands.filter(function (b, k) { return k && !b.visibility && b.tone == null; }); return off.length ? '<p class="small" style="margin:6px 0 0">' + tr('Sin presencia en ninguna respuesta (fuera del mapa): ', 'Not in any answer (off the map): ') + off.map(function (b) { return esc(b.name); }).join(', ') + '.</p>' : ''; })() + '<p class="qmsg"><b>' + esc(me.name) + ':</b> ' + msg + ' <span class="small">' + tr('Pasa el ratón o pulsa una burbuja para ver su ficha.', 'Hover or tap a bubble to see its card.') + '</span></p></section>';
   }
   function funnelInfo(st) {
     var S2 = (st.result.byStage || []).filter(function (x) { return x.n; }); if (S2.length < 2) return null;
@@ -493,6 +504,49 @@
     var sh = $('ceoShare'); if (sh) sh.onclick = function () { close(); openShare(st); };
     $('ceoClose').focus();
   }
+  // Interacción del mapa: ficha flotante al pasar, marca resaltada y ficha completa al pulsar
+  function qCard(st, k) {
+    var b = st.result.brands[k], me = st.result.brands[0];
+    var row = function (l, v) { return '<div><span>' + l + '</span><b>' + v + '</b></div>'; };
+    return '<div class="qch"><i style="background:' + col(k) + '"></i><b>' + esc(b.name) + '</b>' + (b.target ? '<span class="you">' + tr('tu marca', 'your brand') + '</span>' : '') + '</div><div class="qcg">' +
+      row(tr('Visibilidad', 'Visibility'), pct(b.visibility)) + row(tr('1.ª opción', '1st pick'), pct(b.top1)) + row(tr('Posición media', 'Avg. position'), b.avgPos ? '#' + num(b.avgPos, 1) : '—') + row(tr('Tono', 'Tone'), toneWord(b.tone)) + row(tr('Cuota de voz', 'Share of voice'), pct(b.sov)) + '</div>' +
+      (!b.target && me ? '<div class="qvs">' + (b.visibility > me.visibility ? tr('Aparece ' + Math.round((b.visibility - me.visibility) * 100) + ' puntos más que ' + esc(me.name) + '.', 'Appears ' + Math.round((b.visibility - me.visibility) * 100) + ' points more than ' + esc(me.name) + '.') : b.visibility < me.visibility ? tr(esc(me.name) + ' aparece ' + Math.round((me.visibility - b.visibility) * 100) + ' puntos más.', esc(me.name) + ' appears ' + Math.round((me.visibility - b.visibility) * 100) + ' points more.') : tr('Misma visibilidad que ' + esc(me.name) + '.', 'Same visibility as ' + esc(me.name) + '.')) + '</div>' : '');
+  }
+  function bindQuad(st) {
+    var wrap = $('qwrap'); if (!wrap) return;
+    var svg = wrap.querySelector('.quad'), tip = $('qtip'), det = $('qdet'), sel = null;
+    var focus = function (k) { svg.classList.toggle('focus', k != null); wrap.querySelectorAll('.qb').forEach(function (g) { g.classList.toggle('on', +g.dataset.k === k); }); document.querySelectorAll('#results .qchip').forEach(function (c) { c.classList.toggle('on', +c.dataset.k === k); }); };
+    var show = function (g) {
+      var k = +g.dataset.k, c = g.querySelector('.qg'), wr = wrap.getBoundingClientRect(), cr = c.getBoundingClientRect();
+      tip.innerHTML = qCard(st, k); tip.classList.add('show');
+      var x = cr.left - wr.left + cr.width / 2, y = cr.top - wr.top;
+      var tw = tip.offsetWidth, th = tip.offsetHeight, left = Math.min(wr.width - tw - 4, Math.max(4, x - tw / 2)), top = y - th - 12;
+      if (top < 0) top = cr.bottom - wr.top + 12;
+      tip.style.left = left + 'px'; tip.style.top = top + 'px';
+    };
+    var hide = function () { tip.classList.remove('show'); focus(sel); };
+    var pick = function (k) {
+      sel = sel === k ? null : k; focus(sel);
+      if (sel == null) { det.hidden = true; return; }
+      var i = -1; st.result.rows.forEach(function (r) { if (i < 0 && r.pos[k] != null) i = st.answers.findIndex(function (a) { return a.prompt === r.prompt && a.engine === r.engine; }); });
+      det.innerHTML = qCard(st, k) + '<div class="qda">' + (i >= 0 ? '<button type="button" class="btn ghost" id="qread">' + tr('Leer sus respuestas', 'Read its answers') + ' →</button>' : '') + '<button type="button" class="btn ghost" id="qclose">' + tr('Cerrar', 'Close') + '</button></div>';
+      det.hidden = false; det.style.setProperty('--qc', col(k));
+      var rd = $('qread'); if (rd) rd.onclick = function () { gotoAnswer(i); };
+      $('qclose').onclick = function () { pick(k); };
+    };
+    wrap.querySelectorAll('.qb').forEach(function (g) {
+      g.onmouseenter = function () { focus(+g.dataset.k); show(g); }; g.onmouseleave = hide;
+      g.onfocus = function () { focus(+g.dataset.k); show(g); }; g.onblur = hide;
+      g.onclick = function () { pick(+g.dataset.k); };
+      g.onkeydown = function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(+g.dataset.k); } };
+    });
+    document.querySelectorAll('#results .qchip').forEach(function (c) {
+      var g = wrap.querySelector('.qb[data-k="' + c.dataset.k + '"]');
+      c.onmouseenter = function () { if (g) { focus(+c.dataset.k); show(g); } }; c.onmouseleave = hide;
+      c.onclick = function () { pick(+c.dataset.k); };
+    });
+    requestAnimationFrame(function () { svg.classList.add('in'); });
+  }
   // Ir a una respuesta concreta en "Lee las respuestas"
   function gotoAnswer(i) {
     if (i < 0 || !S.study || !S.study.answers[i]) return;
@@ -501,10 +555,7 @@
     var a = $('ans'); if (a) a.closest('section').scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
   function bindPhase1(st) {
-    document.querySelectorAll('#results .qb').forEach(function (g) {
-      var go = function () { var k = +g.dataset.k, nm = st.result.brands[k]; var i = -1; st.result.rows.forEach(function (r, j) { if (i < 0 && r.pos[k] != null) i = st.answers.findIndex(function (a) { return a.prompt === r.prompt && a.engine === r.engine; }); }); if (i >= 0) gotoAnswer(i); };
-      g.onclick = go; g.onkeydown = function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } };
-    });
+    bindQuad(st);
     document.querySelectorAll('#results [data-goto]').forEach(function (b) { b.onclick = function () { gotoAnswer(+b.dataset.goto); }; });
     document.querySelectorAll('#results .hm:not(.fn) tr[data-q]').forEach(function (tr0) { tr0.onclick = function () { gotoAnswer(st.answers.findIndex(function (a) { return a.prompt === tr0.dataset.q; })); }; });
     var cb = $('ceoBtn'); if (cb) cb.onclick = function () { openCeo(st); };
