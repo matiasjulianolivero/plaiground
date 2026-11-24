@@ -117,19 +117,40 @@
       S.study = r.d.study; $('setup').innerHTML = ''; renderResults(); $('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
   }
+  // Respuestas ya obtenidas (vista previa + preparación en segundo plano), para no repetirlas tras entrar con el email
+  var sig = function (st) { return st.domain + '|' + st.prompts.join('|'); };
+  function cacheGet() { try { var c = JSON.parse(localStorage.getItem('plg-aibb-answers') || 'null'); return c && S.setup && c.sig === sig(S.setup) ? c.answers : []; } catch (e) { return []; } }
+  function cachePut(list) { try { localStorage.setItem('plg-aibb-answers', JSON.stringify({ sig: sig(S.setup), answers: list, ts: Date.now() })); } catch (e) { } }
+  function prefetch(engine) {
+    var have = cacheGet(), todo = S.setup.prompts.filter(function (p) { return !have.some(function (a) { return a.prompt === p && a.engine === engine; }); });
+    var k = 0, total = S.setup.prompts.length;
+    var show = function () { var el = $('preProg'); if (el) { var n = cacheGet().length; el.innerHTML = n >= total ? '✓ ' + tr('Tu informe completo ya está listo: entra con tu email y lo verás al instante.', 'Your full report is ready: sign in with your email and you’ll see it instantly.') : '⏳ ' + tr('Ya estamos preparando tu informe completo (' + n + ' de ' + total + ' preguntas)…', 'We’re already preparing your full report (' + n + ' of ' + total + ' questions)…'); } };
+    show();
+    (function step() {
+      if (k >= todo.length || S.cfg.user) return show();
+      setTimeout(function () {
+        api('/api/aibb/ask', { method: 'POST', body: JSON.stringify({ setup: S.setup, engine: engine, prompt: todo[k] }) }).then(function (r) {
+          if (r.ok && r.d.text) { var c = cacheGet(); c.push({ engine: engine, prompt: todo[k], text: r.d.text }); cachePut(c); k++; show(); step(); }
+          else if (r.status !== 429) { k++; step(); } else show();
+        });
+      }, 4200);
+    })();
+  }
   function runLive(teaser) {
     var engines = S.engines.filter(function (e) { return e.active && (teaser || S.sel[e.id]); }).map(function (e) { return e.id; });
     if (teaser) engines = engines.slice(0, 1);
     if (!engines.length) return;
     var ps = teaser ? S.setup.prompts.slice(0, (S.cfg && S.cfg.teaser) || 3) : S.setup.prompts;
-    var jobs = []; engines.forEach(function (e) { ps.forEach(function (p) { jobs.push({ engine: e, prompt: p, st: '' }); }); });
-    S.running = true; $('setup').innerHTML = ''; $('results').innerHTML = ''; renderRun(jobs, 0, jobs.length + 1); $('run').scrollIntoView({ behavior: 'smooth', block: 'start' });
-    var answers = [], i = 0;
+    var cached = cacheGet(), answers = [];
+    var jobs = []; engines.forEach(function (e) { ps.forEach(function (p) { var hit = cached.filter(function (a) { return a.prompt === p && a.engine === e; })[0]; if (hit) answers.push(hit); else jobs.push({ engine: e, prompt: p, st: '' }); }); });
+    S.running = true; $('setup').innerHTML = ''; $('results').innerHTML = ''; renderRun(jobs, 0, jobs.length + 1);
+    if (!jobs.length) { $('run').querySelector('h2').textContent = tr('Preparando tu informe…', 'Preparing your report…'); } $('run').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    var i = 0;
     (function next() {
       if (i >= jobs.length) return finish();
       var j = jobs[i]; j.st = 'on'; renderRun(jobs, i, jobs.length + 1);
       api('/api/aibb/ask', { method: 'POST', body: JSON.stringify({ setup: S.setup, engine: j.engine, prompt: j.prompt }) }).then(function (r) {
-        if (r.ok && r.d.text) { j.st = 'ok'; answers.push({ engine: j.engine, prompt: j.prompt, text: r.d.text }); }
+        if (r.ok && r.d.text) { j.st = 'ok'; answers.push({ engine: j.engine, prompt: j.prompt, text: r.d.text }); if (teaser) cachePut(answers.slice()); }
         else { j.st = 'ko'; if (r.status === 429 && (r.d.error === 'global_limit' || r.d.error === 'teaser_limit')) { S.limitHit = r.d.error; i = jobs.length; return finish(); } }
         i++; renderRun(jobs, i, jobs.length + 1);
         setTimeout(next, i < jobs.length ? 4200 : 0); // respeta el límite por minuto de la capa gratuita
@@ -141,6 +162,7 @@
         S.running = false; $('run').innerHTML = '';
         if (!r.ok) { $('goErr').textContent = tr('No se pudo calcular el estudio.', 'Couldn’t compute the study.'); return; }
         S.study = r.d.study; renderResults(); loadHistory(); $('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        if (teaser && r.d.study.partial) prefetch(engines[0]); else if (!r.d.study.partial) { try { localStorage.removeItem('plg-aibb-answers'); } catch (e) { } }
       });
     }
   }
@@ -214,7 +236,7 @@
       kpis +
       '<div class="g2"><section class="panel"><h3>' + tr('Ranking de visibilidad', 'Visibility ranking') + '</h3><p class="sub">' + tr('% de respuestas en las que aparece cada marca · posición media · cuota de voz', '% of answers mentioning each brand · average position · share of voice') + '</p>' + rank + '</section>' +
       '<section class="panel"><h3>' + tr('Lo que hay que saber', 'What you need to know') + '</h3><p class="sub">' + tr('Lectura automática de los resultados', 'Automatic reading of the results') + '</p>' + ins + '</section></div>' +
-      (st.partial ? '<div class="lockwrap"><div class="lockcard card"><div class="eyebrow">🔒 ' + tr('Informe completo', 'Full report') + '</div><h3>' + tr('Desbloquea tu informe completo gratis', 'Unlock your full report for free') + '</h3><p class="sub">' + tr('Las ' + s.prompts.length + ' preguntas, posición pregunta a pregunta, fuentes que cita la IA, el tono hacia tu marca, todas las respuestas y tu histórico mes a mes. Solo tu email, sin contraseña.', 'All ' + s.prompts.length + ' questions, position question by question, the sources AI cites, the tone towards your brand, every answer and your month-by-month history. Just your email, no password.') + '</p>' + loginFormHtml() + '</div><div class="locked" aria-hidden="true">' : '') +
+      (st.partial ? '<div class="lockwrap"><div class="lockcard card"><div class="eyebrow">🔒 ' + tr('Informe completo', 'Full report') + '</div><h3>' + tr('Desbloquea tu informe completo gratis', 'Unlock your full report for free') + '</h3><p class="sub">' + tr('Las ' + s.prompts.length + ' preguntas, posición pregunta a pregunta, fuentes que cita la IA, el tono hacia tu marca, todas las respuestas y tu histórico mes a mes. Solo tu email, sin contraseña.', 'All ' + s.prompts.length + ' questions, position question by question, the sources AI cites, the tone towards your brand, every answer and your month-by-month history. Just your email, no password.') + '</p>' + loginFormHtml() + '<p class="small" id="preProg" style="margin:10px 0 0"></p></div><div class="locked" aria-hidden="true">' : '') +
       '<section class="panel sec"><h3>' + tr('Posición por pregunta', 'Position by question') + '</h3><p class="sub">' + tr('En qué puesto sale cada marca en cada respuesta (1 = la primera que menciona la IA)', 'Where each brand ranks in each answer (1 = the first one the AI mentions)') + '</p>' + hm + '</section>' +
       '<div class="g2"><section class="panel"><h3>' + tr('Visibilidad por asistente', 'Visibility by assistant') + '</h3><p class="sub">' + tr('% de respuestas de cada IA que mencionan a cada marca', '% of each AI’s answers mentioning each brand') + '</p>' + eh + '</section>' +
       '<section class="panel"><h3>' + tr('Fuentes que cita la IA', 'Sources the AI cites') + '</h3><p class="sub">' + tr('Webs mencionadas como fuente en las respuestas', 'Websites mentioned as sources in the answers') + '</p>' + src + '</section></div>' +
