@@ -77,7 +77,10 @@
     $('goErr').textContent = ''; var b = $('goBtn'); b.disabled = true;
     S.study = null; $('results').innerHTML = ''; $('run').innerHTML = '';
     var stopPrep = prepAnim();
-    api('/api/aibb/setup', { method: 'POST', body: JSON.stringify({ url: v, lang: L() }) }).then(function (r) {
+    var tries = 0;
+    (function doSetup() { api('/api/aibb/setup', { method: 'POST', body: JSON.stringify({ url: v, lang: L() }) }).then(function (r) {
+      // Si la IA estaba saturada y no detectó competidores, se reintenta solo una vez antes de pedir la revisión manual
+      if (r.ok && r.d.reason === 'auto_failed' && !(r.d.setup && r.d.setup.competitors && r.d.setup.competitors.length) && tries++ < 1) { setTimeout(doSetup, 4000); return; }
       stopPrep(); b.disabled = false;
       if (!r.ok) { $('setup').innerHTML = ''; $('goErr').innerHTML = r.d.error === 'user_limit' ? tr('Has llegado al máximo de estudios gratuitos de hoy desde este dispositivo. Vuelve mañana' + (S.cfg && S.cfg.user ? '.' : ' o <a href="#" id="limitLogin">entra con tu email</a> para ver tus estudios.'), 'You’ve reached today’s free study limit on this device. Come back tomorrow' + (S.cfg && S.cfg.user ? '.' : ' or <a href="#" id="limitLogin">sign in with your email</a> to see your studies.')) : r.d.error === 'global_limit' ? tr('Hoy se ha agotado el cupo gratuito de la beta. Vuelve mañana.', 'Today’s free beta quota is used up. Come back tomorrow.') : r.d.error === 'invalid_url' ? tr('Esa web no parece válida.', 'That website doesn’t look valid.') : tr('No se pudo preparar el estudio. Inténtalo de nuevo.', 'Couldn’t prepare the study. Try again.'); var ll = $('limitLogin'); if (ll) ll.onclick = function (e) { e.preventDefault(); e.stopPropagation(); window.scrollTo({ top: 0, behavior: 'smooth' }); $('who').classList.add('open'); setTimeout(function () { var hh = $('hem'); if (hh) hh.focus(); }, 300); }; return; }
       S.setup = r.d.setup; S.mode = r.d.mode; S.reason = r.d.reason || ''; S.engines = r.d.engines || [];
@@ -85,7 +88,7 @@
       // Flujo directo: se analiza todo sin paso intermedio. Solo se pide revisar si no se detectaron competidores.
       if (S.mode === 'demo' || (S.reason === 'auto_failed' && !S.setup.competitors.length)) { renderSetup(); $('setup').scrollIntoView({ behavior: 'smooth', block: 'start' }); }
       else { S.unlock = null; runLive(); }
-    });
+    }); })();
   };
 
   // Tarjeta animada mientras se lee la web y se prepara el estudio (mismo estilo que el progreso del estudio)
