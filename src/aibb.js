@@ -10,7 +10,7 @@
 
 const DAILY_CALLS_DEFAULT = 300;   // tope global de llamadas a LLM al día (la capa gratuita de Flash-Lite ronda las 500)
 const STUDIES_PER_USER_DAY = 3;    // estudios reales por usuario y día
-const MAX_PROMPTS = 8, MAX_COMPETITORS = 5;
+const MAX_PROMPTS = 8, MAX_COMPETITORS = 7; // más de 7 competidores: informe Premium
 const TEASER_PROMPTS = 3, TEASER_ASKS_PER_IP_DAY = 16; // sin registro: vista previa de 3 preguntas + preparación del resto en segundo plano (2 estudios al día por IP)
 
 const ENGINES = [
@@ -136,7 +136,7 @@ Nombre del sitio: ${site.siteName}
 H1: ${site.h1}
 Idioma de la web: ${site.lang || 'desconocido'}
 
-Devuelve: {"brand": nombre comercial de la marca, "category": categoría de producto/servicio en 2-5 palabras (en ${es ? 'español' : 'inglés'}), "country": país principal de mercado, "competitors": [4 competidores directos reales y conocidos en ese mercado, solo nombres de marca], "prompts": [${MAX_PROMPTS} preguntas que haría un comprador a un asistente de IA en ${es ? 'español' : 'inglés'}, variadas: mejores opciones de la categoría, recomendación para su caso, comparativa con un competidor, opiniones de la marca, alternativas a un competidor, precio, top 5, mejor relación calidad-precio. No menciones la marca en más de 3 de ellas]}`;
+Devuelve: {"brand": nombre comercial de la marca, "category": categoría de producto/servicio en 2-5 palabras (en ${es ? 'español' : 'inglés'}), "country": país principal de mercado, "competitors": [entre 3 y 7 competidores directos reales en ese mercado, solo nombres de marca: incluye todos los que de verdad compiten con ella por los mismos clientes (si hay 6 o 7 relevantes, pon 6 o 7; si solo hay 3 claros, pon 3), sin rellenar con marcas poco relevantes], "prompts": [${MAX_PROMPTS} preguntas que haría un comprador a un asistente de IA en ${es ? 'español' : 'inglés'}, variadas: mejores opciones de la categoría, recomendación para su caso, comparativa con un competidor, opiniones de la marca, alternativas a un competidor, precio, top 5, mejor relación calidad-precio. No menciones la marca en más de 3 de ellas]}`;
     const r = await callEngine(env, 'gemini', prompt, { json: true, temperature: 0.4 });
     await logUse(env, user, 'gemini', 'setup', !r.error);
     if (r.error) return { error: r.error };
