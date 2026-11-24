@@ -25,7 +25,9 @@
   /* ---------- cabecera ---------- */
   document.querySelectorAll('.pill button').forEach(function (b) { b.onclick = function () { H.setAttribute('data-lang', b.dataset.l); H.lang = b.dataset.l; try { localStorage.setItem('plg-lang', b.dataset.l); } catch (e) { } rerender(); }; });
   $('themeBtn').onclick = function () { var t = dark() ? 'light' : 'dark'; H.setAttribute('data-theme', t); try { localStorage.setItem('plg-theme', t); } catch (e) { } rerender(); };
-  function rerender() { if (S.setup && !S.study && !S.running) renderSetup(); if (S.study) renderResults(); renderHistory(); renderWho(); }
+  function ph() { $('url').placeholder = tr('tuempresa.com', 'yourcompany.com'); }
+  ph();
+  function rerender() { ph(); if (S.setup && !S.study && !S.running) renderSetup(); if (S.study) renderResults(); renderHistory(); renderWho(); }
   function renderWho() { var u = S.cfg && S.cfg.user; $('who').innerHTML = u ? '● ' + esc(u.email) : ''; }
 
   /* ---------- paso 1: web ---------- */
