@@ -79,7 +79,8 @@ export function createAibb(h) {
           }
           await logErr(env, `gemini ${mdl} ${r.status}: ${JSON.stringify(d).slice(0, 400)}`);
           // 400/404: modelo no disponible; 403/429 con cupo 0: el modelo no está en la capa gratuita → probar el siguiente
-          if (r.status === 400 || r.status === 404 || r.status === 403 || (r.status === 429 && /limit: ?0|free_tier|FreeTier/i.test(JSON.stringify(d)))) { last = r.status === 429 ? 'rate_limited' : 'engine_failed'; continue; }
+          // Modelo no disponible, sin cupo gratuito o saturado (503 'high demand'): probar el siguiente modelo
+          if (r.status === 400 || r.status === 404 || r.status === 403 || r.status >= 500 || (r.status === 429 && /limit: ?0|free_tier|FreeTier/i.test(JSON.stringify(d)))) { last = r.status === 429 ? 'rate_limited' : 'engine_failed'; continue; }
           if ((r.status === 429 || r.status >= 500) && !retried) { await new Promise(res => setTimeout(res, 1500)); return callEngine(env, id, prompt, { json: wantJson, temperature, system }, true); }
           return { error: r.status === 429 ? 'rate_limited' : 'engine_failed' };
         }
