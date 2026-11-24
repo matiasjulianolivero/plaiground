@@ -66,14 +66,20 @@ export function createAibb(h) {
         // Los modelos Gemini 3.5+ no admiten temperature/top_p: no se envían. Si un modelo no existe, se prueba el siguiente.
         const models = [model].concat(env[e.model] ? [] : (e.alt || []));
         let last = 'engine_failed', busy = false;
+        const deadline = Date.now() + 50e3; // tope total: el estudio nunca se queda colgado
         // Si todos los modelos están saturados (503 'high demand'), se espera y se repite la cadena hasta 2 veces más.
         for (let round = 0; round < 3; round++) {
-        if (round) { if (!busy) break; busy = false; await new Promise(res => setTimeout(res, round * 2500)); }
+        if (round) { if (!busy || Date.now() > deadline - 8e3) break; busy = false; await new Promise(res => setTimeout(res, round * 2500)); }
         for (const mdl of models) {
-          const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(mdl)}:generateContent`, {
+          const left = deadline - Date.now(); if (left < 3000) { busy = false; break; }
+          let r;
+          try {
+            r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(mdl)}:generateContent`, {
+            signal: AbortSignal.timeout(Math.min(20e3, left)),
             method: 'POST', headers: { 'content-type': 'application/json', 'x-goog-api-key': env[e.key] },
             body: JSON.stringify(Object.assign({ contents: [{ role: 'user', parts: [{ text: prompt }] }], generationConfig: Object.assign({ maxOutputTokens: 4096 }, wantJson ? { responseMimeType: 'application/json' } : {}) }, system ? { systemInstruction: { parts: [{ text: system }] } } : {}))
           });
+          } catch (err) { await logErr(env, `gemini ${mdl} timeout/red: ${String(err && err.name || err).slice(0, 80)}`); busy = true; continue; }
           const d = await r.json().catch(() => ({}));
           if (r.ok) {
             const text = ((d.candidates || [])[0]?.content?.parts || []).filter(p => !p.thought).map(p => p.text || '').join('');
