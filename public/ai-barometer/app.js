@@ -213,17 +213,22 @@
     var ps = teaser ? S.setup.prompts.slice(0, (S.cfg && S.cfg.teaser) || 3) : S.setup.prompts;
     var cached = cacheGet(), answers = [];
     var jobs = []; engines.forEach(function (e) { ps.forEach(function (p) { var hit = cached.filter(function (a) { return a.prompt === p && a.engine === e; })[0]; if (hit) answers.push(hit); else jobs.push({ engine: e, prompt: p, st: '' }); }); });
-    S.running = true; $('setup').innerHTML = ''; $('results').innerHTML = ''; renderRun(jobs, 0, jobs.length + 1);
-    if (!jobs.length) { $('run').querySelector('h2').textContent = tr('Preparando tu informe…', 'Preparing your report…'); } $('run').scrollIntoView({ behavior: 'smooth', block: 'start' });
-    var i = 0;
+    S.running = true; $('setup').innerHTML = '';
+    var hw = $('how'); if (hw) hw.hidden = true; // los pasos 01/02/03 solo tienen sentido antes del primer estudio
+    if (!jobs.length) {
+      // Todas las respuestas ya están calculadas (desbloqueo con email): no se muestra una barra desde 0%, se abre el informe en el sitio
+      var lb = document.querySelector('#lform button'); if (lb) { lb.disabled = true; lb.textContent = tr('Abriendo tu informe completo…', 'Opening your full report…'); }
+    } else { $('results').innerHTML = ''; renderRun(jobs, 0, jobs.length + 1); $('run').scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+    // Cola de trabajo: si una pregunta falla (IA saturada), se reintenta una vez al final sin cambiar el orden en pantalla.
+    var queue = jobs.map(function (x, k) { return k; }), done = 0;
     (function next() {
-      if (i >= jobs.length) return finish();
-      var j = jobs[i]; j.st = 'on'; renderRun(jobs, i, jobs.length + 1);
+      if (!queue.length) return finish();
+      var j = jobs[queue.shift()]; j.st = 'on'; renderRun(jobs, done, jobs.length + 1);
       api('/api/aibb/ask', { method: 'POST', body: JSON.stringify({ setup: S.setup, engine: j.engine, prompt: j.prompt, unlock: teaser ? undefined : S.unlock }) }).then(function (r) {
         if (r.ok && r.d.text) { j.st = 'ok'; answers.push({ engine: j.engine, prompt: j.prompt, text: r.d.text }); if (teaser || !(S.cfg && S.cfg.user)) cachePut(answers.slice()); }
-        else { j.st = 'ko'; if (r.status === 429 && (r.d.error === 'global_limit' || r.d.error === 'teaser_limit')) { S.limitHit = r.d.error; i = jobs.length; return finish(); } }
-        i++; renderRun(jobs, i, jobs.length + 1);
-        setTimeout(next, i < jobs.length ? 4200 : 0); // respeta el límite por minuto de la capa gratuita
+        else { j.st = 'ko'; if (r.status === 429 && (r.d.error === 'global_limit' || r.d.error === 'teaser_limit')) { S.limitHit = r.d.error; queue = []; return finish(); } if (!j.retried) { j.retried = true; j.st = 'wait'; queue.push(jobs.indexOf(j)); } }
+        if (j.st !== 'wait') done++; renderRun(jobs, done, jobs.length + 1);
+        setTimeout(next, queue.length ? 4200 : 0); // respeta el límite por minuto de la capa gratuita
       });
     })();
     function finish() {
@@ -239,7 +244,7 @@
   function renderRun(jobs, done, total) {
     var p = Math.round(done / total * 100);
     $('run').innerHTML = '<section class="card sec"><div class="runh"><div><div class="eyebrow">' + tr('En marcha', 'Running') + '</div><h2 style="font-size:30px;margin-top:8px">' + tr('Analizando tu marca en la IA…', 'Analyzing your brand in AI…') + '</h2></div><b style="font:800 34px var(--display)">' + p + '%</b></div><div class="bar"><i style="width:' + p + '%"></i></div>' +
-      (jobs.length ? '<div class="tasks">' + jobs.map(function (j) { return '<div class="task ' + j.st + '"><span class="st">' + (j.st === 'ok' ? '✓' : j.st === 'ko' ? '!' : '') + '</span><span>' + esc(j.prompt) + '</span><span class="e">' + ENG_NAME[j.engine] + '</span></div>'; }).join('') + '</div>' : '') + '</section>';
+      (jobs.length ? '<div class="tasks">' + jobs.map(function (j) { return '<div class="task ' + j.st + '"><span class="st">' + (j.st === 'ok' ? '✓' : j.st === 'ko' ? '!' : j.st === 'wait' ? '↻' : '') + '</span><span>' + esc(j.prompt) + '</span><span class="e">' + ENG_NAME[j.engine] + '</span></div>'; }).join('') + '</div>' : '') + '</section>';
   }
 
   /* ---------- resultados ---------- */
@@ -261,6 +266,7 @@
     return '<svg class="ring" viewBox="0 0 112 112" aria-hidden="true"><circle cx="56" cy="56" r="' + r + '" fill="none" stroke="rgba(255,255,255,.22)" stroke-width="10"/><circle cx="56" cy="56" r="' + r + '" fill="none" stroke="#fff" stroke-width="10" stroke-linecap="round" stroke-dasharray="' + (c * v / 100) + ' ' + c + '" transform="rotate(-90 56 56)"/><text x="56" y="64" text-anchor="middle" fill="#fff" font-family="Bricolage Grotesque,system-ui" font-weight="800" font-size="30">' + v + '</text></svg>';
   }
   function renderResults() {
+    var hw0 = $('how'); if (hw0) hw0.hidden = true;
     var st = S.study; if (!st) return;
     var R = st.result, B = R.brands, s = st.setup, me = B[0];
     var engs = (R.byEngine || []).map(function (e) { return e.engine; });
