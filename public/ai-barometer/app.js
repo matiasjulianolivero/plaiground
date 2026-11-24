@@ -29,7 +29,30 @@
   function ph() { $('url').placeholder = tr('tuempresa.com', 'yourcompany.com'); }
   ph();
   function rerender() { ph(); if (S.setup && !S.study && !S.running) renderSetup(); if (S.study) renderResults(); renderHistory(); renderWho(); }
-  function renderWho() { var u = S.cfg && S.cfg.user; $('who').innerHTML = u ? '● ' + esc(u.email) : ''; }
+  function renderWho() {
+    var u = S.cfg && S.cfg.user, w = $('who');
+    if (!u || S.viewer) { w.innerHTML = ''; w.classList.remove('open'); return; }
+    w.innerHTML = '<button type="button" class="ubtn" id="ubtn" aria-haspopup="true" aria-expanded="false" aria-label="' + tr('Tu cuenta', 'Your account') + '"><i>' + esc(u.email[0].toUpperCase()) + '</i><span>' + esc(u.email) + '</span></button>' +
+      '<div class="umenu" role="menu"><div class="em">' + tr('Sesión iniciada como', 'Signed in as') + '<br><b style="color:var(--ink)">' + esc(u.email) + '</b></div>' +
+      '<button type="button" role="menuitem" id="uHist">' + tr('Mi histórico', 'My history') + '</button><button type="button" role="menuitem" id="uNew">' + tr('Nuevo estudio', 'New study') + '</button><button type="button" role="menuitem" class="out" id="uOut">' + tr('Cerrar sesión', 'Sign out') + '</button></div>';
+    var close = function () { w.classList.remove('open'); $('ubtn').setAttribute('aria-expanded', 'false'); };
+    $('ubtn').onclick = function (e) { e.stopPropagation(); var o = !w.classList.contains('open'); w.classList.toggle('open', o); this.setAttribute('aria-expanded', o); };
+    $('uHist').onclick = function () { close(); if (S.hist.length) $('history').scrollIntoView({ behavior: 'smooth', block: 'start' }); else $('url').focus(); };
+    $('uNew').onclick = function () { close(); S.study = null; $('results').innerHTML = ''; $('setup').innerHTML = ''; window.scrollTo({ top: 0, behavior: 'smooth' }); $('url').focus(); };
+    $('uOut').onclick = function () {
+      close();
+      api('/api/auth/logout', { method: 'POST' }).then(function () {
+        try { ['plg-aibb-answers', 'plg-aibb-setup', 'plg-aibb-autorun', 'plg-aibb-url'].forEach(function (k) { localStorage.removeItem(k); }); } catch (e) { }
+        S.cfg.user = null; S.hist = []; S.study = null; S.setup = null; S.unlock = null; S.unlockEmail = null;
+        $('results').innerHTML = ''; $('setup').innerHTML = ''; $('run').innerHTML = ''; renderHistory(); renderWho();
+        $('goErr').style.color = 'var(--teal)'; $('goErr').textContent = tr('Has cerrado sesión.', 'You’ve signed out.');
+        setTimeout(function () { $('goErr').textContent = ''; $('goErr').style.color = ''; }, 4000);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+    };
+  }
+  document.addEventListener('click', function (e) { var w = $('who'); if (w && !w.contains(e.target)) w.classList.remove('open'); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { var w = $('who'); if (w) w.classList.remove('open'); } });
 
   /* ---------- paso 1: web ---------- */
   $('goForm').onsubmit = function (e) {
