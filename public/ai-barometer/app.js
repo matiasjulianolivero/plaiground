@@ -207,7 +207,8 @@
     var ins = '<ul class="ins">' + insights(st).map(function (x) { return '<li><span class="em">' + x[0] + '</span><span>' + x[1] + '</span></li>'; }).join('') + '</ul>';
     var exl = st.answers.map(function (a, i) { return '<button type="button" data-x="' + i + '" aria-pressed="' + (i === S.exSel) + '"><span class="e">' + ENG_NAME[a.engine] + '</span><span>' + esc(a.prompt) + '</span></button>'; }).join('');
     $('results').innerHTML = '<div class="rhead"><div><div class="eyebrow">' + tr('Resultados', 'Results') + ' · ' + esc(s.domain) + '</div><h2 style="margin-top:10px">' + esc(s.brand) + '</h2><div class="meta">' + esc(s.category) + ' · ' + d.toLocaleDateString(L() === 'es' ? 'es-ES' : 'en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) + ' · ' + st.answers.length + tr(' respuestas analizadas', ' answers analyzed') + '</div></div>' +
-      '<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">' + (st.demo ? '<span class="tag demo">🧪 ' + tr('Ejemplo · datos simulados', 'Sample · simulated data') + '</span>' : st.partial ? '<span class="tag live">👀 ' + tr('Vista previa', 'Preview') + '</span>' : '<span class="tag live">🛰️ ' + tr('Estudio real', 'Live study') + '</span>') + '<button class="btn ghost" type="button" id="again" style="padding:11px 16px;font-size:14px">' + tr('Nuevo estudio', 'New study') + '</button></div></div>' +
+      '<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">' + (st.demo ? '<span class="tag demo">🧪 ' + tr('Ejemplo · datos simulados', 'Sample · simulated data') + '</span>' : st.partial ? '<span class="tag live">👀 ' + tr('Vista previa', 'Preview') + '</span>' : '<span class="tag live">🛰️ ' + tr('Estudio real', 'Live study') + '</span>') + (S.viewer ? '<a class="btn" href="/ai-barometer/" style="padding:11px 16px;font-size:14px">' + tr('Analiza tu marca gratis', 'Analyze your brand free') + ' →</a>' : (st.id && !st.demo && !st.partial && S.cfg && S.cfg.user ? '<button class="btn" type="button" id="shareBtn" style="padding:11px 16px;font-size:14px">' + tr('Compartir', 'Share') + '</button>' : '') + '<button class="btn ghost" type="button" id="again" style="padding:11px 16px;font-size:14px">' + tr('Nuevo estudio', 'New study') + '</button>') + '</div></div><div id="sharebox"></div>' +
+      (S.viewer ? '<div class="banner live" style="margin-bottom:16px"><span class="ic">📤</span><div>' + tr('<b>Informe compartido contigo.</b> Es una copia de solo lectura' + (S.viewerExp ? ', disponible hasta el ' + new Date(S.viewerExp).toLocaleDateString('es-ES', { day: 'numeric', month: 'long' }) : '') + '. ¿Quieres ver cómo sale tu marca? <a href="/ai-barometer/">Haz tu estudio gratis</a>.', '<b>Report shared with you.</b> It’s a read-only copy' + (S.viewerExp ? ', available until ' + new Date(S.viewerExp).toLocaleDateString('en-GB', { day: 'numeric', month: 'long' }) : '') + '. Want to see how your brand does? <a href="/ai-barometer/">Run your free study</a>.') + '</div></div>' : '') +
       (st.partial ? '<div class="banner live" style="margin-bottom:16px"><span class="ic">👀</span><div>' + tr('<b>Vista previa:</b> resultados con ' + st.answers.length + ' de ' + s.prompts.length + ' preguntas. Desbloquea abajo el informe completo, gratis.', '<b>Preview:</b> results from ' + st.answers.length + ' of ' + s.prompts.length + ' questions. Unlock the full report below, for free.') + '</div></div>' : '') +
       (st.demo ? '<div class="banner" style="margin-bottom:16px"><span class="ic">🧪</span><div>' + tr('Estas cifras salen de <b>respuestas inventadas</b> para enseñarte el informe. No describen la visibilidad real de ninguna marca.', 'These figures come from <b>made-up answers</b> to show you the report. They don’t describe any brand’s real visibility.') + '</div></div>' : '') +
       kpis +
@@ -222,7 +223,8 @@
     showAnswer(S.exSel); bindLogin();
     var cpb = $('copyPlan'); if (cpb) cpb.onclick = function () { (navigator.clipboard ? navigator.clipboard.writeText(planText(st)) : Promise.reject()).then(function () { cpb.textContent = tr('Copiado ✓', 'Copied ✓'); setTimeout(function () { cpb.textContent = tr('Copiar plan', 'Copy plan'); }, 1800); }).catch(function () { }); };
     document.querySelectorAll('#exl button').forEach(function (b) { b.onclick = function () { S.exSel = +b.dataset.x; document.querySelectorAll('#exl button').forEach(function (x) { x.setAttribute('aria-pressed', x === b); }); showAnswer(S.exSel); }; });
-    $('again').onclick = function () { S.study = null; S.exSel = 0; $('results').innerHTML = ''; window.scrollTo({ top: 0, behavior: 'smooth' }); $('url').focus(); };
+    var shb = $('shareBtn'); if (shb) shb.onclick = function () { openShare(st); };
+    if ($('again')) $('again').onclick = function () { S.study = null; S.exSel = 0; $('results').innerHTML = ''; window.scrollTo({ top: 0, behavior: 'smooth' }); $('url').focus(); };
     tips($('results'));
   }
 
@@ -270,6 +272,21 @@
     var strip = function (h) { var d = document.createElement('div'); d.innerHTML = h; return d.textContent; };
     return tr('Plan para mejorar en la IA · ', 'Plan to improve in AI · ') + st.setup.brand + ' (AI Brand Barometer · plaiground)\n\n' + P.map(function (items, k) { return n[k] + '\n' + items.map(function (it) { return '• ' + strip(it.t) + ' — ' + strip(it.why) + '\n' + it.s.map(function (x) { return '   - ' + strip(x); }).join('\n'); }).join('\n') ; }).join('\n\n');
   }
+  function openShare(st) {
+    var box = $('sharebox'); box.innerHTML = '<div class="card sec sharecard"><b>' + tr('Creando enlace…', 'Creating link…') + '</b></div>';
+    api('/api/aibb/studies/' + st.id + '/share', { method: 'POST' }).then(function (r) {
+      if (!r.ok) { box.innerHTML = '<div class="card sec sharecard err">' + tr('No se pudo crear el enlace.', 'Couldn’t create the link.') + '</div>'; return; }
+      var url = location.origin + '/ai-barometer/?s=' + r.d.share.token, exp = new Date(r.d.share.expires_at).toLocaleDateString(L() === 'es' ? 'es-ES' : 'en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+      var msg = tr('Mira cómo sale ' + st.setup.brand + ' en las respuestas de la IA frente a la competencia: ', 'See how ' + st.setup.brand + ' shows up in AI answers vs. competitors: ');
+      box.innerHTML = '<div class="card sec sharecard"><div class="share-h"><div><h3 style="font-size:22px">' + tr('Comparte este informe', 'Share this report') + '</h3><p class="small" style="margin:4px 0 0">' + tr('Cualquiera con el enlace verá una copia de solo lectura hasta el ', 'Anyone with the link sees a read-only copy until ') + exp + tr('. No verá tu email ni tu histórico.', '. They won’t see your email or history.') + '</p></div><button type="button" class="x" id="shClose" aria-label="' + tr('Cerrar', 'Close') + '">×</button></div>' +
+        '<div class="share-row"><input class="t" id="shUrl" readonly value="' + esc(url) + '"><button class="btn" type="button" id="shCopy">' + tr('Copiar enlace', 'Copy link') + '</button></div>' +
+        '<div class="share-apps">' + (navigator.share ? '<button type="button" class="btn ghost" id="shNative">' + tr('Compartir…', 'Share…') + '</button>' : '') + '<a class="btn ghost" target="_blank" rel="noopener" href="https://wa.me/?text=' + encodeURIComponent(msg + url) + '">WhatsApp</a><a class="btn ghost" href="mailto:?subject=' + encodeURIComponent('AI Brand Barometer · ' + st.setup.brand) + '&body=' + encodeURIComponent(msg + url) + '">Email</a><a class="btn ghost" target="_blank" rel="noopener" href="https://www.linkedin.com/sharing/share-offsite/?url=' + encodeURIComponent(url) + '">LinkedIn</a><button type="button" class="linkbtn" id="shRevoke">' + tr('Desactivar enlace', 'Disable link') + '</button></div></div>';
+      $('shClose').onclick = function () { box.innerHTML = ''; };
+      $('shCopy').onclick = function () { var b = this; $('shUrl').select(); (navigator.clipboard ? navigator.clipboard.writeText(url) : Promise.reject()).then(function () { b.textContent = tr('Copiado ✓', 'Copied ✓'); setTimeout(function () { b.textContent = tr('Copiar enlace', 'Copy link'); }, 1800); }).catch(function () { }); };
+      var nb = $('shNative'); if (nb) nb.onclick = function () { navigator.share({ title: 'AI Brand Barometer · ' + st.setup.brand, text: msg, url: url }).catch(function () { }); };
+      $('shRevoke').onclick = function () { var b = this; if (!b.dataset.sure) { b.dataset.sure = 1; b.textContent = tr('¿Seguro? El enlace dejará de funcionar', 'Sure? The link will stop working'); return; } api('/api/aibb/studies/' + st.id + '/share', { method: 'DELETE' }).then(function () { box.innerHTML = '<div class="card sec sharecard">' + tr('Enlace desactivado. Si vuelves a compartir, se creará uno nuevo.', 'Link disabled. Sharing again creates a new one.') + '</div>'; }); };
+    });
+  }
   function kpi(l, v, d) { return '<div class="kpi"><div class="l">' + l + '</div><div class="v">' + v + '</div><div class="d">' + d + '</div></div>'; }
   function showAnswer(i) {
     var st = S.study, a = st.answers[i]; if (!a) { $('ans').textContent = ''; return; }
@@ -313,6 +330,16 @@
   }
 
   /* ---------- arranque ---------- */
+  var shareTok = new URLSearchParams(location.search).get('s');
+  if (shareTok && /^[a-f0-9]{36}$/.test(shareTok)) {
+    var mr = document.createElement('meta'); mr.name = 'robots'; mr.content = 'noindex'; document.head.appendChild(mr);
+    document.body.classList.add('viewing');
+    api('/api/aibb/share/' + shareTok).then(function (r) {
+      if (!r.ok) { document.body.classList.remove('viewing'); $('goErr').textContent = tr('Este enlace ya no está disponible. Pide a quien te lo envió que lo comparta de nuevo, o haz tu propio estudio.', 'This link is no longer available. Ask whoever sent it to share it again, or run your own study.'); return; }
+      S.viewer = true; S.viewerExp = r.d.expires_at; S.study = r.d.study; renderResults();
+    });
+    return;
+  }
   var tok = new URLSearchParams(location.search).get('login');
   var boot = tok && /^[a-f0-9]{64}$/.test(tok) ? (history.replaceState(null, '', location.pathname), api('/api/auth/verify', { method: 'POST', body: JSON.stringify({ token: tok, src: 'aibb' }) }).then(function (r) { if (!r.ok) $('goErr').textContent = tr('Ese enlace ha caducado o ya se usó. Vuelve a pedirlo desde tu estudio.', 'That link has expired or was already used. Request a new one from your study.'); })) : Promise.resolve();
   boot.then(function () { return api('/api/aibb/config'); }).then(function (r) {

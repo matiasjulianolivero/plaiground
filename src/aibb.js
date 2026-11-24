@@ -38,7 +38,9 @@ export function createAibb(h) {
       env.DB.prepare(`CREATE TABLE IF NOT EXISTS aibb_usage (ts INTEGER NOT NULL, user_id TEXT, engine TEXT, kind TEXT, ok INTEGER)`),
       env.DB.prepare(`CREATE INDEX IF NOT EXISTS idx_aibb_usage_ts ON aibb_usage(ts)`),
       env.DB.prepare(`CREATE TABLE IF NOT EXISTS aibb_studies (id TEXT PRIMARY KEY, user_id TEXT NOT NULL, created_at INTEGER NOT NULL, domain TEXT, brand TEXT, lang TEXT, score INTEGER, visibility REAL, data TEXT NOT NULL)`),
-      env.DB.prepare(`CREATE INDEX IF NOT EXISTS idx_aibb_user ON aibb_studies(user_id, created_at)`)
+      env.DB.prepare(`CREATE INDEX IF NOT EXISTS idx_aibb_user ON aibb_studies(user_id, created_at)`),
+      env.DB.prepare(`CREATE TABLE IF NOT EXISTS aibb_shares (token TEXT PRIMARY KEY, study_id TEXT NOT NULL, user_id TEXT NOT NULL, created_at INTEGER NOT NULL, expires_at INTEGER NOT NULL, revoked_at INTEGER)`),
+      env.DB.prepare(`CREATE INDEX IF NOT EXISTS idx_aibb_shares_study ON aibb_shares(study_id)`)
     ]);
   }
   async function quota(env, user, kind) {
@@ -322,11 +324,33 @@ Devuelve: {"brand": nombre comercial de la marca, "category": categoría de prod
       const r = await env.DB.prepare('SELECT id, created_at, domain, brand, score, visibility FROM aibb_studies WHERE user_id = ? ORDER BY created_at DESC LIMIT 200').bind(user.id).all();
       return json({ studies: r.results || [] });
     }
+    // Enlace público de solo lectura para compartir un estudio (30 días, revocable)
+    const shm = pathname.match(/^\/api\/aibb\/studies\/([a-f0-9]{16})\/share$/);
+    if (shm) {
+      if (!user) return json({ error: 'unauthorized' }, 401);
+      const own = await env.DB.prepare('SELECT id FROM aibb_studies WHERE id = ? AND user_id = ?').bind(shm[1], user.id).first();
+      if (!own) return json({ error: 'not_found' }, 404);
+      const now = Date.now();
+      if (m === 'GET') { const sh = await env.DB.prepare('SELECT token, expires_at FROM aibb_shares WHERE study_id = ? AND revoked_at IS NULL AND expires_at > ? ORDER BY created_at DESC').bind(shm[1], now).first(); return json({ share: sh || null }); }
+      if (m === 'POST') {
+        let sh = await env.DB.prepare('SELECT token, expires_at FROM aibb_shares WHERE study_id = ? AND revoked_at IS NULL AND expires_at > ? ORDER BY created_at DESC').bind(shm[1], now).first();
+        if (!sh) { sh = { token: randomToken(18), expires_at: now + 30 * 864e5 }; await env.DB.prepare('INSERT INTO aibb_shares (token, study_id, user_id, created_at, expires_at) VALUES (?,?,?,?,?)').bind(sh.token, shm[1], user.id, now, sh.expires_at).run(); }
+        return json({ share: sh });
+      }
+      if (m === 'DELETE') { await env.DB.prepare('UPDATE aibb_shares SET revoked_at = ? WHERE study_id = ? AND user_id = ? AND revoked_at IS NULL').bind(now, shm[1], user.id).run(); return json({ ok: true }); }
+    }
+    const pub = pathname.match(/^\/api\/aibb\/share\/([a-f0-9]{36})$/);
+    if (pub && m === 'GET') {
+      const r = await env.DB.prepare('SELECT st.data AS data, sh.expires_at AS exp FROM aibb_shares sh JOIN aibb_studies st ON st.id = sh.study_id WHERE sh.token = ? AND sh.revoked_at IS NULL AND sh.expires_at > ?').bind(pub[1], Date.now()).first();
+      if (!r) return json({ error: 'not_found' }, 404);
+      const st = JSON.parse(r.data); delete st.id;
+      return json({ study: st, expires_at: r.exp }, 200, { 'x-robots-tag': 'noindex' });
+    }
     const sm = pathname.match(/^\/api\/aibb\/studies\/([a-f0-9]{16})$/);
     if (sm) {
       if (!user) return json({ error: 'unauthorized' }, 401);
       if (m === 'GET') { const r = await env.DB.prepare('SELECT data FROM aibb_studies WHERE id = ? AND user_id = ?').bind(sm[1], user.id).first(); return r ? json({ study: JSON.parse(r.data) }) : json({ error: 'not_found' }, 404); }
-      if (m === 'DELETE') { await env.DB.prepare('DELETE FROM aibb_studies WHERE id = ? AND user_id = ?').bind(sm[1], user.id).run(); return json({ ok: true }); }
+      if (m === 'DELETE') { await env.DB.batch([env.DB.prepare('DELETE FROM aibb_shares WHERE study_id = ? AND user_id = ?').bind(sm[1], user.id), env.DB.prepare('DELETE FROM aibb_studies WHERE id = ? AND user_id = ?').bind(sm[1], user.id)]); return json({ ok: true }); }
     }
     return json({ error: 'not_found' }, 404);
   };
