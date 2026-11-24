@@ -90,6 +90,8 @@ html[data-theme="dark"] .chip button{background:rgba(255,255,255,.1)}
 .rhead{display:flex;gap:18px;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;margin:40px 0 18px}
 .rhead h2{font-size:clamp(32px,4.4vw,54px);line-height:1}.rhead .meta{color:var(--muted);margin-top:8px}
 .tag{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;font:700 12px var(--body);letter-spacing:.08em;text-transform:uppercase}
+.tag.prem{background:linear-gradient(100deg,rgba(67,56,202,.14),rgba(255,122,89,.16));color:var(--ind)}small.prem{font-weight:800!important;color:var(--ind)!important;font-size:11px;letter-spacing:.08em;text-transform:uppercase;padding:3px 7px;border-radius:999px;background:color-mix(in srgb,var(--ind) 12%,transparent)}
+.prem-card{display:flex;gap:20px;align-items:center;justify-content:space-between;flex-wrap:wrap;background:linear-gradient(120deg,color-mix(in srgb,var(--ind) 8%,var(--paper)),color-mix(in srgb,var(--coral) 8%,var(--paper)))}.prem-card>div{flex:1;min-width:260px}
 .tag.demo{background:color-mix(in srgb,var(--gold) 18%,transparent);color:color-mix(in srgb,var(--gold) 70%,var(--ink))}.tag.live{background:color-mix(in srgb,var(--teal) 16%,transparent);color:color-mix(in srgb,var(--teal) 70%,var(--ink))}
 .kpis{display:grid;grid-template-columns:1.7fr repeat(4,1fr);gap:14px;align-items:start}#setup,#run,#results,#history{scroll-margin-top:96px}@media (max-width:1000px){.kpis{grid-template-columns:1fr 1fr}}@media (max-width:520px){.kpis{grid-template-columns:1fr}}
 .kpi{background:var(--paper);border:1px solid var(--line);border-radius:22px;padding:20px;box-shadow:var(--sh);position:relative;overflow:hidden}
