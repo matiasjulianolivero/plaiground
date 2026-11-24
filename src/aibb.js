@@ -576,5 +576,6 @@ Devuelve SOLO un JSON {"tone":[[...${names.length} valores...], ...una fila por 
     return json({ error: 'not_found' }, 404);
   };
   handle.runJobs = runJobs;
+  handle.analyze = analyze; // para recalcular estudios guardados (casos de estudio)
   return handle;
 }

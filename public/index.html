@@ -412,6 +412,22 @@ html[data-theme="dark"] header .nav::after{opacity:.18}
 .ab-rows b{font:800 15px var(--display);color:#A3A8CC}.ab-rows i{height:14px;border-radius:99px;display:block}
 .ab-rows .me{padding:8px;margin:0 -8px;border-radius:12px;background:rgba(139,140,248,.16)}.ab-rows .me b,.ab-rows .me span{color:#fff;font-weight:700}
 .ab-eng{display:flex;gap:6px;flex-wrap:wrap}.ab-eng span{font:700 11.5px var(--body);letter-spacing:.06em;padding:6px 10px;border-radius:999px;background:rgba(255,255,255,.08);color:#C9CCEA}
+
+/* Miniatura del caso AI Brand Barometer */
+.aibbthumb{min-height:340px;padding:28px}
+.cz{width:min(440px,100%);background:rgba(244,245,251,.05);border:1px solid rgba(244,245,251,.1);border-radius:22px;padding:20px 20px 16px;transform:rotate(-1.5deg);transition:transform .5s}
+.proj:hover .cz{transform:rotate(0) scale(1.02)}
+.cz-h{display:flex;justify-content:space-between;align-items:center}.cz-k{font:700 11px var(--body);letter-spacing:.16em;text-transform:uppercase;color:#A3A8CC}
+.cz-s b{font:800 30px var(--display);color:#F4F5FB}.cz-s small{color:#A3A8CC;font-size:12px;margin-left:2px}
+.cz-q{margin:10px 0 14px;font-size:13px;color:#C9CCEA;line-height:1.4}
+.cz-r{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.cz-r li{display:grid;grid-template-columns:92px 1fr 38px;gap:10px;align-items:center;font-size:13px;color:#C9CCEA}
+.cz-r li i{height:10px;border-radius:99px;background:rgba(244,245,251,.08);position:relative;overflow:hidden}
+.cz-r li i::after{content:"";position:absolute;inset:0 auto 0 0;width:var(--v);background:var(--c);border-radius:99px;transform-origin:left;animation:abgrow 1.4s cubic-bezier(.2,.8,.2,1) both}
+.cz-r li b{font-size:12.5px;text-align:right;color:#F4F5FB}.cz-r li.me span{color:#fff;font-weight:700}
+.cz-f{margin-top:12px;font-size:11.5px;color:#7F84AD}
+@keyframes abgrow{from{transform:scaleX(0)}}
+@media (prefers-reduced-motion:reduce){.cz-r li i::after{animation:none}.cz{transform:none}}
 </style>
 </head>
 <body>
@@ -630,6 +646,35 @@ html[data-theme="dark"] header .nav::after{opacity:.18}
               <div><b><span lang="es">Enfoque</span><span lang="en">Approach</span></b><span><span lang="es">Gamificación: 13 rincones que se desbloquean al recorrerlos.</span><span lang="en">Gamification: 13 spots that unlock as you explore them.</span></span></div>
             </div>
             <span class="go"><i>→</i> <span lang="es">Entrar al festival</span><span lang="en">Enter the festival</span></span>
+          </div>
+        </a>
+        <a class="proj rv" href="/ai-barometer/?caso=mcdonalds-es">
+          <div class="thumb aibbthumb" style="--tb:#0F1230" aria-hidden="true">
+            <div class="cz">
+              <div class="cz-h"><span class="cz-k">AI Brand Barometer</span><span class="cz-s"><b>92</b><small>/100</small></span></div>
+              <div class="cz-q"><span lang="es">McDonald’s frente a 6 cadenas · 8 preguntas de compradores · España</span><span lang="en">McDonald’s vs 6 chains · 8 buyer questions · Spain</span></div>
+              <ul class="cz-r">
+                <li class="me" style="--v:88%;--c:#FF7A59"><span>McDonald's</span><i></i><b>88%</b></li>
+                <li style="--v:75%;--c:#2EC4A0"><span>Goiko</span><i></i><b>75%</b></li>
+                <li style="--v:63%;--c:#8B8CF8"><span>Burger King</span><i></i><b>63%</b></li>
+                <li style="--v:38%;--c:#E87BA4"><span>Popeyes</span><i></i><b>38%</b></li>
+                <li style="--v:13%;--c:#F5B544"><span>KFC</span><i></i><b>13%</b></li>
+                <li style="--v:0%;--c:#6B6F95"><span>Subway</span><i></i><b>0%</b></li>
+              </ul>
+              <div class="cz-f"><span lang="es">Visibilidad en las respuestas de Gemini</span><span lang="en">Visibility in Gemini’s answers</span></div>
+            </div>
+          </div>
+
+          <div class="info">
+            <div class="tags"><span class="tag" style="--tc:#9FF0D6"><span lang="es">Caso de estudio</span><span lang="en">Case study</span></span><span class="tag">GEO</span><span class="tag"><span lang="es">IA generativa</span><span lang="en">Generative AI</span></span></div>
+            <h3><span lang="es">¿Qué dice la IA de McDonald’s en España?</span><span lang="en">What does AI say about McDonald’s in Spain?</span></h3>
+            <p><span lang="es">Estudio independiente con nuestro AI Brand Barometer: preguntamos a Gemini lo que preguntaría un comprador y medimos qué cadenas recomienda, en qué orden y con qué tono.</span><span lang="en">An independent study with our AI Brand Barometer: we asked Gemini what a buyer would ask and measured which chains it recommends, in what order and in what tone.</span></p>
+            <div class="case">
+              <div><b><span lang="es">Reto</span><span lang="en">Challenge</span></b><span><span lang="es">Saber si el líder de la calle también lidera cuando el comprador pregunta a la IA.</span><span lang="en">Find out whether the street leader also leads when buyers ask AI.</span></span></div>
+              <div><b><span lang="es">Hallazgo</span><span lang="en">Finding</span></b><span><span lang="es">McDonald’s sale en el 88% de las respuestas y es primera opción en la mitad, pero Goiko le gana en relación calidad-precio y supera en presencia a Burger King.</span><span lang="en">McDonald’s appears in 88% of answers and is the first pick in half of them, but Goiko beats it on value for money and outranks Burger King in presence.</span></span></div>
+              <div><b><span lang="es">Resultado</span><span lang="en">Result</span></b><span><span lang="es">Informe completo: mapa de posicionamiento, recorrido del comprador, reputación y plan de acción.</span><span lang="en">Full report: positioning map, buyer journey, reputation and action plan.</span></span></div>
+            </div>
+            <span class="go"><i>→</i> <span lang="es">Ver el caso completo</span><span lang="en">See the full case</span></span>
           </div>
         </a>
         <div class="soon rv">
