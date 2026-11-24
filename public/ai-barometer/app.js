@@ -61,15 +61,30 @@
     if (!/^(https?:\/\/)?([a-z0-9-]+\.)+[a-z]{2,}(\/.*)?$/i.test(v)) { $('goErr').textContent = tr('Escribe la web de tu empresa, por ejemplo tuempresa.com', 'Enter your company website, e.g. yourcompany.com'); return; }
     $('goErr').textContent = ''; var b = $('goBtn'); b.disabled = true;
     S.study = null; $('results').innerHTML = ''; $('run').innerHTML = '';
-    $('setup').innerHTML = '<div class="card sec"><b>' + tr('Leyendo tu web y preparando el estudio…', 'Reading your website and preparing the study…') + '</b><div class="bar"><i style="width:35%"></i></div></div>';
+    var stopPrep = prepAnim();
     api('/api/aibb/setup', { method: 'POST', body: JSON.stringify({ url: v, lang: L() }) }).then(function (r) {
-      b.disabled = false;
+      stopPrep(); b.disabled = false;
       if (!r.ok) { $('setup').innerHTML = ''; $('goErr').textContent = r.d.error === 'user_limit' ? tr('Has llegado al máximo de estudios de hoy. Vuelve mañana.', 'You’ve reached today’s study limit. Come back tomorrow.') : r.d.error === 'global_limit' ? tr('Hoy se ha agotado el cupo gratuito de la beta. Vuelve mañana.', 'Today’s free beta quota is used up. Come back tomorrow.') : r.d.error === 'invalid_url' ? tr('Esa web no parece válida.', 'That website doesn’t look valid.') : tr('No se pudo preparar el estudio. Inténtalo de nuevo.', 'Couldn’t prepare the study. Try again.'); return; }
       S.setup = r.d.setup; S.mode = r.d.mode; S.reason = r.d.reason || ''; S.engines = r.d.engines || [];
       S.sel = {}; S.engines.forEach(function (x) { S.sel[x.id] = x.active; });
       renderSetup(); $('setup').scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
   };
+
+  // Tarjeta animada mientras se lee la web y se prepara el estudio (mismo estilo que el progreso del estudio)
+  function prepAnim() {
+    var steps = [tr('Leyendo tu web', 'Reading your website'), tr('Entendiendo tu marca y tu categoría', 'Understanding your brand and category'), tr('Buscando a tus competidores', 'Finding your competitors'), tr('Preparando las preguntas de tus compradores', 'Preparing your buyers’ questions')];
+    var t0 = Date.now(), done = false;
+    function draw() {
+      if (done) return;
+      var el = (Date.now() - t0) / 1000, p = Math.min(94, Math.round(100 * (1 - Math.exp(-el / 5)))), k = Math.min(steps.length - 1, Math.floor(p / 25));
+      $('setup').innerHTML = '<section class="card sec"><div class="runh"><div><div class="eyebrow">' + tr('Preparando tu estudio', 'Preparing your study') + '</div><h2 style="font-size:30px;margin-top:8px">' + steps[k] + '…</h2></div><b style="font:800 34px var(--display)">' + p + '%</b></div><div class="bar"><i style="width:' + p + '%"></i></div>' +
+        '<div class="tasks">' + steps.map(function (x, i) { return '<div class="task ' + (i < k ? 'ok' : i === k ? 'on' : '') + '"><span class="st">' + (i < k ? '✓' : '') + '</span><span>' + x + '</span></div>'; }).join('') + '</div></section>';
+      setTimeout(draw, 400);
+    }
+    draw(); setTimeout(function () { $('setup').scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 50);
+    return function () { done = true; };
+  }
 
   /* ---------- paso 2: revisar y lanzar ---------- */
   function renderSetup() {
