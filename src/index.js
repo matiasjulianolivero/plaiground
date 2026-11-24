@@ -124,21 +124,42 @@ async function currentUser(req, env) {
 }
 
 /* ---------- email ---------- */
-function loginEmail(link, lang, product) {
+function loginEmail(link, lang, product, save) {
   const en = lang === 'en';
   const P = product || 'Data plaiground', tag = product ? 'AI Brand Barometer' : 'Data';
-  const subject = product ? (en ? 'Your AI Brand Barometer report is ready' : 'Tu informe del AI Brand Barometer está listo') : (en ? `Your access link to ${P}` : `Tu enlace de acceso a ${P}`);
+  const t = (es, e) => en ? e : es;
+  // Tres variantes: guardar un informe del barómetro (save), entrar en el barómetro y entrar en Data plaiground.
+  const c = save ? {
+    subject: t('Tu informe del AI Brand Barometer está listo', 'Your AI Brand Barometer report is ready'),
+    title: t('Guarda tu informe de visibilidad en IA', 'Save your AI visibility report'),
+    body: t('Tu informe ya está listo. Pulsa el botón para guardarlo en tu histórico, compararlo mes a mes y compartirlo. El enlace funciona durante 7 días y solo se puede usar una vez.', 'Your report is ready. Click the button to save it in your history, compare it month by month and share it. The link works for 7 days and can only be used once.'),
+    btn: t('Guardar y abrir mi informe', 'Save and open my report'),
+    text: t('Guarda y abre tu informe (enlace válido 7 días): ', 'Save and open your report (link valid for 7 days): ')
+  } : product ? {
+    subject: t('Tu enlace para entrar en el AI Brand Barometer', 'Your sign-in link for AI Brand Barometer'),
+    title: t('Entra en el AI Brand Barometer', 'Sign in to AI Brand Barometer'),
+    body: t('Pulsa el botón para entrar y ver tus estudios guardados o lanzar uno nuevo. El enlace caduca en 15 minutos y solo se puede usar una vez.', 'Click the button to sign in and see your saved studies or run a new one. The link expires in 15 minutes and can only be used once.'),
+    btn: t('Entrar', 'Sign in'),
+    text: t('Entra en el AI Brand Barometer (enlace válido 15 minutos): ', 'Sign in to AI Brand Barometer (link valid for 15 minutes): ')
+  } : {
+    subject: t(`Tu enlace de acceso a ${P}`, `Your access link to ${P}`),
+    title: t('Entra en Data plaiground', 'Sign in to Data plaiground'),
+    body: t('Pulsa el botón para entrar. El enlace caduca en 15 minutos y solo se puede usar una vez.', 'Click the button to sign in. The link expires in 15 minutes and can only be used once.'),
+    btn: t('Entrar', 'Sign in'),
+    text: t(`Entra en ${P} (enlace válido 15 minutos): `, `Sign in to ${P} (link valid for 15 minutes): `)
+  };
+  const subject = c.subject;
   const html = `<!DOCTYPE html><html><body style="margin:0;background:#F4F5FB;font-family:Arial,Helvetica,sans-serif;color:#14162E">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F4F5FB;padding:32px 16px"><tr><td align="center">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#ffffff;border-radius:18px;padding:32px">
 <tr><td style="font-size:22px;font-weight:bold;letter-spacing:-0.5px">pl<span style="color:#4338CA">ai</span>ground <span style="font-size:13px;color:#555A7A;font-weight:normal">${tag}</span></td></tr>
-<tr><td style="padding:22px 0 8px;font-size:20px;font-weight:bold">${en ? (product ? 'Save your AI visibility report' : 'Sign in to Data plaiground') : (product ? 'Guarda tu informe de visibilidad en IA' : 'Entra en Data plaiground')}</td></tr>
-<tr><td style="font-size:15px;line-height:1.55;color:#555A7A">${product ? (en ? 'Your report is ready. Click the button to save it in your history, compare it month by month and share it. The link works for 7 days and can only be used once.' : 'Tu informe ya está listo. Pulsa el botón para guardarlo en tu histórico, compararlo mes a mes y compartirlo. El enlace funciona durante 7 días y solo se puede usar una vez.') : (en ? 'Click the button to sign in. The link expires in 15 minutes and can only be used once.' : 'Pulsa el botón para entrar. El enlace caduca en 15 minutos y solo se puede usar una vez.')}</td></tr>
-<tr><td style="padding:24px 0"><a href="${esc(link)}" style="display:inline-block;background:#4338CA;color:#ffffff;text-decoration:none;font-weight:bold;padding:14px 24px;border-radius:999px">${en ? (product ? 'Save and open my report' : 'Sign in') : (product ? 'Guardar y abrir mi informe' : 'Entrar')}</a></td></tr>
-<tr><td style="font-size:13px;line-height:1.5;color:#555A7A">${en ? 'If the button doesn’t work, copy this link into your browser:' : 'Si el botón no funciona, copia este enlace en tu navegador:'}<br><span style="word-break:break-all;color:#4338CA">${esc(link)}</span></td></tr>
-<tr><td style="padding-top:22px;font-size:12px;color:#8A8EAD;border-top:1px solid #E6E8F5">${en ? 'If you didn’t request this, you can ignore this email.' : 'Si no lo has pedido tú, ignora este email.'} · plaigroundmarketing.com</td></tr>
+<tr><td style="padding:22px 0 8px;font-size:20px;font-weight:bold">${c.title}</td></tr>
+<tr><td style="font-size:15px;line-height:1.55;color:#555A7A">${c.body}</td></tr>
+<tr><td style="padding:24px 0"><a href="${esc(link)}" style="display:inline-block;background:#4338CA;color:#ffffff;text-decoration:none;font-weight:bold;padding:14px 24px;border-radius:999px">${c.btn}</a></td></tr>
+<tr><td style="font-size:13px;line-height:1.5;color:#555A7A">${t('Si el botón no funciona, copia este enlace en tu navegador:', 'If the button doesn’t work, copy this link into your browser:')}<br><span style="word-break:break-all;color:#4338CA">${esc(link)}</span></td></tr>
+<tr><td style="padding-top:22px;font-size:12px;color:#8A8EAD;border-top:1px solid #E6E8F5">${t('Si no lo has pedido tú, ignora este email.', 'If you didn’t request this, you can ignore this email.')} · plaigroundmarketing.com</td></tr>
 </table></td></tr></table></body></html>`;
-  const text = (en ? `Sign in to ${P} (link valid for 15 minutes): ` : `Entra en ${P} (enlace válido 15 minutos): `) + link;
+  const text = c.text + link;
   return { subject, html, text };
 }
 
@@ -419,7 +440,7 @@ async function issueLoginLink(env, base, email, lang, ip, aibb) {
   await env.DB.prepare('INSERT INTO login_tokens (token_hash, email, created_at, expires_at, ip, accepted, lang) VALUES (?,?,?,?,?,?,?)')
     .bind(await sha256(token), email, now, now + ttl * 60e3, ip, 1, lang).run();
   const link = aibb ? `${base}/ai-barometer/?login=${token}` : `${base}/data/app/?login=${token}`;
-  return sendEmail(env, email, loginEmail(link, lang, aibb ? 'AI Brand Barometer' : ''));
+  return sendEmail(env, email, loginEmail(link, lang, aibb ? 'AI Brand Barometer' : '', !!aibb));
 }
 async function requestLogin(req, env, url) {
   if (!env.RESEND_API_KEY) return json({ error: 'email_not_configured' }, 503);
