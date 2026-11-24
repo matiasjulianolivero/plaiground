@@ -23,6 +23,7 @@ const engineList = env => ENGINES.map(e => ({ id: e.id, name: e.name, active: en
 
 export function createAibb(h) {
   const { json, currentUser, randomToken } = h;
+  const STUDIES_PER_IP_DAY = 5;
 
   /* ---------- utilidades ---------- */
   const norm = s => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
@@ -45,7 +46,7 @@ export function createAibb(h) {
     if (all.n >= (+env.AIBB_DAILY_CALLS || DAILY_CALLS_DEFAULT)) return 'global_limit';
     if (kind === 'setup') {
       const mine = await env.DB.prepare("SELECT COUNT(*) AS n FROM aibb_usage WHERE ts > ? AND user_id = ? AND kind = 'setup'").bind(since, user.id).first();
-      if (mine.n >= STUDIES_PER_USER_DAY) return 'user_limit';
+      if (mine.n >= (String(user.id).startsWith('ip:') ? STUDIES_PER_IP_DAY : STUDIES_PER_USER_DAY + 2)) return 'user_limit';
     }
     return '';
   }
@@ -257,12 +258,14 @@ Devuelve: {"brand": nombre comercial de la marca, "category": categoría de prod
       const domain = domainOf(raw);
       if (!domain || !domain.includes('.') || /^(localhost|127\.|10\.|192\.168\.|169\.254\.)/.test(domain)) return json({ error: 'invalid_url' }, 400);
       const site = await readSite('https://' + domain + '/');
-      const live = liveOk && !!user && body.demo !== true && !!env.GEMINI_API_KEY;
-      if (!live) return json({ mode: 'demo', reason: !user ? 'login' : !liveOk ? 'nokey' : 'demo', setup: demoSetup(domain, site, lang), engines: engineList(env), site });
-      const q = await quota(env, user, 'setup'); if (q) return json({ error: q }, 429);
-      const s = await liveSetup(env, user, domain, site, lang);
+      if (!env.GEMINI_API_KEY) return json({ mode: 'demo', reason: !user ? 'login' : 'nokey', setup: demoSetup(domain, site, lang), engines: engineList(env), site });
+      // La preparación (marca, competidores reales y preguntas) también funciona sin sesión, con su propio tope por IP;
+      // lanzar las preguntas a las IA sí exige iniciar sesión.
+      const who = user || { id: 'ip:' + (await h.sha256((req.headers.get('cf-connecting-ip') || '') + ':aibb')).slice(0, 24) };
+      const q = await quota(env, who, 'setup'); if (q) return json({ mode: 'demo', reason: q, setup: demoSetup(domain, site, lang), engines: engineList(env), site });
+      const s = await liveSetup(env, who, domain, site, lang);
       if (s.error) return json({ mode: 'demo', reason: s.error, setup: demoSetup(domain, site, lang), engines: engineList(env), site });
-      return json({ mode: 'live', setup: s, engines: engineList(env), site });
+      return json({ mode: user ? 'live' : 'login', setup: s, engines: engineList(env), site });
     }
 
     if (pathname === '/api/aibb/ask' && m === 'POST') {
@@ -282,7 +285,7 @@ Devuelve: {"brand": nombre comercial de la marca, "category": categoría de prod
       if (!s.domain || !s.prompts.length) return json({ error: 'bad_request' }, 400);
       const demo = body.demo === true || !user || !liveOk;
       let answers, judge = null;
-      if (demo) answers = demoAnswers(s, ['gemini', 'chatgpt', 'claude', 'perplexity']);
+      if (demo) { s.competitors = ['Alfaplus', 'Betaware', 'Gammix', 'Deltio']; s.prompts = s.prompts.map(p => p); answers = demoAnswers(s, ['gemini', 'chatgpt', 'claude', 'perplexity']); }
       else {
         answers = (Array.isArray(body.answers) ? body.answers : []).slice(0, MAX_PROMPTS * ENGINES.length).map(a => ({ prompt: clip(a.prompt, 240), engine: String(a.engine || ''), text: clip(a.text, 6000) })).filter(a => a.text);
         if (!answers.length) return json({ error: 'no_answers' }, 400);
