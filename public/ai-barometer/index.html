@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="es" data-lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script>(function(){var t,l;try{t=localStorage.getItem('plg-theme');l=localStorage.getItem('plg-lang')}catch(e){}
+if(t!=='light'&&t!=='dark')t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';
+if(l!=='es'&&l!=='en')l=(navigator.language||'es').toLowerCase().indexOf('es')===0?'es':'en';
+var h=document.documentElement;h.setAttribute('data-theme',t);h.setAttribute('data-lang',l);h.lang=l;})();</script>
+<title>AI Brand Barometer · plaiground</title>
+<meta name="description" content="Descubre cómo aparece tu marca en las respuestas de ChatGPT, Gemini, Claude y Perplexity frente a tu competencia. Beta gratuita de plaiground.">
+<meta property="og:title" content="AI Brand Barometer · plaiground">
+<meta property="og:description" content="¿Qué responde una IA cuando alguien pregunta por tu categoría? Mide tu visibilidad en los LLM frente a tu competencia.">
+<meta property="og:image" content="https://plaigroundmarketing.com/og.jpg">
+<link rel="icon" href="/favicon.ico" sizes="any"><link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#F4F5FB;--ink:#14162E;--muted:#555A7A;--line:rgba(20,22,46,.10);--paper:#fff;--soft:#E6E8F5;--ind:#4338CA;--ind2:#8B8CF8;--coral:#FF7A59;--teal:#19B5A5;--gold:#E0A100;--good:#0F9D6B;--bad:#D9480F;
+--display:"Bricolage Grotesque",system-ui,sans-serif;--body:"DM Sans",system-ui,sans-serif;--sh:0 18px 50px rgba(20,22,46,.08)}
+html[data-theme="dark"]{--bg:#0B0D1F;--ink:#ECEEFF;--muted:#A3A8CC;--line:rgba(236,238,255,.12);--paper:#15183A;--soft:#22264F;--ind:#8B8CF8;--good:#4ADE9B;--bad:#FB923C;--sh:0 18px 50px rgba(0,0,0,.35)}
+html[data-lang="en"] [lang="es"],html[data-lang="es"] [lang="en"]{display:none!important}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 var(--body);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+a{color:inherit}:focus-visible{outline:3px solid var(--ind);outline-offset:3px;border-radius:10px}
+.wrap{max-width:1180px;margin:0 auto;padding:0 24px}
+h1,h2,h3{font-family:var(--display);letter-spacing:-.035em;margin:0}
+.eyebrow{font-weight:700;font-size:13px;letter-spacing:.2em;text-transform:uppercase;color:var(--ind)}
+/* header glass */
+header{position:sticky;top:0;z-index:50;padding:12px max(2vw,12px) 0;pointer-events:none}
+.nav{pointer-events:auto;position:relative;max-width:1240px;height:62px;margin:0 auto;padding:0 10px 0 22px;border-radius:999px;display:flex;align-items:center;gap:14px;
+ background:linear-gradient(160deg,rgba(255,255,255,.5),rgba(255,255,255,.3) 55%,rgba(236,238,255,.42));backdrop-filter:blur(18px) saturate(190%);-webkit-backdrop-filter:blur(18px) saturate(190%);box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 10px 30px rgba(20,22,46,.10);border:1px solid rgba(255,255,255,.6)}
+html[data-theme="dark"] .nav{background:linear-gradient(160deg,rgba(60,64,130,.30),rgba(21,24,58,.16) 55%,rgba(40,44,96,.26));box-shadow:inset 0 1px 0 rgba(255,255,255,.2),0 10px 30px rgba(0,0,0,.3);border-color:rgba(255,255,255,.12)}
+.brand{font:800 23px var(--display);letter-spacing:-.045em;text-decoration:none}.brand .ai{color:var(--ind)}
+.crumb{font:600 13px var(--body);color:var(--muted);padding-left:12px;border-left:1px solid var(--line)}
+.nav .sp{flex:1}
+.pill{display:flex;padding:3px;border-radius:999px;background:rgba(255,255,255,.35);border:1px solid var(--line)}html[data-theme="dark"] .pill{background:rgba(255,255,255,.07)}
+.pill button{border:0;background:none;color:var(--muted);font:700 12px var(--body);padding:7px 11px;border-radius:999px;cursor:pointer}
+html[data-lang="es"] .pill [data-l="es"],html[data-lang="en"] .pill [data-l="en"]{background:var(--ink);color:var(--bg)}
+.who{font:600 13px var(--body);color:var(--muted);max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tbtn{border:1px solid var(--line);background:rgba(255,255,255,.35);color:var(--ink);width:38px;height:38px;border-radius:50%;cursor:pointer;display:grid;place-items:center}html[data-theme="dark"] .tbtn{background:rgba(255,255,255,.07)}
+@media (max-width:640px){.crumb,.who{display:none}}
+/* hero */
+.hero{padding:56px 0 30px;position:relative}
+.hero h1{font-size:clamp(42px,6.4vw,84px);line-height:.98;font-weight:800;margin:16px 0 18px;max-width:900px}
+.hero h1 .g{background:linear-gradient(100deg,var(--ind),#7C5CFF 40%,var(--coral) 75%,var(--teal));-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero p.lead{font-size:clamp(18px,1.6vw,21px);color:var(--muted);max-width:720px;margin:0}
+.go{margin-top:30px;display:flex;gap:10px;flex-wrap:wrap;max-width:760px;padding:8px;border-radius:999px;background:var(--paper);border:1px solid var(--line);box-shadow:var(--sh)}
+.go input{flex:1;min-width:200px;border:0;background:none;color:var(--ink);font:500 18px var(--body);padding:12px 18px;outline:none}
+.btn{border:0;border-radius:999px;padding:15px 24px;font:700 16px var(--body);cursor:pointer;color:#fff;background:linear-gradient(100deg,#4338CA,#7C5CFF 50%,#FF7A59);box-shadow:0 12px 30px rgba(124,92,255,.35);transition:transform .15s;text-decoration:none;display:inline-flex;align-items:center;gap:8px}
+.btn:hover{transform:translateY(-2px)}.btn[disabled]{opacity:.55;cursor:wait;transform:none}
+.btn.ghost{background:var(--paper);color:var(--ink);border:1px solid var(--line);box-shadow:none}
+.notes{display:flex;gap:18px;flex-wrap:wrap;margin-top:16px;color:var(--muted);font-size:14px}.notes span::before{content:"✓ ";color:var(--teal);font-weight:800}
+.err{color:var(--bad);font-weight:600;min-height:22px;margin-top:10px}
+.orbit{position:absolute;right:-60px;top:20px;width:420px;height:420px;pointer-events:none;opacity:.9}
+@media (max-width:1100px){.orbit{display:none}}
+/* cards */
+.card{background:var(--paper);border:1px solid var(--line);border-radius:26px;padding:clamp(20px,2.6vw,30px);box-shadow:var(--sh)}
+.sec{margin-top:26px}
+.banner{display:flex;gap:14px;align-items:flex-start;padding:16px 18px;border-radius:18px;background:color-mix(in srgb,var(--gold) 12%,var(--paper));border:1px solid color-mix(in srgb,var(--gold) 40%,transparent);font-size:15px}
+.banner.live{background:color-mix(in srgb,var(--teal) 10%,var(--paper));border-color:color-mix(in srgb,var(--teal) 40%,transparent)}
+.banner b{font-weight:700}.banner .ic{font-size:22px;line-height:1}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}@media (max-width:860px){.grid2{grid-template-columns:1fr}}
+label.f{display:block;font:700 12px var(--body);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:0 0 6px}
+input.t,textarea.t{width:100%;font:500 16px var(--body);color:var(--ink);background:var(--bg);border:1.5px solid var(--line);border-radius:14px;padding:12px 14px}
+input.t:focus,textarea.t:focus{outline:none;border-color:var(--ind)}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{display:inline-flex;align-items:center;gap:8px;padding:8px 8px 8px 14px;border-radius:999px;background:var(--soft);font-weight:600;font-size:14.5px}
+.chip button{border:0;background:rgba(20,22,46,.08);color:var(--ink);width:24px;height:24px;border-radius:50%;cursor:pointer;font-size:14px;line-height:1}
+html[data-theme="dark"] .chip button{background:rgba(255,255,255,.1)}
+.chip.add input{border:0;background:none;color:var(--ink);font:600 14.5px var(--body);width:160px;outline:none}
+.plist{display:grid;gap:8px}.prow{display:flex;gap:8px;align-items:center}.prow .n{flex:none;width:28px;height:28px;border-radius:9px;background:var(--soft);display:grid;place-items:center;font:700 13px var(--body);color:var(--muted)}
+.prow input{flex:1}.prow button{border:0;background:none;color:var(--muted);cursor:pointer;font-size:18px;padding:6px}
+.eng{display:flex;flex-wrap:wrap;gap:10px}
+.eng label{display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:16px;border:1.5px solid var(--line);font-weight:700;cursor:pointer;background:var(--bg)}
+.eng label.off{opacity:.55;cursor:not-allowed}.eng small{font-weight:500;color:var(--muted)}
+.eng input{accent-color:var(--ind);width:18px;height:18px}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin-top:22px}
+.lform{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.lform input{flex:1;min-width:200px}
+.small{font-size:13.5px;color:var(--muted)}
+/* run */
+.runh{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap}
+.bar{height:10px;border-radius:99px;background:var(--soft);overflow:hidden;margin:16px 0 18px}.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#4338CA,#7C5CFF,#FF7A59,#19B5A5);transition:width .4s}
+.tasks{display:grid;gap:8px}
+.task{display:flex;gap:12px;align-items:center;padding:12px 14px;border-radius:14px;background:var(--bg);font-size:15px}
+.task .st{flex:none;width:22px;height:22px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;font-size:12px}
+.task.on .st{border-color:var(--ind);border-top-color:transparent;animation:sp .8s linear infinite}.task.ok .st{background:var(--teal);border-color:var(--teal);color:#fff}.task.ko .st{background:var(--bad);border-color:var(--bad);color:#fff}
+.task .e{margin-left:auto;font:700 12px var(--body);color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+@keyframes sp{to{transform:rotate(360deg)}}
+/* results */
+.rhead{display:flex;gap:18px;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;margin:40px 0 18px}
+.rhead h2{font-size:clamp(32px,4.4vw,54px);line-height:1}.rhead .meta{color:var(--muted);margin-top:8px}
+.tag{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;font:700 12px var(--body);letter-spacing:.08em;text-transform:uppercase}
+.tag.demo{background:color-mix(in srgb,var(--gold) 18%,transparent);color:color-mix(in srgb,var(--gold) 70%,var(--ink))}.tag.live{background:color-mix(in srgb,var(--teal) 16%,transparent);color:color-mix(in srgb,var(--teal) 70%,var(--ink))}
+.kpis{display:grid;grid-template-columns:1.7fr repeat(4,1fr);gap:14px;align-items:start}#setup,#run,#results,#history{scroll-margin-top:96px}@media (max-width:1000px){.kpis{grid-template-columns:1fr 1fr}}@media (max-width:520px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--paper);border:1px solid var(--line);border-radius:22px;padding:20px;box-shadow:var(--sh);position:relative;overflow:hidden}
+.kpi .l{font:700 12px var(--body);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.kpi .v{font:800 40px/1 var(--display);letter-spacing:-.04em;margin-top:12px}.kpi .d{color:var(--muted);font-size:13.5px;margin-top:8px}
+.kpi.score{display:flex;gap:16px;align-items:center;background:linear-gradient(135deg,#2B2490,#5F3FD8 45%,#D9566A 80%,#E98A4F);color:#fff;border:0}
+.kpi.score .l,.kpi.score .d{color:rgba(255,255,255,.8)}
+.ring{flex:none;width:104px;height:104px}
+.panel{background:var(--paper);border:1px solid var(--line);border-radius:26px;padding:24px;box-shadow:var(--sh)}
+.panel h3{font-size:24px;margin-bottom:4px}.panel .sub{color:var(--muted);font-size:14.5px;margin:0 0 16px}
+.g2{display:grid;grid-template-columns:1.2fr 1fr;gap:18px;margin-top:18px}@media (max-width:960px){.g2{grid-template-columns:1fr}}
+.rank{display:grid;gap:10px}
+.rk{display:grid;grid-template-columns:150px 1fr 64px 64px;gap:12px;align-items:center;font-size:14.5px}
+.rk .nm{font-weight:700;display:flex;gap:8px;align-items:center;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}.rk .dot{flex:none;width:10px;height:10px;border-radius:3px}
+.rk .tr{height:26px;border-radius:8px;background:var(--soft);position:relative;overflow:hidden}.rk .tr i{position:absolute;inset:0 auto 0 0;border-radius:8px;transition:width .9s cubic-bezier(.2,.8,.2,1)}
+.rk .tr b{position:absolute;left:10px;top:50%;transform:translateY(-50%);font:700 13px var(--body);color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.25)}
+.rk .c{text-align:right;font-variant-numeric:tabular-nums;color:var(--muted)}.rk.hd{font:700 11px var(--body);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.rk.me .nm{color:var(--ind)}
+@media (max-width:560px){.rk{grid-template-columns:100px 1fr 50px}.rk .c.sov{display:none}}
+.hm{width:100%;border-collapse:separate;border-spacing:4px;font-size:13.5px}
+.hm th{font:700 12px var(--body);color:var(--muted);text-align:center;padding:4px;vertical-align:bottom}
+.hm th.p{text-align:left;font-weight:600;color:var(--ink);font-size:13.5px;max-width:320px;line-height:1.35}
+.hm td{text-align:center;border-radius:9px;height:38px;min-width:48px;font:700 14px var(--body);cursor:default}
+.hm td.na{background:var(--soft);color:var(--muted);font-weight:500}
+.hmwrap{overflow-x:auto;max-width:100%}.panel,.g2>*,.kpis>*{min-width:0}@media (max-width:560px){.hm th.p{min-width:150px;font-size:12.5px}}
+.legend{display:flex;gap:14px;flex-wrap:wrap;align-items:center;font-size:12.5px;color:var(--muted);margin-top:10px}.legend i{display:inline-block;width:14px;height:14px;border-radius:4px;vertical-align:-2px;margin-right:6px}
+.src{display:grid;gap:8px}.sr{display:grid;grid-template-columns:1fr 2fr 30px;gap:10px;align-items:center;font-size:14px}.sr .tr{height:12px;border-radius:99px;background:var(--soft);overflow:hidden}.sr .tr i{display:block;height:100%;border-radius:99px;background:var(--ind2)}
+.sr.own .d{color:var(--teal);font-weight:700}.sr.own .tr i{background:var(--teal)}.sr .d{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ins{display:grid;gap:10px;margin:0;padding:0;list-style:none}.ins li{display:flex;gap:12px;padding:14px 16px;border-radius:16px;background:var(--bg);font-size:15px}.ins li b{font-weight:700}.ins .em{font-size:20px;line-height:1.2}
+.ex{display:grid;grid-template-columns:300px 1fr;gap:16px}@media (max-width:860px){.ex{grid-template-columns:1fr}}
+.exl{display:grid;gap:6px;max-height:460px;overflow:auto;padding-right:4px}
+.exl button{text-align:left;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);border-radius:14px;padding:10px 12px;font:500 14px var(--body);cursor:pointer;display:flex;gap:8px;align-items:flex-start}
+.exl button[aria-pressed="true"]{border-color:var(--ind);background:color-mix(in srgb,var(--ind) 8%,var(--paper))}
+.exl button .e{flex:none;font:700 10.5px var(--body);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding-top:2px;width:70px}
+.ans{background:var(--bg);border-radius:18px;padding:18px 20px;white-space:pre-wrap;font-size:15px;line-height:1.65;max-height:460px;overflow:auto}
+.ans mark{border-radius:5px;padding:0 3px;color:#fff}
+.hist svg{width:100%;height:auto;display:block}
+.hl{display:grid;gap:8px;margin-top:14px}.hl .it{display:flex;gap:12px;align-items:center;padding:10px 14px;border-radius:14px;background:var(--bg);font-size:14.5px}.hl .it .sc{font:800 18px var(--display);width:44px}.hl .it .sp{flex:1}.hl button{border:0;background:none;color:var(--muted);cursor:pointer;font:600 13px var(--body)}
+.disc{margin-top:40px;padding:18px 20px;border-radius:18px;border:1px dashed var(--line);color:var(--muted);font-size:13.5px}
+footer{margin-top:60px;padding:30px 0 50px;border-top:1px solid var(--line);color:var(--muted);font-size:13.5px}footer a{color:var(--muted)}
+.how{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:40px}@media (max-width:860px){.how{grid-template-columns:1fr}}
+.how .card h3{font-size:21px;margin:10px 0 6px}.how .card p{margin:0;color:var(--muted)}.how .n{font:800 13px var(--body);color:var(--ind);letter-spacing:.14em}
+.tip{position:fixed;pointer-events:none;z-index:60;background:var(--ink);color:var(--bg);padding:8px 10px;border-radius:10px;font-size:13px;max-width:260px;opacity:0;transition:opacity .12s}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+@media print{header,.go,.notes,#setup,#run,.how,footer{display:none!important}}
+</style>
+</head>
+<body>
+<header><nav class="nav">
+  <a class="brand" href="/" aria-label="plaiground">pl<span class="ai">ai</span>ground</a><span class="crumb">AI Brand Barometer · beta</span>
+  <span class="sp"></span><span class="who" id="who"></span>
+  <div class="pill" role="group" aria-label="Idioma / Language"><button type="button" data-l="es">ES</button><button type="button" data-l="en">EN</button></div>
+  <button class="tbtn" id="themeBtn" type="button" aria-label="Modo claro / oscuro · Light / dark mode"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+</nav></header>
+
+<main class="wrap">
+  <section class="hero">
+    <svg class="orbit" viewBox="0 0 420 420" aria-hidden="true"><defs><linearGradient id="og" x1="0" x2="1"><stop offset="0" stop-color="#8B8CF8"/><stop offset=".6" stop-color="#FF7A59"/><stop offset="1" stop-color="#19B5A5"/></linearGradient></defs>
+      <g fill="none" stroke="url(#og)" stroke-width="1.5" opacity=".55"><circle cx="210" cy="210" r="80"/><circle cx="210" cy="210" r="135" stroke-dasharray="4 8"/><circle cx="210" cy="210" r="190"/></g>
+      <g font-family="DM Sans,system-ui" font-weight="700" font-size="13"><g><circle cx="210" cy="210" r="34" fill="url(#og)"/><text x="210" y="215" text-anchor="middle" fill="#fff">TÚ</text>
+      <animateTransform attributeName="transform" type="rotate" from="0 210 210" to="0 210 210" dur="1s"/></g>
+      <g><animateTransform attributeName="transform" type="rotate" from="0 210 210" to="360 210 210" dur="38s" repeatCount="indefinite"/>
+      <rect x="320" y="196" width="78" height="28" rx="14" fill="#14162E"/><text x="359" y="215" text-anchor="middle" fill="#fff">ChatGPT</text>
+      <rect x="22" y="196" width="70" height="28" rx="14" fill="#4338CA"/><text x="57" y="215" text-anchor="middle" fill="#fff">Gemini</text></g>
+      <g><animateTransform attributeName="transform" type="rotate" from="360 210 210" to="0 210 210" dur="52s" repeatCount="indefinite"/>
+      <rect x="176" y="62" width="68" height="28" rx="14" fill="#D9566A"/><text x="210" y="81" text-anchor="middle" fill="#fff">Claude</text>
+      <rect x="164" y="330" width="92" height="28" rx="14" fill="#19B5A5"/><text x="210" y="349" text-anchor="middle" fill="#fff">Perplexity</text></g></g></svg>
+    <div class="eyebrow">AI Brand Barometer · beta</div>
+    <h1><span lang="es">¿Qué dice la IA<br>de tu marca <span class="g">cuando nadie mira?</span></span><span lang="en">What does AI say<br>about your brand <span class="g">when no one’s looking?</span></span></h1>
+    <p class="lead"><span lang="es">Pon la web de tu empresa. plaiground pregunta a los asistentes de IA lo que preguntaría un comprador de tu categoría y mide si apareces, en qué posición, qué fuentes te citan y cómo quedas frente a tu competencia.</span><span lang="en">Enter your company’s website. plaiground asks AI assistants what a buyer in your category would ask, and measures whether you show up, in what position, which sources cite you and how you compare with your competitors.</span></p>
+    <form class="go" id="goForm" novalidate>
+      <input id="url" type="url" inputmode="url" autocomplete="url" placeholder="tuempresa.com" aria-label="Web de tu empresa / Your company website">
+      <button class="btn" id="goBtn" type="submit"><span lang="es">Analizar mi marca</span><span lang="en">Analyze my brand</span> →</button>
+    </form>
+    <div class="err" id="goErr" role="alert"></div>
+    <div class="notes"><span lang="es">Gratis en beta</span><span lang="en">Free during beta</span><span lang="es">Histórico mes a mes con tu email</span><span lang="en">Month-by-month history with your email</span><span lang="es">Sin tarjeta</span><span lang="en">No card</span></div>
+  </section>
+
+  <div id="setup"></div>
+  <div id="run"></div>
+  <div id="results"></div>
+  <div id="history"></div>
+
+  <section class="how" id="how">
+    <div class="card"><div class="n">01</div><h3><span lang="es">Entendemos tu marca</span><span lang="en">We understand your brand</span></h3><p><span lang="es">Leemos tu web y proponemos categoría, competidores y las preguntas que haría un comprador. Todo editable.</span><span lang="en">We read your site and suggest category, competitors and the questions a buyer would ask. All editable.</span></p></div>
+    <div class="card"><div class="n">02</div><h3><span lang="es">Preguntamos a las IA</span><span lang="en">We ask the AIs</span></h3><p><span lang="es">Lanzamos cada pregunta en los asistentes conectados y guardamos lo que responden, tal cual.</span><span lang="en">We run each question on the connected assistants and keep their answers as they are.</span></p></div>
+    <div class="card"><div class="n">03</div><h3><span lang="es">Te damos el mapa</span><span lang="en">You get the map</span></h3><p><span lang="es">Visibilidad, posición, cuota de voz, fuentes y tono frente a tu competencia. Con sesión, lo comparas mes a mes.</span><span lang="en">Visibility, position, share of voice, sources and tone against your competitors. Signed in, you compare month by month.</span></p></div>
+  </section>
+
+  <p class="disc"><span lang="es"><b>Aviso:</b> resultados orientativos generados con modelos de IA. Las respuestas de los LLM cambian con el tiempo, el modelo, el idioma y la forma de preguntar, y pueden contener errores. Las cifras miden lo que respondieron los modelos en este estudio, no la calidad de ninguna marca. Úsalos como una señal más; las decisiones y su uso son responsabilidad tuya. Más información en los <a href="/legal/terminos/">términos</a> y la <a href="/legal/privacidad/">política de privacidad</a>.</span><span lang="en"><b>Notice:</b> indicative results generated with AI models. LLM answers change with time, model, language and phrasing, and may contain errors. The figures measure what the models answered in this study, not the quality of any brand. Use them as one more signal; decisions and their use are your responsibility. More in the <a href="/legal/terminos/">terms</a> and the <a href="/legal/privacidad/">privacy policy</a>.</span></p>
+</main>
+<footer><div class="wrap">© plaiground · <a href="/">plaigroundmarketing.com</a> · <a href="/barometer/">Franchise Brand Barometer</a> · <a href="/data/">Data plaiground</a> · <a href="/legal/aviso-legal/"><span lang="es">Aviso legal</span><span lang="en">Legal notice</span></a></div></footer>
+<div class="tip" id="tip" role="tooltip"></div>
+<script src="/js/consent.js" defer></script>
+<script src="/ai-barometer/app.js" defer></script>
+</body>
+</html>

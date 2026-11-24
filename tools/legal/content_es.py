@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # Contenido legal en español. {NIF} y {DOM} son marcadores de datos pendientes.
-UPDATED_ES = "23 de noviembre de 2026"
+UPDATED_ES = "24 de noviembre de 2026"
 
 PAGES_ES = {}
 
@@ -73,6 +73,7 @@ body="""
 <tr><td>Formulario de contacto (“pase al plaiground”)</td><td>Nombre, email, empresa y rol (opcionales), intereses, urgencia, mensaje, idioma, dirección IP y fecha de aceptación de esta política</td><td>Responder a tu solicitud, enviarte el email de confirmación con tu pase y evitar envíos abusivos</td><td>Tu solicitud y medidas precontractuales (art. 6.1.b); la IP, interés legítimo en prevenir abusos (art. 6.1.f)</td><td>Hasta 2 años desde el último contacto, salvo obligación legal; puedes pedir su borrado en cualquier momento</td></tr>
 <tr><td>Newsletter mensual (opcional)</td><td>Email, nombre, idioma y fechas de alta, confirmación y baja</td><td>Enviarte una vez al mes novedades y experimentos del plaiground</td><td>Tu consentimiento (art. 6.1.a RGPD y art. 21 LSSI), que confirmas con un clic en el email que te enviamos (doble confirmación). Marcar la casilla es opcional y no condiciona nada más</td><td>Mientras sigas suscrito. Puedes darte de baja en cualquier momento con el enlace incluido en cada email o escribiendo a matiasjulianolivero@gmail.com; tras la baja se conserva solo la prueba del consentimiento y de la baja durante el plazo de prescripción de posibles reclamaciones</td></tr>
 <tr><td>Preferencias en tu navegador</td><td>Idioma, tema claro/oscuro y elección de cookies</td><td>Recordar tus preferencias</td><td>Necesario para el servicio que solicitas; ver <a href="/legal/cookies/">política de cookies</a></td><td>Se guardan solo en tu dispositivo; la elección de cookies, 12 meses</td></tr>
+<tr><td>AI Brand Barometer</td><td>La web (dominio) que indiques, la marca, categoría, competidores y preguntas del estudio, las respuestas de los modelos de IA y los resultados; si inicias sesión, tu email y el histórico de estudios</td><td>Hacer el estudio de visibilidad en IA, mostrártelo y, con sesión, guardar tu histórico para comparar mes a mes</td><td>Ejecución de los <a href="/legal/terminos/">términos de uso</a> (art. 6.1.b)</td><td>Los estudios se guardan mientras tengas la cuenta; puedes borrar cada uno o la cuenta entera cuando quieras. Sin sesión no se guarda nada</td></tr>
 <tr><td>Cuenta en Data plaiground</td><td>Email, fecha de aceptación de los términos, fecha del último acceso, idioma y los dashboards que crees</td><td>Darte acceso con un enlace por email (sin contraseña), guardar tus dashboards y avisarte de cambios importantes del servicio</td><td>Ejecución de los <a href="/legal/terminos/">términos de uso</a> (art. 6.1.b)</td><td>Mientras tengas la cuenta. Puedes borrarla tú mismo en cualquier momento desde la plataforma; las cuentas sin actividad durante 24 meses se eliminan</td></tr>
 <tr><td>Uso de herramientas interactivas</td><td>Los datos que introduzcas en ellas</td><td>Prestar la funcionalidad que pides</td><td>Ejecución de los <a href="/legal/terminos/">términos de uso</a> (art. 6.1.b)</td><td>Ver apartado 3</td></tr>
 </tbody></table></div>
@@ -95,6 +96,8 @@ body="""
 <li><strong>Cloudflare, Inc.</strong>: alojamiento y entrega de la web, protección frente a ataques y base de datos de las cuentas y dashboards de Data plaiground.</li>
 <li><strong>Google LLC</strong>: tipografías (Google Fonts), que se cargan desde servidores de Google y reciben tu dirección IP; y correo electrónico (Gmail) cuando escribes.</li>
 <li><strong>Resend</strong>: envío de los emails de acceso y avisos de Data plaiground, de los emails del formulario de contacto y de la newsletter.</li>
+<li><strong>Google LLC</strong> (API de Gemini): modelo de IA que responde a las preguntas del AI Brand Barometer y valora el tono de las respuestas. Se usa su capa gratuita, en la que <strong>Google puede utilizar lo que se le envía para mejorar sus productos</strong>; por eso solo se le envían datos de la marca (dominio, nombre, categoría, competidores y preguntas), nunca tu email. No escribas datos personales ni confidenciales en esos campos.</li>
+<li><strong>OpenAI, Anthropic y Perplexity</strong>: solo si en el futuro se activan para el AI Brand Barometer, con el mismo tipo de datos de marca.</li>
 <li><strong>Anthropic, PBC</strong>: modelos de inteligencia artificial (Claude) para las herramientas con IA, cuando estén disponibles.</li>
 <li><strong>LinkedIn</strong>: solo si decides contactar a través de esa red, conforme a su propia política de privacidad.</li>
 </ul>
@@ -173,6 +176,7 @@ body="""
 <ul>
 <li>Las herramientas son demostraciones, prototipos o versiones de prueba (beta) y pueden cambiar, fallar o desaparecer sin previo aviso.</li>
 <li>Salvo que se indique otra cosa, su uso es gratuito y no existe un contrato de prestación de servicios profesionales ni un nivel de servicio garantizado.</li>
+<li><strong>AI Brand Barometer:</strong> sus resultados reflejan solo lo que respondieron unos modelos de IA concretos a unas preguntas concretas en un momento dado. Las respuestas de los modelos varían con el tiempo, el modelo, el idioma y la forma de preguntar, pueden ser inexactas y no describen la calidad real de ninguna marca. Las marcas y competidores que aparecen pertenecen a sus titulares y se citan solo con fines informativos. Eres responsable de las webs, marcas y preguntas que introduzcas y del uso que hagas de los resultados.</li>
 <li>Si en el futuro se ofrece alguna modalidad de pago, se regirá por condiciones específicas que deberás aceptar expresamente antes de contratarla.</li>
 </ul>
 
@@ -231,7 +235,8 @@ intro="Cómo se usa la inteligencia artificial en plaiground, qué límites tien
 body="""
 <h2 id="donde">1. Dónde se usa IA</h2>
 <p>plaiground usa inteligencia artificial como herramienta de trabajo para crear contenidos y proyectos, y en algunas herramientas interactivas, por ejemplo para analizar la estructura de unos datos, proponer qué indicadores y gráficos mostrar o redactar resúmenes.</p>
-<p>Los modelos usados son de terceros (principalmente Claude, de Anthropic). plaiground no entrena modelos propios.</p>
+<p>En el AI Brand Barometer, la IA es además el objeto de estudio: se hacen preguntas a asistentes de IA de terceros (por ahora, Gemini de Google) y se analizan sus respuestas. Los resultados se marcan siempre como generados con IA, y los estudios de ejemplo como datos simulados.</p>
+<p>Los modelos usados son de terceros (principalmente Claude, de Anthropic, y Gemini, de Google). plaiground no entrena modelos propios.</p>
 
 <h2 id="aviso">2. Cómo se identifica</h2>
 <ul>
