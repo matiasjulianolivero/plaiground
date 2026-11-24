@@ -4,10 +4,13 @@
    Una sola vez por visitante, se salta con cualquier clic/tecla/scroll, sin animación si el sistema pide menos movimiento, y se puede cerrar. */
 (function () {
   'use strict';
-  var KEY_INTRO = 'plg-plai-intro', KEY_OFF = 'plg-plai-off';
+  var KEY_INTRO = 'plg-plai-intro', KEY_OFF = 'plg-plai-hide';
   var get = function (k) { try { return localStorage.getItem(k); } catch (e) { return null; } };
   var put = function (k, v) { try { localStorage.setItem(k, v); } catch (e) { } };
-  if (get(KEY_OFF) === '1') return;
+  var sget = function (k) { try { return sessionStorage.getItem(k); } catch (e) { return null; } };
+  var sput = function (k, v) { try { sessionStorage.setItem(k, v); } catch (e) { } };
+  if (sget(KEY_OFF) === '1') return;
+  var PATH = location.pathname, HOME = PATH === '/' || PATH === '/index.html', AIBB = PATH.indexOf('/ai-barometer') === 0, DATA = PATH === '/data/' || PATH === '/data/index.html';
   var H = document.documentElement, NS = 'http://www.w3.org/2000/svg';
   var L = function () { return H.getAttribute('data-lang') === 'en' ? 'en' : 'es'; };
   var T = {
@@ -16,8 +19,33 @@
     ok: { es: '¡Como nuevo!', en: 'Good as new!' },
     cta: { es: '¿Qué dice la IA de tu marca?', en: 'What does AI say about your brand?' },
     go: { es: 'Descúbrelo gratis →', en: 'Find out free →' },
-    close: { es: 'Cerrar a Plai', en: 'Close Plai' }
+    close: { es: 'Cerrar a Plai', en: 'Close Plai' },
+    menu: { es: '¿En qué te ayudo?', en: 'How can I help?' }
   };
+  // Atajos del menú (al pulsar a Plai)
+  var ACTIONS = [
+    { es: 'Analizar mi marca en la IA', en: 'Analyze my brand in AI', go: 'aibb' },
+    { es: 'Convertir mis datos en decisiones', en: 'Turn my data into decisions', href: '/data/' },
+    { es: 'Ver el caso McDonald’s', en: 'See the McDonald’s case', href: '/ai-barometer/?caso=mcdonalds-es' },
+    { es: 'Hablar con Matías', en: 'Talk to Matías', href: '/#contacto' }
+  ];
+  // Sugerencias según la parte de la página que se está viendo
+  var TIPS = HOME ? {
+    'ai-barometer': { es: 'Estas herramientas son gratis. ¿Probamos con tu web? Tarda unos minutos.', en: 'These tools are free. Shall we try your website? It takes a few minutes.', a: { es: 'Analizar mi marca →', en: 'Analyze my brand →', go: 'aibb' } },
+    data: { es: '¿Tienes un Excel o un CSV con datos de marketing? Te lo convierto en un dashboard con plan de acción.', en: 'Got an Excel or CSV with marketing data? I’ll turn it into a dashboard with an action plan.', a: { es: 'Subir mis datos →', en: 'Upload my data →', href: '/data/' } },
+    lab: { es: 'Mi favorito: lo que dice la IA de McDonald’s. ¡Goiko le gana en precio!', en: 'My favourite: what AI says about McDonald’s. Goiko beats it on price!', a: { es: 'Ver el caso →', en: 'See the case →', href: '/ai-barometer/?caso=mcdonalds-es' } },
+    servicios: { es: '¿No sabes por dónde empezar? Cuéntale tu reto a Matías y te dice qué haría.', en: 'Not sure where to start? Tell Matías your challenge and he’ll tell you what he’d do.', a: { es: 'Contar mi reto →', en: 'Tell my challenge →', href: '#contacto' } },
+    'sobre-mi': { es: 'Psst… su CV es un festival de música. En serio.', en: 'Psst… his CV is a music festival. Seriously.', a: { es: 'Entrar al festival →', en: 'Enter the festival →', href: '/cv/' } },
+    contacto: { es: 'Cuatro toques y tu pase se arma solo. Matías responde en menos de 48 h.', en: 'Four taps and your pass builds itself. Matías replies within 48 h.' }
+  } : DATA ? {
+    demo: { es: 'Así queda un dashboard real. Con tus datos, en unos minutos.', en: 'This is what a real dashboard looks like. With your data, in minutes.' },
+    acceso: { es: 'Entra con tu email y sube tu Excel, CSV o Google Sheets. Yo me encargo del resto.', en: 'Sign in with your email and upload your Excel, CSV or Google Sheets. I’ll handle the rest.' },
+    faq: { es: '¿Dudas con tus datos? Aquí están las respuestas rápidas.', en: 'Questions about your data? Quick answers here.' }
+  } : {};
+  var PAGE_TIP = HOME ? { es: '¿Qué dice la IA de tu marca? Te lo cuento gratis.', en: 'What does AI say about your brand? I’ll tell you, free.', a: { es: 'Descúbrelo →', en: 'Find out →', go: 'aibb' } }
+    : AIBB ? { es: 'Pon tu web arriba y yo investigo qué dice la IA de tu marca.', en: 'Enter your website above and I’ll find out what AI says about your brand.' }
+    : DATA ? { es: 'Sube tus datos y te devuelvo decisiones, no solo gráficos.', en: 'Upload your data and I’ll give you decisions, not just charts.' }
+    : { es: '¿Te ayudo?', en: 'Can I help?' };
   var tr = function (k) { return T[k][L()]; };
   var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -32,6 +60,8 @@
     '.plai-bub a{display:inline-block;margin-top:4px;color:var(--ind,#4338CA);font-weight:800;text-decoration:none}.plai-bub a:hover{text-decoration:underline}' +
     '.plai-bub .x{position:absolute;top:-9px;right:-9px;width:24px;height:24px;border-radius:50%;border:1px solid var(--line,rgba(20,22,46,.12));background:var(--paper,#fff);color:var(--muted,#555A7A);font:700 13px/1 system-ui;cursor:pointer;display:grid;place-items:center}' +
     '.plai-bub.intro{border-radius:18px;text-align:center}' +
+    '.plai-bub b{display:block;font-weight:800;margin-bottom:4px}.plai-bub .pm-tip{font-weight:500;color:var(--muted,#555A7A);font-size:13.5px;margin:2px 0 8px}' +
+    '.plai-bub .pm{display:flex;flex-direction:column;gap:2px}.plai-bub .pm a{margin:0;padding:6px 0;border-top:1px solid var(--line,rgba(20,22,46,.1))}' +
     '@media print{#plai-layer,.plai-bub{display:none!important}}';
   document.head.appendChild(css);
 
@@ -74,18 +104,87 @@
     requestAnimationFrame(function () { bub.classList.add('show'); });
   }
   function hideBubble() { bub.classList.remove('show'); }
-  function ctaBubble() {
-    var c = corner();
-    bubble('<button class="x" type="button" aria-label="' + tr('close') + '">×</button>' + tr('cta') + '<br><a href="#" data-plai-go>' + tr('go') + '</a>', c[0] + 10, c[1] - 52 * c[2] - 8);
-    bub.querySelector('.x').onclick = function () { put(KEY_OFF, '1'); bub.remove(); layer.remove(); };
-    bub.querySelector('[data-plai-go]').onclick = function (e) {
-      e.preventDefault(); hideBubble();
-      var f = document.getElementById('hurl');
+  var lastShow = 0, autoCount = 0, hideTimer = null, mode = '';
+  function act(a) {
+    hideBubble();
+    if (a.go === 'aibb') {
+      var f = document.getElementById('hurl') || document.getElementById('url');
       if (f) { f.scrollIntoView({ behavior: 'smooth', block: 'center' }); setTimeout(function () { f.focus({ preventScroll: true }); }, 450); }
-      else location.href = '/ai-barometer/';
-    };
+      else location.href = '/ai-barometer/' + (L() === 'en' ? '?lang=en' : '');
+      return;
+    }
+    var href = a.href;
+    if (href.charAt(0) === '#' || href.indexOf('/#') === 0) { var t = document.querySelector(href.replace('/', '')); if (t && HOME) { t.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; } }
+    if (L() === 'en' && href.charAt(0) === '/' && href.indexOf('#') < 0) href += (href.indexOf('?') < 0 ? '?' : '&') + 'lang=en';
+    location.href = href;
   }
-
+  function closeBtn() { return '<button class="x" type="button" aria-label="' + tr('close') + '">×</button>'; }
+  function wire(list) {
+    var x = bub.querySelector('.x'); if (x) x.onclick = function (e) { e.stopPropagation(); sput(KEY_OFF, '1'); bub.remove(); layer.remove(); };
+    bub.querySelectorAll('[data-a]').forEach(function (b) { b.onclick = function (e) { e.preventDefault(); act(list[+b.dataset.a]); }; });
+  }
+  function anchor() { var c = corner(); return [c[0] + 10, c[1] - 52 * c[2] - 8]; }
+  // Sugerencia corta (se esconde sola)
+  function showTip(t, auto) {
+    var c = anchor(), a = t.a ? [t.a] : [];
+    bubble(closeBtn() + t[L()] + (t.a ? '<br><a href="#" data-a="0">' + t.a[L()] + '</a>' : ''), c[0], c[1]);
+    wire(a); mode = 'tip'; lastShow = Date.now(); hop();
+    clearTimeout(hideTimer); hideTimer = setTimeout(function () { if (mode === 'tip' && !bub.matches(':hover')) hideBubble(); }, auto ? 6500 : 9000);
+  }
+  // Menú al pulsar a Plai: la sugerencia del momento + atajos
+  function showMenu() {
+    var c = anchor(), t = current();
+    // La sugerencia del momento va primero; sin repetir un atajo que lleve al mismo sitio
+    var list = (t && t.a ? [t.a] : []).concat(ACTIONS.filter(function (a) { return !(t && t.a && ((a.go && a.go === t.a.go) || (a.href && t.a.href && a.href.replace('/#', '#') === t.a.href.replace('/#', '#')))); }));
+    var lab = function (a) { return a[L()].replace(/\s*→$/, ''); };
+    bubble(closeBtn() + '<b>' + tr('menu') + '</b>' + (t ? '<div class="pm-tip">' + t[L()] + '</div>' : '') + '<div class="pm">' + list.map(function (a, k) { return '<a href="#" data-a="' + k + '">' + lab(a) + ' →</a>'; }).join('') + '</div>', c[0], c[1]);
+    wire(list); mode = 'menu'; clearTimeout(hideTimer);
+  }
+  function hideBubbleMode() { hideBubble(); mode = ''; }
+  function hop() { if (!done || reduce) return; var p = g._p.slice(), s0 = performance.now(); (function k(n) { var t = Math.min(1, (n - s0) / 320); place(p[0], p[1] - 12 * Math.sin(t * Math.PI), p[2]); if (t < 1) requestAnimationFrame(k); })(s0); }
+  // Lo que Plai comenta según la sección visible (o el estado del barómetro)
+  var visibleSec = null;
+  function current() {
+    if (AIBB) return aibbTip();
+    return (visibleSec && TIPS[visibleSec]) || PAGE_TIP;
+  }
+  function watchSections() {
+    var ids = Object.keys(TIPS); if (!ids.length || !('IntersectionObserver' in window)) return;
+    var seen = {}, pend = null;
+    // Comenta la sección que está en el centro de la pantalla en ese momento (y no una por la que ya pasó)
+    function maybe() {
+      pend = null;
+      var id = visibleSec; if (!id || !TIPS[id] || seen[id] || autoCount >= 3 || mode === 'menu' || !done) return;
+      var wait = 5000 - (Date.now() - lastShow);
+      if (wait > 0) { pend = setTimeout(maybe, wait + 200); return; }
+      seen[id] = 1; autoCount++; showTip(TIPS[id], true);
+    }
+    var io = new IntersectionObserver(function (es) {
+      es.forEach(function (e) { if (e.isIntersecting) visibleSec = e.target.id; });
+      clearTimeout(pend); pend = setTimeout(maybe, 900);
+    }, { rootMargin: '-45% 0px -45% 0px', threshold: 0 });
+    ids.forEach(function (id) { var el2 = document.getElementById(id); if (el2) io.observe(el2); });
+  }
+  // AI Brand Barometer: reacciona a lo que está pasando
+  var aibbState = '';
+  function aibbTip() {
+    var run = document.getElementById('run'), res = document.getElementById('results'), setup = document.getElementById('setup');
+    var caso = /[?&]caso=/.test(location.search);
+    if (run && run.textContent.trim()) return { es: 'Investigando… Pregunto a la IA lo que preguntaría un comprador. Puede tardar unos minutos.', en: 'Investigating… I’m asking AI what a buyer would ask. It can take a few minutes.' };
+    if (setup && setup.textContent.trim()) return { es: 'Leyendo tu web y buscando a tus competidores…', en: 'Reading your website and finding your competitors…' };
+    if (res && res.querySelector('.quad')) return caso
+      ? { es: 'Este es el caso McDonald’s. ¿Probamos con tu marca?', en: 'This is the McDonald’s case. Shall we try your brand?', a: { es: 'Analizar mi marca →', en: 'Analyze my brand →', href: '/ai-barometer/' } }
+      : { es: '¡Listo! Toca una burbuja del mapa para ver su ficha, y prueba el “Resumen para tu CEO”.', en: 'Done! Tap a bubble on the map to see its card, and try the “Summary for your CEO”.' };
+    return PAGE_TIP;
+  }
+  function watchAibb() {
+    var check = function () {
+      var t = aibbTip(), k = t.es; if (k === aibbState) return; aibbState = k;
+      if (done && mode !== 'menu') showTip(t, true);
+    };
+    ['run', 'results', 'setup'].forEach(function (id) { var n = document.getElementById(id); if (n) new MutationObserver(function () { clearTimeout(watchAibb._t); watchAibb._t = setTimeout(check, 600); }).observe(n, { childList: true }); });
+    setTimeout(check, 1200);
+  }
   function build() {
     w = innerWidth; h = innerHeight;
     layer = el('svg', { id: 'plai-layer', viewBox: '0 0 ' + w + ' ' + h, 'aria-hidden': 'true' });
@@ -96,10 +195,10 @@
     layer.appendChild(crackG); layer.appendChild(g); layer.appendChild(tirita); layer.appendChild(spark);
     document.body.appendChild(layer);
     bub = document.createElement('div'); bub.className = 'plai-bub'; bub.setAttribute('role', 'status'); document.body.appendChild(bub);
-    g.addEventListener('click', function (e) { if (!done) return; e.stopPropagation(); if (bub.classList.contains('show')) hideBubble(); else ctaBubble(); });
+    g.addEventListener('click', function (e) { if (!done) return; e.stopPropagation(); if (bub.classList.contains('show') && mode === 'menu') hideBubbleMode(); else showMenu(); });
     addEventListener('resize', function () {
       w = innerWidth; h = innerHeight; layer.setAttribute('viewBox', '0 0 ' + w + ' ' + h);
-      if (done) { var c = corner(); place(c[0], c[1], c[2]); if (bub.classList.contains('show')) ctaBubble(); }
+      if (done) { var c = corner(); place(c[0], c[1], c[2]); if (bub.classList.contains('show')) hideBubbleMode(); }
     });
   }
 
@@ -149,15 +248,18 @@
     var mn = document.querySelector('main'); if (mn) mn.style.transform = ''; face('ok'); g.setAttribute('opacity', 1);
     var c = corner(); place(c[0], c[1], c[2]);
     g.setAttribute('role', 'button'); g.setAttribute('tabindex', '0'); g.setAttribute('aria-label', tr('cta'));
-    g.onkeydown = function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (bub.classList.contains('show')) hideBubble(); else ctaBubble(); } };
-    hideBubble(); setTimeout(ctaBubble, 350);
-    setTimeout(function () { if (!bub.matches(':hover')) hideBubble(); }, 9000);
+    g.onkeydown = function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (bub.classList.contains('show') && mode === 'menu') hideBubbleMode(); else showMenu(); } };
+    g.setAttribute('aria-label', tr('menu'));
+    hideBubble();
+    if (AIBB) { watchAibb(); return; }
+    setTimeout(function () { showTip(current(), false); }, 350);
+    watchSections();
   }
 
   function start() {
     build();
     var first = get(KEY_INTRO) !== '1';
-    if (!first || reduce) { finish(); return; }
+    if (!HOME || !first || reduce) { finish(); return; }
     put(KEY_INTRO, '1');
     var stop = function () { if (!skip) { skip = true; } };
     ['pointerdown', 'keydown', 'wheel', 'touchstart'].forEach(function (ev) { addEventListener(ev, stop, { once: true, passive: true }); });
