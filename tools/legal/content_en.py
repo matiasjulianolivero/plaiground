@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-UPDATED_EN = "23 November 2026"
+UPDATED_EN = "24 November 2026"
 PAGES_EN = {}
 
 PAGES_EN["aviso-legal"] = dict(
@@ -72,6 +72,7 @@ body="""
 <tr><td>Preferences in your browser</td><td>Language, light/dark theme and cookie choice</td><td>Remember your preferences</td><td>Necessary for the service you request; see the <a href="/legal/cookies/">cookie policy</a></td><td>Stored only on your device; cookie choice, 12 months</td></tr>
 <tr><td>Contact form (“plaiground pass”)</td><td>Name, email, company and role (optional), interests, urgency, message, language, IP address and date you accepted this policy</td><td>Reply to your request, send you the confirmation email with your pass and prevent abusive submissions</td><td>Your request and pre-contractual steps (Art. 6(1)(b)); the IP, legitimate interest in preventing abuse (Art. 6(1)(f))</td><td>Up to 2 years from the last contact, unless the law requires otherwise; you can ask for deletion at any time</td></tr>
 <tr><td>Monthly newsletter (optional)</td><td>Email, name, language and dates of sign-up, confirmation and unsubscription</td><td>Send you plaiground news and experiments once a month</td><td>Your consent (Art. 6(1)(a) GDPR and Art. 21 of Spain’s LSSI), which you confirm with one click in the email we send you (double opt-in). Ticking the box is optional and conditions nothing else</td><td>While you stay subscribed. You can unsubscribe at any time via the link in every email or by writing to matiasjulianolivero@gmail.com; after unsubscribing only proof of consent and unsubscription is kept for the limitation period of possible claims</td></tr>
+<tr><td>AI Brand Barometer</td><td>The website (domain) you enter, the brand, category, competitors and questions of the study, the AI models’ answers and the results; if you sign in, your email and study history</td><td>Run the AI visibility study, show it to you and, when signed in, keep your history to compare month by month</td><td>Performance of the <a href="/legal/terminos/">terms of use</a> (Art. 6(1)(b))</td><td>Studies are kept while you have the account; you can delete each one or the whole account at any time. Nothing is stored without signing in</td></tr>
 <tr><td>Data plaiground account</td><td>Email, date you accepted the terms, last sign-in date, language and the dashboards you create</td><td>Give you access via an email link (no password), save your dashboards and tell you about important service changes</td><td>Performance of the <a href="/legal/terminos/">terms of use</a> (Art. 6(1)(b))</td><td>While you keep the account. You can delete it yourself at any time from the platform; accounts inactive for 24 months are deleted</td></tr>
 <tr><td>Using interactive tools</td><td>The data you enter into them</td><td>Provide the functionality you ask for</td><td>Performance of the <a href="/legal/terminos/">terms of use</a> (Art. 6(1)(b))</td><td>See section 3</td></tr>
 </tbody></table></div>
@@ -94,6 +95,8 @@ body="""
 <li><strong>Cloudflare, Inc.</strong>: hosting and delivery of the site, protection against attacks, and the database for Data plaiground accounts and dashboards.</li>
 <li><strong>Google LLC</strong>: fonts (Google Fonts), loaded from Google servers, which receive your IP address; and email (Gmail) when you write.</li>
 <li><strong>Resend</strong>: sending Data plaiground sign-in emails and notices, contact-form emails and the newsletter.</li>
+<li><strong>Google LLC</strong> (Gemini API): AI model that answers the AI Brand Barometer questions and rates the tone of the answers. Its free tier is used, under which <strong>Google may use what is sent to improve its products</strong>; that’s why only brand data is sent (domain, name, category, competitors and questions), never your email. Don’t enter personal or confidential data in those fields.</li>
+<li><strong>OpenAI, Anthropic and Perplexity</strong>: only if they are enabled for the AI Brand Barometer in the future, with the same kind of brand data.</li>
 <li><strong>Anthropic, PBC</strong>: artificial intelligence models (Claude) for AI tools, once available.</li>
 <li><strong>LinkedIn</strong>: only if you choose to get in touch there, under its own privacy policy.</li>
 </ul>
@@ -174,6 +177,7 @@ body="""
 <ul>
 <li>The tools are demos, prototypes or beta versions and may change, fail or disappear without notice.</li>
 <li>Unless stated otherwise, they are free to use and there is no professional services contract or guaranteed service level.</li>
+<li><strong>AI Brand Barometer:</strong> its results only reflect what specific AI models answered to specific questions at a given moment. Model answers vary with time, model, language and phrasing, may be inaccurate and do not describe the real quality of any brand. Brands and competitors shown belong to their owners and are mentioned for information only. You are responsible for the websites, brands and questions you enter and for how you use the results.</li>
 <li>If a paid option is offered in the future, it will be governed by specific terms that you must expressly accept before signing up.</li>
 </ul>
 
@@ -233,7 +237,8 @@ intro="How artificial intelligence is used on plaiground, its limits and how you
 body="""
 <h2 id="donde">1. Where AI is used</h2>
 <p>plaiground uses artificial intelligence as a working tool to create content and projects, and in some interactive tools, for example to analyse the structure of a dataset, suggest which indicators and charts to show, or write summaries.</p>
-<p>The models used are third-party models (mainly Claude, by Anthropic). plaiground does not train its own models.</p>
+<p>In the AI Brand Barometer, AI is also the subject of study: questions are put to third-party AI assistants (for now, Google’s Gemini) and their answers are analysed. Results are always labelled as AI-generated, and sample studies as simulated data.</p>
+<p>The models used are third-party models (mainly Claude, by Anthropic, and Gemini, by Google). plaiground does not train its own models.</p>
 
 <h2 id="aviso">2. How it is disclosed</h2>
 <ul>

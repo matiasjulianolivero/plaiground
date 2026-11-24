@@ -1,3 +1,4 @@
+import { createAibb } from './aibb.js';
 /**
  * plaiground · Worker
  * --------------------------------------------------------------
@@ -399,6 +400,7 @@ async function nlPoll(env, i) {
   return json({ counts: c, total: c.a + c.b + c.c + c.d });
 }
 
+let aibb = null;
 /* ---------- handlers ---------- */
 async function requestLogin(req, env, url) {
   if (!env.RESEND_API_KEY) return json({ error: 'email_not_configured' }, 503);
@@ -421,7 +423,8 @@ async function requestLogin(req, env, url) {
     .bind(await sha256(token), email, now, now + TOKEN_TTL_MIN * 60e3, ip, 1, lang).run();
 
   const base = (env.APP_URL || url.origin).replace(/\/$/, '');
-  const link = `${base}/data/app/?login=${token}`;
+  const next = body.next === '/ai-barometer/' ? '&next=ai-barometer' : '';
+  const link = `${base}/data/app/?login=${token}${next}`;
   const ok = await sendEmail(env, email, loginEmail(link, lang));
   if (!ok) return json({ error: 'email_failed' }, 502);
   return json({ ok: true });
@@ -469,6 +472,8 @@ async function deleteAccount(env, user) {
     env.DB.prepare('DELETE FROM shares WHERE user_id = ?').bind(user.id),
     env.DB.prepare('DELETE FROM email_log WHERE user_id = ?').bind(user.id),
     env.DB.prepare('DELETE FROM ai_usage WHERE user_id = ?').bind(user.id),
+    env.DB.prepare('CREATE TABLE IF NOT EXISTS aibb_studies (id TEXT PRIMARY KEY, user_id TEXT NOT NULL, created_at INTEGER NOT NULL, domain TEXT, brand TEXT, lang TEXT, score INTEGER, visibility REAL, data TEXT NOT NULL)'),
+    env.DB.prepare('DELETE FROM aibb_studies WHERE user_id = ?').bind(user.id),
     env.DB.prepare('DELETE FROM sessions WHERE user_id = ?').bind(user.id),
     env.DB.prepare('DELETE FROM login_tokens WHERE email = ?').bind(user.email),
     env.DB.prepare('DELETE FROM users WHERE id = ?').bind(user.id)
@@ -632,6 +637,7 @@ async function api(req, env, url, ctx) {
     return new Response('ok', { status: 200 });
   }
   if (m !== 'GET' && !sameOrigin(req, url)) return json({ error: 'forbidden' }, 403);
+  if (pathname.startsWith('/api/aibb/')) { aibb = aibb || createAibb({ json, currentUser, randomToken }); return aibb(req, env, url, pathname, m); }
 
   if (pathname === '/api/auth/request' && m === 'POST') return requestLogin(req, env, url);
   if (pathname === '/api/auth/verify' && m === 'POST') return verifyLogin(req, env);

@@ -400,6 +400,17 @@ html[data-theme="dark"] header .lang,html[data-theme="dark"] header .theme{borde
 html[data-theme="dark"] header .nav::after{opacity:.18}
 @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){header .nav{background:var(--gl-bg2)}}
 @media (max-width:560px){header{padding:10px 10px 0}header .nav{height:58px;padding:0 6px 0 18px}}
+#ai-barometer{padding:20px 0 40px}
+.ab{display:grid;grid-template-columns:1fr 1.05fr;gap:48px;align-items:center;padding:clamp(26px,4vw,52px);border-radius:32px;background:var(--paper);border:1px solid var(--line)}
+@media (max-width:900px){.ab{grid-template-columns:1fr}}
+.ab h2{font-size:clamp(32px,4vw,50px);line-height:1.03;font-weight:800;margin:12px 0 14px;letter-spacing:-.035em}.ab h2 em{font-style:normal;background:linear-gradient(100deg,var(--ind),#7C5CFF 45%,var(--coral));-webkit-background-clip:text;background-clip:text;color:transparent}
+.ab p{color:var(--muted);font-size:17.5px}
+.ab-vis{border-radius:24px;padding:22px;background:#14162E;color:#ECEEFF;box-shadow:0 30px 70px rgba(20,22,46,.25)}
+.ab-q{font:600 15px var(--body);padding:12px 16px;border-radius:16px 16px 16px 4px;background:rgba(255,255,255,.08);display:inline-block}
+.ab-rows{display:grid;gap:10px;margin:18px 0}.ab-rows div{display:grid;grid-template-columns:26px 110px 1fr;gap:10px;align-items:center;font-size:14.5px}
+.ab-rows b{font:800 15px var(--display);color:#A3A8CC}.ab-rows i{height:14px;border-radius:99px;display:block}
+.ab-rows .me{padding:8px;margin:0 -8px;border-radius:12px;background:rgba(139,140,248,.16)}.ab-rows .me b,.ab-rows .me span{color:#fff;font-weight:700}
+.ab-eng{display:flex;gap:6px;flex-wrap:wrap}.ab-eng span{font:700 11.5px var(--body);letter-spacing:.06em;padding:6px 10px;border-radius:999px;background:rgba(255,255,255,.08);color:#C9CCEA}
 </style>
 </head>
 <body>
@@ -412,6 +423,7 @@ html[data-theme="dark"] header .nav::after{opacity:.18}
       <li><a href="#servicios"><span lang="es">Servicios</span><span lang="en">Services</span></a></li>
       <li><a href="#lab"><span lang="es">Proyectos</span><span lang="en">Projects</span></a></li>
       <li><a href="/data/">Data <span class="navnew">beta</span></a></li>
+      <li><a href="/ai-barometer/">AI Barometer <span class="navnew">beta</span></a></li>
       <li><a href="#sobre-mi"><span lang="es">Sobre mí</span><span lang="en">About</span></a></li>
       <li><a class="cta" href="#contacto"><span lang="es">Hablemos</span><span lang="en">Let’s talk</span></a></li>
     </ul>
@@ -493,6 +505,31 @@ html[data-theme="dark"] header .nav::after{opacity:.18}
     </div>
   </section>
 
+  <section id="ai-barometer">
+    <div class="wrap">
+      <div class="ab rv">
+        <div class="ab-vis" aria-hidden="true">
+          <div class="ab-q"><span lang="es">“¿Cuál es el mejor software de gestión para pymes?”</span><span lang="en">“What’s the best management software for SMEs?”</span></div>
+          <div class="ab-rows">
+            <div><b>1</b><span>Marca A</span><i style="width:92%;background:#2a78d6"></i></div>
+            <div><b>2</b><span>Marca B</span><i style="width:74%;background:#eb6834"></i></div>
+            <div class="me"><b>3</b><span lang="es">Tu marca</span><span lang="en">Your brand</span><i style="width:55%;background:linear-gradient(90deg,#4338CA,#7C5CFF,#FF7A59)"></i></div>
+            <div><b>—</b><span>Marca C</span><i style="width:8%;background:#8a8eac"></i></div>
+          </div>
+          <div class="ab-eng"><span>Gemini</span><span>ChatGPT</span><span>Claude</span><span>Perplexity</span></div>
+        </div>
+        <div>
+          <div class="eyebrow"><span lang="es">Nuevo · AI Brand Barometer (beta)</span><span lang="en">New · AI Brand Barometer (beta)</span></div>
+          <h2><span lang="es">Tu marca ya no se busca. <em>Se pregunta.</em></span><span lang="en">Your brand isn’t searched anymore. <em>It’s asked.</em></span></h2>
+          <p><span lang="es">Pon tu web y descubre qué responden los asistentes de IA cuando un comprador pregunta por tu categoría: si apareces, en qué posición, qué fuentes te citan y cómo quedas frente a tu competencia. Con tu email, guardas el histórico mes a mes.</span><span lang="en">Enter your website and find out what AI assistants answer when a buyer asks about your category: whether you appear, in what position, which sources cite you and how you compare with competitors. With your email, you keep a month-by-month history.</span></p>
+          <div class="btns">
+            <a class="btn primary" href="/ai-barometer/"><span lang="es">Analizar mi marca</span><span lang="en">Analyze my brand</span></a>
+            <a class="btn ghost" href="/newsletter/01/#powerup"><span lang="es">Hazlo a mano en 15 min</span><span lang="en">Do it by hand in 15 min</span></a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
   <section id="data">
     <div class="wrap">
       <div class="dp rv">
