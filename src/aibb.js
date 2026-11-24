@@ -14,7 +14,7 @@ const MAX_PROMPTS = 8, MAX_COMPETITORS = 7; // más de 7 competidores: informe P
 const TEASER_PROMPTS = 3, TEASER_ASKS_PER_IP_DAY = 16; // sin registro: vista previa de 3 preguntas + preparación del resto en segundo plano (2 estudios al día por IP)
 
 const ENGINES = [
-  { id: 'gemini', name: 'Gemini', key: 'GEMINI_API_KEY', model: 'GEMINI_MODEL', def: 'gemini-3.5-flash-lite', alt: ['gemini-3.1-flash-lite', 'gemini-flash-lite-latest'] },
+  { id: 'gemini', name: 'Gemini', key: 'GEMINI_API_KEY', model: 'GEMINI_MODEL', def: 'gemini-3.1-flash-lite', alt: ['gemini-flash-lite-latest', 'gemini-3.5-flash-lite', 'gemini-2.5-flash-lite', 'gemini-flash-latest'] },
   { id: 'chatgpt', name: 'ChatGPT', key: 'OPENAI_API_KEY', model: 'OPENAI_MODEL' },
   { id: 'claude', name: 'Claude', key: 'ANTHROPIC_API_KEY', model: 'AIBB_ANTHROPIC_MODEL' },
   { id: 'perplexity', name: 'Perplexity', key: 'PERPLEXITY_API_KEY', model: 'PERPLEXITY_MODEL' }
@@ -78,7 +78,8 @@ export function createAibb(h) {
             await logErr(env, `gemini ${mdl} empty: ${JSON.stringify(d).slice(0, 300)}`); last = 'engine_failed'; continue;
           }
           await logErr(env, `gemini ${mdl} ${r.status}: ${JSON.stringify(d).slice(0, 400)}`);
-          if (r.status === 400 || r.status === 404) { last = 'engine_failed'; continue; }
+          // 400/404: modelo no disponible; 403/429 con cupo 0: el modelo no está en la capa gratuita → probar el siguiente
+          if (r.status === 400 || r.status === 404 || r.status === 403 || (r.status === 429 && /limit: ?0|free_tier|FreeTier/i.test(JSON.stringify(d)))) { last = r.status === 429 ? 'rate_limited' : 'engine_failed'; continue; }
           if ((r.status === 429 || r.status >= 500) && !retried) { await new Promise(res => setTimeout(res, 1500)); return callEngine(env, id, prompt, { json: wantJson, temperature, system }, true); }
           return { error: r.status === 429 ? 'rate_limited' : 'engine_failed' };
         }
