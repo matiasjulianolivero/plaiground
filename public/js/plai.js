@@ -3,7 +3,7 @@
    - Cuenta una historia que avanza con la navegación: cada sección tiene su mensaje, aparece al llegar, desaparece al salir y no se repite.
    - Vive: pestañea, sigue el cursor con los ojos, se ríe con las cosquillas, piensa cuando el barómetro trabaja y salta cuando tiene algo que contar.
    - La × cierra el bocadillo y silencia los comentarios automáticos; Plai se queda y al pulsarlo abre su menú.
-   - Respeta prefers-reduced-motion y no aparece al imprimir. */
+   - Solo en escritorio (pantalla ancha con ratón). Respeta prefers-reduced-motion y no aparece al imprimir. */
 (function () {
   'use strict';
   var KEY_INTRO = 'plg-plai-intro', KEY_MUTE = 'plg-plai-mute';
@@ -98,7 +98,8 @@
     '.plai-bub b{display:block;font-weight:800;margin-bottom:4px}.plai-bub .pm-tip{font-weight:500;color:var(--muted,#555A7A);font-size:13.5px;margin:2px 0 8px}' +
     '.plai-bub .pm{display:flex;flex-direction:column;gap:2px}.plai-bub .pm a{margin:0;padding:6px 0;border-top:1px solid var(--line,rgba(20,22,46,.1))}' +
     '.plai-bub .pm-mute{display:block;margin-top:6px;background:none;border:0;padding:0;color:var(--muted,#555A7A);font:600 12.5px var(--body,system-ui);cursor:pointer;text-decoration:underline}' +
-    '@media print{#plai-layer,.plai-bub{display:none!important}}';
+    '@media print{#plai-layer,.plai-bub{display:none!important}}' +
+    '@media (max-width:899px){#plai-layer,.plai-bub{display:none!important}}';
   document.head.appendChild(css);
 
   // ---------- dibujo (centro en 0,0) ----------
@@ -379,6 +380,8 @@
   }
   // Espera a que el visitante haya respondido al aviso de cookies (si aparece)
   function ready() {
+    // Solo en escritorio: pantalla ancha y ratón
+    if (!(window.matchMedia && matchMedia('(min-width: 900px) and (hover: hover) and (pointer: fine)').matches)) return;
     var visible = function () { var cc = document.getElementById('plg-cc'); return !!(cc && cc.querySelector('.cc-box')); };
     if (!visible()) { setTimeout(start, 1600); return; }
     var iv = setInterval(function () { if (!visible()) { clearInterval(iv); setTimeout(start, 900); } }, 400);
