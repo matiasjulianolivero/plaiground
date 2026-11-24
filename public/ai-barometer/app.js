@@ -127,7 +127,7 @@
       '<h2 style="font-size:30px;margin:24px 0 16px">' + tr('Revisa tu estudio', 'Review your study') + '</h2>' +
       '<div class="grid2"><div><label class="f" for="sb">' + tr('Marca', 'Brand') + '</label><input class="t" id="sb" maxlength="60" value="' + esc(s.brand) + '"></div><div><label class="f" for="sc">' + tr('Categoría', 'Category') + '</label><input class="t" id="sc" maxlength="80" value="' + esc(s.category) + '"></div></div>' +
       '<div class="sec"><label class="f">' + tr('Competidores', 'Competitors') + ' <span style="text-transform:none;letter-spacing:0;font-weight:500">(' + s.competitors.length + ' · ' + tr('hasta ', 'up to ') + MAXC() + tr(' gratis', ' free') + ')</span></label><div class="chips" id="comps">' + s.competitors.map(function (c, i) { return '<span class="chip">' + esc(c) + '<button type="button" data-rc="' + i + '" aria-label="' + tr('Quitar', 'Remove') + ' ' + esc(c) + '">×</button></span>'; }).join('') + (s.competitors.length < MAXC() ? '<span class="chip add"><input id="addc" maxlength="60" placeholder="+ ' + tr('Añadir competidor', 'Add competitor') + '"></span>' : '<a class="chip prem-chip" href="/#contacto">✦ ' + tr('Más competidores con Premium', 'More competitors with Premium') + '</a>') + '</div></div>' +
-      '<div class="sec"><label class="f">' + tr('Preguntas que haría un comprador', 'Questions a buyer would ask') + '</label><div class="plist">' + s.prompts.map(function (p, i) { return '<div class="prow"><span class="n">' + (i + 1) + '</span><input class="t" data-p="' + i + '" maxlength="240" value="' + esc(p) + '"><button type="button" data-rp="' + i + '" aria-label="' + tr('Quitar pregunta', 'Remove question') + '">×</button></div>'; }).join('') + '</div>' + (s.prompts.length < 8 ? '<button type="button" class="btn ghost" id="addp" style="margin-top:10px;padding:10px 16px;font-size:14px">+ ' + tr('Añadir pregunta', 'Add question') + '</button>' : '') + '</div>' +
+      '<div class="sec"><label class="f">' + tr('Preguntas que haría un comprador', 'Questions a buyer would ask') + '</label><div class="plist">' + s.prompts.map(function (p, i) { return '<div class="prow"><span class="n">' + (i + 1) + '</span><input class="t" data-p="' + i + '" maxlength="240" value="' + esc(p) + '"><button type="button" data-rp="' + i + '" aria-label="' + tr('Quitar pregunta', 'Remove question') + '">×</button></div>'; }).join('') + '</div>' + (s.prompts.length < 10 ? '<button type="button" class="btn ghost" id="addp" style="margin-top:10px;padding:10px 16px;font-size:14px">+ ' + tr('Añadir pregunta', 'Add question') + '</button>' : '') + '</div>' +
       '<div class="sec"><label class="f">' + tr('Asistentes de IA', 'AI assistants') + '</label><div class="eng">' + eng + '</div></div>' +
       (live && S.engines.some(function (x) { return !x.active; }) ? '<p class="small" style="margin-top:10px">' + tr('ChatGPT, Claude y Perplexity llegarán con el <b>informe Premium</b>. <a href="/#contacto">Quiero que me avisen</a>', 'ChatGPT, Claude and Perplexity will come with the <b>Premium report</b>. <a href="/#contacto">Let me know</a>') + '</p>' : '') +
       '<div class="row"><span class="small">' + (gate ? tr('Gratis · resultados en unos segundos · sin registro para la vista previa', 'Free · results in seconds · no sign-up for the preview') : live ? tr('Tarda 1–2 minutos. Las respuestas se guardan tal cual las dan los modelos.', 'Takes 1–2 minutes. Answers are stored exactly as the models give them.') : tr('Las respuestas del modo demo son inventadas y solo sirven para ver el informe.', 'Demo answers are made up and only show what the report looks like.')) + '</span><button class="btn" id="runBtn" type="button">' + (gate ? tr('Analizar ahora', 'Analyze now') : live ? tr('Lanzar estudio', 'Run study') : tr('Ver estudio de ejemplo', 'See sample study')) + ' →</button></div></section>';
@@ -136,12 +136,13 @@
   function readSetup() {
     var s = S.setup; s.brand = $('sb').value.trim() || s.brand; s.category = $('sc').value.trim();
     document.querySelectorAll('[data-p]').forEach(function (i) { s.prompts[+i.dataset.p] = i.value.trim(); });
+    var stg = s.stages || []; s.stages = s.prompts.map(function (p, i) { return p ? (stg[i] || null) : '\u0000'; }).filter(function (x) { return x !== '\u0000'; });
     s.prompts = s.prompts.filter(Boolean);
     document.querySelectorAll('[data-e]').forEach(function (c) { S.sel[c.dataset.e] = c.checked; });
   }
   function bindSetup() {
     document.querySelectorAll('[data-rc]').forEach(function (b) { b.onclick = function () { readSetup(); S.setup.competitors.splice(+b.dataset.rc, 1); renderSetup(); }; });
-    document.querySelectorAll('[data-rp]').forEach(function (b) { b.onclick = function () { readSetup(); S.setup.prompts.splice(+b.dataset.rp, 1); renderSetup(); }; });
+    document.querySelectorAll('[data-rp]').forEach(function (b) { b.onclick = function () { readSetup(); S.setup.prompts.splice(+b.dataset.rp, 1); if (S.setup.stages) S.setup.stages.splice(+b.dataset.rp, 1); renderSetup(); }; });
     var ac = $('addc'); if (ac) ac.onkeydown = function (e) { if (e.key === 'Enter' && ac.value.trim()) { e.preventDefault(); readSetup(); S.setup.competitors.push(ac.value.trim()); renderSetup(); var n = $('addc'); if (n) n.focus(); } };
     var ap = $('addp'); if (ap) ap.onclick = function () { readSetup(); S.setup.prompts.push(''); renderSetup(); var all = document.querySelectorAll('[data-p]'); all[all.length - 1].focus(); };
     bindLogin();
@@ -304,6 +305,9 @@
     var miss = R.rows.filter(function (r) { return r.pos[0] == null; }).map(function (r) { return r.prompt; }).filter(function (v, i, a) { return a.indexOf(v) === i; });
     if (miss.length && me.visibility > 0) out.push(['🕳️', tr('Huecos: no sales en <b>' + miss.length + ' pregunta' + (miss.length > 1 ? 's' : '') + '</b>, por ejemplo «' + esc(miss[0]) + '».', 'Gaps: you don’t show up in <b>' + miss.length + ' question' + (miss.length > 1 ? 's' : '') + '</b>, e.g. “' + esc(miss[0]) + '”.')]);
     out.push(R.ownCited > 0 ? ['🔗', tr('Tu web aparece como fuente en el <b>' + pct(R.ownCited) + '</b> de las respuestas.', 'Your website appears as a source in <b>' + pct(R.ownCited) + '</b> of answers.')] : ['🔗', tr('<b>Tu web no aparece como fuente.</b> ' + (R.sources[0] ? 'La más citada es ' + esc(R.sources[0].domain) + ': ahí es donde conviene estar.' : ''), '<b>Your website isn’t cited as a source.</b> ' + (R.sources[0] ? 'The most cited is ' + esc(R.sources[0].domain) + ': that’s where you want to be.' : ''))]);
+    var F = !st.partial && funnelInfo(st);
+    if (F && F.worst.vis[0] < F.best.vis[0]) out.push(['🧭', tr('En el recorrido del comprador <b>flojeas en ' + stgName(F.worst.stage).toLowerCase() + '</b> (' + pct(F.worst.vis[0]) + ' de presencia).', 'In the buyer journey <b>you’re weakest at ' + stgName(F.worst.stage).toLowerCase() + '</b> (' + pct(F.worst.vis[0]) + ' presence).')]);
+    if (!st.partial && (R.cons || []).length) out.push(['🗣️', tr('Crítica que más repite la IA: <b>«' + esc(R.cons[0]) + '»</b>.', 'Criticism AI repeats most: <b>“' + esc(R.cons[0]) + '”</b>.')]);
     if (R.sentiment != null && !st.partial) out.push([R.sentiment > .2 ? '💚' : R.sentiment < -.2 ? '⚠️' : '😐', tr('Tono hacia tu marca: <b>' + (R.sentiment > .2 ? 'positivo' : R.sentiment < -.2 ? 'negativo' : 'neutro') + '</b>.', 'Tone towards your brand: <b>' + (R.sentiment > .2 ? 'positive' : R.sentiment < -.2 ? 'negative' : 'neutral') + '</b>.')]);
     return out;
   }
@@ -331,7 +335,8 @@
     var hm = '<div class="hmwrap"><table class="hm"><thead><tr><th></th>' + B.map(function (b, i) { return '<th><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:' + col(i) + ';margin-right:5px"></span>' + esc(b.name) + '</th>'; }).join('') + '</tr></thead><tbody>' +
       prompts.map(function (p) {
         var rows = R.rows.filter(function (r) { return r.prompt === p; });
-        return '<tr><th class="p" scope="row">' + esc(p) + '</th>' + B.map(function (b, k) {
+        var sg = (s.stages && s.stages[prompts.indexOf(p)]) || (rows[0] && rows[0].stage) || '';
+        return '<tr data-q="' + esc(p) + '" class="click"><th class="p" scope="row">' + (sg ? '<span class="stg s-' + sg + '">' + stgName(sg) + '</span>' : '') + esc(p) + '</th>' + B.map(function (b, k) {
           var ps = rows.map(function (r) { return r.pos[k]; }).filter(function (x) { return x != null; });
           if (!ps.length) return '<td class="na" data-tip="' + esc(b.name) + ': ' + tr('no aparece', 'not mentioned') + '">—</td>';
           var best = Math.min.apply(null, ps), t = 1 - (best - 1) / Math.max(1, B.length - 1) * .85;
@@ -351,7 +356,7 @@
     var ins = '<ul class="ins">' + insights(st).map(function (x) { return '<li><span class="em">' + x[0] + '</span><span>' + x[1] + '</span></li>'; }).join('') + '</ul>';
     var exl = st.answers.map(function (a, i) { return '<button type="button" data-x="' + i + '" aria-pressed="' + (i === S.exSel) + '"><span class="e">' + ENG_NAME[a.engine] + '</span><span>' + esc(a.prompt) + '</span></button>'; }).join('');
     $('results').innerHTML = '<div class="rhead"><div><div class="eyebrow">' + tr('Resultados', 'Results') + ' · ' + esc(s.domain) + '</div><h2 style="margin-top:10px">' + esc(s.brand) + '</h2><div class="meta">' + esc(s.category) + ' · ' + d.toLocaleDateString(L() === 'es' ? 'es-ES' : 'en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) + ' · ' + st.answers.length + tr(' respuestas analizadas', ' answers analyzed') + '</div></div>' +
-      '<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">' + (st.demo ? '<span class="tag demo">🧪 ' + tr('Ejemplo · datos simulados', 'Sample · simulated data') + '</span>' : st.partial ? '<span class="tag live">👀 ' + tr('Vista previa', 'Preview') + '</span>' : '<span class="tag live">🛰️ ' + tr('Estudio real', 'Live study') + '</span>') + (S.viewer ? '<a class="btn" href="/ai-barometer/" style="padding:11px 16px;font-size:14px">' + tr('Analiza tu marca gratis', 'Analyze your brand free') + ' →</a>' : (st.id && !st.demo && !st.partial && S.cfg && S.cfg.user ? '<button class="btn" type="button" id="shareBtn" style="padding:11px 16px;font-size:14px">' + tr('Compartir', 'Share') + '</button>' : '') + '<button class="btn ghost" type="button" id="editStudy" style="padding:11px 16px;font-size:14px">' + tr('Editar y repetir', 'Edit and rerun') + '</button><button class="btn ghost" type="button" id="again" style="padding:11px 16px;font-size:14px">' + tr('Nuevo estudio', 'New study') + '</button>') + '</div></div><div id="sharebox"></div>' +
+      '<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">' + (st.demo ? '<span class="tag demo">🧪 ' + tr('Ejemplo · datos simulados', 'Sample · simulated data') + '</span>' : st.partial ? '<span class="tag live">👀 ' + tr('Vista previa', 'Preview') + '</span>' : '<span class="tag live">🛰️ ' + tr('Estudio real', 'Live study') + '</span>') + (S.viewer ? '<a class="btn" href="/ai-barometer/" style="padding:11px 16px;font-size:14px">' + tr('Analiza tu marca gratis', 'Analyze your brand free') + ' →</a>' : (!st.partial && hasTone(st) ? '<button class="btn ghost" type="button" id="ceoBtn" style="padding:11px 16px;font-size:14px">📋 ' + tr('Resumen para tu CEO', 'Summary for your CEO') + '</button>' : '') + (st.id && !st.demo && !st.partial && S.cfg && S.cfg.user ? '<button class="btn" type="button" id="shareBtn" style="padding:11px 16px;font-size:14px">' + tr('Compartir', 'Share') + '</button>' : '') + '<button class="btn ghost" type="button" id="editStudy" style="padding:11px 16px;font-size:14px">' + tr('Editar y repetir', 'Edit and rerun') + '</button><button class="btn ghost" type="button" id="again" style="padding:11px 16px;font-size:14px">' + tr('Nuevo estudio', 'New study') + '</button>') + '</div></div><div id="sharebox"></div>' +
       (S.viewer ? '<div class="banner live" style="margin-bottom:16px"><span class="ic">📤</span><div>' + tr('<b>Informe compartido contigo.</b> Es una copia de solo lectura' + (S.viewerExp ? ', disponible hasta el ' + new Date(S.viewerExp).toLocaleDateString('es-ES', { day: 'numeric', month: 'long' }) : '') + '. ¿Quieres ver cómo sale tu marca? <a href="/ai-barometer/">Haz tu estudio gratis</a>.', '<b>Report shared with you.</b> It’s a read-only copy' + (S.viewerExp ? ', available until ' + new Date(S.viewerExp).toLocaleDateString('en-GB', { day: 'numeric', month: 'long' }) : '') + '. Want to see how your brand does? <a href="/ai-barometer/">Run your free study</a>.') + '</div></div>' : '') +
       (S.unlockEmail && !st.partial && !S.viewer && !(S.cfg && S.cfg.user) ? '<div class="banner live" style="margin-bottom:16px"><span class="ic">📩</span><div>' + tr('<b>¡Informe desbloqueado!</b> Te hemos enviado un email a <b>' + esc(S.unlockEmail) + '</b>: ábrelo para guardar este informe en tu histórico, compararlo cada mes y compartirlo.', '<b>Report unlocked!</b> We’ve emailed <b>' + esc(S.unlockEmail) + '</b>: open it to save this report to your history, compare it monthly and share it.') + '</div></div>' : '') +
       (st.partial ? '<div class="banner live" style="margin-bottom:16px"><span class="ic">👀</span><div>' + tr('<b>Vista previa:</b> resultados con ' + st.answers.length + ' de ' + s.prompts.length + ' preguntas. Desbloquea abajo el informe completo, gratis.', '<b>Preview:</b> results from ' + st.answers.length + ' of ' + s.prompts.length + ' questions. Unlock the full report below, for free.') + '</div></div>' : '') +
@@ -359,7 +364,9 @@
       kpis +
       '<div class="g2"><section class="panel"><h3>' + tr('Ranking de visibilidad', 'Visibility ranking') + '</h3><p class="sub">' + tr('% de respuestas en las que aparece cada marca · posición media · cuota de voz', '% of answers mentioning each brand · average position · share of voice') + '</p>' + rank + '</section>' +
       '<section class="panel"><h3>' + tr('Lo que hay que saber', 'What you need to know') + '</h3><p class="sub">' + tr('Lectura automática de los resultados', 'Automatic reading of the results') + '</p>' + ins + '</section></div>' +
+      quadHtml(st) +
       (st.partial ? '<div class="lockwrap"><div class="lockcard card"><div class="eyebrow">🔒 ' + tr('Informe completo', 'Full report') + '</div><h3>' + tr('Desbloquea tu informe completo gratis', 'Unlock your full report for free') + '</h3><p class="sub">' + tr('Las ' + s.prompts.length + ' preguntas, posición pregunta a pregunta, fuentes que cita la IA, el tono hacia tu marca, todas las respuestas y tu histórico mes a mes. Solo tu email, sin contraseña.', 'All ' + s.prompts.length + ' questions, position question by question, the sources AI cites, the tone towards your brand, every answer and your month-by-month history. Just your email, no password.') + '</p>' + loginFormHtml() + '<p class="small" id="preProg" style="margin:10px 0 0"></p></div><div class="locked" aria-hidden="true">' : '') +
+      funnelHtml(st) + repHtml(st) +
       '<section class="panel sec"><h3>' + tr('Posición por pregunta', 'Position by question') + '</h3><p class="sub">' + tr('En qué puesto sale cada marca en cada respuesta (1 = la primera que menciona la IA)', 'Where each brand ranks in each answer (1 = the first one the AI mentions)') + '</p>' + hm + '</section>' +
       '<div class="g2"><section class="panel"><h3>' + tr('Visibilidad por asistente', 'Visibility by assistant') + '</h3><p class="sub">' + tr('% de respuestas de cada IA que mencionan a cada marca', '% of each AI’s answers mentioning each brand') + '</p>' + eh + '</section>' +
       '<section class="panel"><h3>' + tr('Fuentes que cita la IA', 'Sources the AI cites') + '</h3><p class="sub">' + tr('Webs mencionadas como fuente en las respuestas', 'Websites mentioned as sources in the answers') + '</p>' + src + '</section></div>' +
@@ -371,7 +378,135 @@
     var shb = $('shareBtn'); if (shb) shb.onclick = function () { openShare(st); };
     var ed = $('editStudy'); if (ed) ed.onclick = function () { S.setup = JSON.parse(JSON.stringify(st.setup)); if (st.demo) S.mode = 'demo'; else S.mode = S.cfg && S.cfg.user ? 'live' : 'login'; S.reason = ''; S.engines = (S.cfg && S.cfg.engines) || S.engines; S.sel = {}; S.engines.forEach(function (x) { S.sel[x.id] = x.active; }); S.study = null; $('results').innerHTML = ''; renderSetup(); $('setup').scrollIntoView({ behavior: 'smooth', block: 'start' }); };
     if ($('again')) $('again').onclick = function () { S.study = null; S.exSel = 0; $('results').innerHTML = ''; window.scrollTo({ top: 0, behavior: 'smooth' }); $('url').focus(); };
-    tips($('results'));
+    tips($('results')); bindPhase1(st);
+  }
+
+  /* ---------- Fase 1: mapa de posicionamiento, embudo, reputación y resumen para el CEO ---------- */
+  function stgName(k) { return ({ descubrimiento: tr('Descubrimiento', 'Discovery'), comparacion: tr('Comparación', 'Comparison'), precio: tr('Precio', 'Price'), confianza: tr('Confianza', 'Trust'), riesgo: tr('Riesgo', 'Risk') })[k] || k; }
+  function stgQ(k) { return ({ descubrimiento: tr('«¿Qué opciones hay?»', '“What are my options?”'), comparacion: tr('«¿Cuál de estas elijo?»', '“Which of these should I pick?”'), precio: tr('«¿Cuánto cuesta?»', '“How much is it?”'), confianza: tr('«¿Me puedo fiar?»', '“Can I trust it?”') })[k] || ''; }
+  function toneWord(v) { return v == null ? tr('sin datos', 'no data') : v > .2 ? tr('positivo', 'positive') : v < -.2 ? tr('negativo', 'negative') : tr('neutro', 'neutral'); }
+  function hasTone(st) { return st.result && st.result.brands.some(function (b) { return b.tone !== undefined; }); }
+  function quadInfo(st) {
+    var B = st.result.brands, av = B.reduce(function (s, b) { return s + b.visibility; }, 0) / B.length;
+    var div = Math.min(.9, Math.max(.1, av)), me = B[0], t = me.tone == null ? 0 : me.tone, hiV = me.visibility >= div, hiT = t >= 0;
+    var q = hiV && hiT ? 'lead' : !hiV && hiT ? 'gem' : hiV ? 'crit' : 'inv';
+    return { div: div, q: q };
+  }
+  function quadName(q) { return ({ lead: tr('Líderes recomendados', 'Recommended leaders'), gem: tr('Joyas ocultas', 'Hidden gems'), crit: tr('Conocidos pero criticados', 'Known but criticised'), inv: tr('Invisibles', 'Invisible') })[q]; }
+  function quadSvg(st, small) {
+    var B = st.result.brands, qi = quadInfo(st);
+    var mob = window.innerWidth < 640, W = mob ? 400 : 680, H = mob ? 380 : small ? 330 : 400, L0 = mob ? 34 : 54, R0 = mob ? 10 : 18, T0 = 30, B0 = 44, pw = W - L0 - R0, ph = H - T0 - B0;
+    var maxV = Math.max.apply(null, B.map(function (b) { return b.visibility; })), xmax = Math.min(1, Math.max(.4, maxV * 1.2));
+    var X = function (v) { return L0 + Math.min(1, v / xmax) * pw; }, Y = function (t) { return T0 + (1 - ((t == null ? 0 : t) + 1) / 2) * ph; };
+    var maxT1 = Math.max(.01, Math.max.apply(null, B.map(function (b) { return b.top1; })));
+    var dx = X(qi.div), dy = Y(0), ink = 'var(--muted)';
+    var o = '<svg class="quad" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + tr('Mapa de posicionamiento: visibilidad frente a tono de cada marca', 'Positioning map: visibility vs tone for each brand') + '">' +
+      '<rect x="' + L0 + '" y="' + T0 + '" width="' + pw + '" height="' + ph + '" rx="14" fill="var(--soft)" opacity=".45"/>' +
+      '<rect x="' + dx + '" y="' + T0 + '" width="' + (L0 + pw - dx) + '" height="' + (dy - T0) + '" rx="0" fill="var(--good,#1BAF7A)" opacity=".07"/>' +
+      '<line x1="' + dx + '" y1="' + T0 + '" x2="' + dx + '" y2="' + (T0 + ph) + '" stroke="var(--line)" stroke-width="1.5" stroke-dasharray="5 5"/><line x1="' + L0 + '" y1="' + dy + '" x2="' + (L0 + pw) + '" y2="' + dy + '" stroke="var(--line)" stroke-width="1.5" stroke-dasharray="5 5"/>' +
+      [['gem', L0 + 12, T0 + 20, 'start'], ['lead', L0 + pw - 12, T0 + 20, 'end'], ['inv', L0 + 12, T0 + ph - 12, 'start'], ['crit', L0 + pw - 12, T0 + ph - 12, 'end']].map(function (c) { return '<text x="' + c[1] + '" y="' + c[2] + '" text-anchor="' + c[3] + '" class="ql' + (c[0] === qi.q ? ' on' : '') + '">' + quadName(c[0]) + '</text>'; }).join('') +
+      '<text x="' + (L0 + pw / 2) + '" y="' + (H - 8) + '" text-anchor="middle" class="qa">' + tr('Visibilidad en IA →', 'AI visibility →') + '</text>' +
+      '<text transform="translate(' + (mob ? 10 : 16) + ' ' + (T0 + ph / 2) + ') rotate(-90)" text-anchor="middle" class="qa">' + tr('Tono de la IA →', 'AI tone →') + '</text>' +
+      [0, .25, .5, .75, 1].filter(function (v) { return v <= xmax + .001; }).map(function (v) { return '<text x="' + X(v) + '" y="' + (T0 + ph + 16) + '" text-anchor="middle" class="qt">' + Math.round(v * 100) + '%</text>'; }).join('') +
+      '<text x="' + (L0 - 8) + '" y="' + (T0 + 10) + '" text-anchor="end" class="qt">+</text><text x="' + (L0 - 8) + '" y="' + (T0 + ph) + '" text-anchor="end" class="qt">−</text>';
+    // Las burbujas grandes debajo y tu marca siempre encima; si dos coinciden, se separan un poco para que se vean las dos
+    var P = B.map(function (b, k) { return { k: k, b: b, cx: X(b.visibility), cy: Y(b.tone), r: 7 + 17 * Math.sqrt(b.top1 / maxT1) }; }).filter(function (p) { return p.k === 0 || p.b.visibility > 0 || p.b.tone != null; });
+    P.forEach(function (p, i) { P.slice(0, i).forEach(function (q) { var dx0 = p.cx - q.cx, dy0 = p.cy - q.cy; if (Math.sqrt(dx0 * dx0 + dy0 * dy0) < Math.max(10, Math.min(p.r, q.r))) { p.cx = Math.min(L0 + pw - p.r, p.cx + Math.max(p.r, q.r) * .9); } }); });
+    P.sort(function (a, c) { return (a.k === 0) - (c.k === 0) || c.r - a.r; });
+    var placed = [];
+    P.forEach(function (p) {
+      var b = p.b, k = p.k, cx = p.cx, cy = p.cy, r = p.r;
+      var tip = esc(b.name) + ' · ' + tr('visibilidad ', 'visibility ') + pct(b.visibility) + ' · ' + tr('tono ', 'tone ') + toneWord(b.tone) + ' · ' + tr('1.ª opción en ', '1st pick in ') + pct(b.top1);
+      var ly = cy - r - 7; placed.forEach(function (q) { if (Math.abs(q[0] - cx) < 80 && Math.abs(q[1] - ly) < 14) ly = q[1] - 14; }); placed.push([cx, ly]);
+      o += '<g class="qb' + (b.target ? ' me' : '') + '" data-k="' + k + '" data-tip="' + tip + '" tabindex="0" role="button" aria-label="' + tip + '">' +
+        (b.target ? '<circle cx="' + cx + '" cy="' + cy + '" r="' + (r + 5) + '" fill="none" stroke="var(--ink)" stroke-width="2"/>' : '') +
+        '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="' + col(k) + '" fill-opacity=".88" stroke="var(--paper)" stroke-width="2"' + (b.tone == null ? ' stroke-dasharray="3 3"' : '') + '/>' +
+        '<text x="' + Math.min(L0 + pw - 4, Math.max(L0 + 4, cx)) + '" y="' + Math.max(T0 + 12, ly) + '" text-anchor="middle" class="qn' + (b.target ? ' me' : '') + '">' + esc(b.name) + '</text></g>';
+    });
+    return o + '</svg>';
+  }
+  function quadHtml(st) {
+    if (!hasTone(st)) return '';
+    var qi = quadInfo(st), me = st.result.brands[0];
+    var msg = ({ lead: tr('La IA te conoce y habla bien de ti. Ahora toca defender la posición y ser la primera opción más veces.', 'AI knows you and speaks well of you. Now defend the position and be the first pick more often.'),
+      gem: tr('Cuando la IA habla de ti, habla bien, pero te menciona poco. Tu reto es la visibilidad, no la reputación.', 'When AI talks about you it’s positive, but it rarely mentions you. Your challenge is visibility, not reputation.'),
+      crit: tr('La IA te menciona a menudo, pero con un tono poco favorable. Tu reto es la reputación: lo que se dice de ti.', 'AI mentions you often, but not favourably. Your challenge is reputation: what’s said about you.'),
+      inv: tr('Para estas preguntas, la IA apenas te menciona y no tiene una opinión clara de ti. Empieza por existir donde se informa la IA.', 'For these questions, AI barely mentions you and has no clear view of you. Start by existing where AI gets its information.') })[qi.q];
+    return '<section class="panel sec"><div class="qhead"><div><h3>' + tr('Mapa de posicionamiento', 'Positioning map') + '</h3><p class="sub">' + tr('Cada burbuja es una marca: a la derecha, más visible en la IA; arriba, mejor tono. El tamaño indica cuántas veces es la primera opción.', 'Each bubble is a brand: further right, more visible in AI; higher up, better tone. Size shows how often it is the first pick.') + '</p></div><div class="qbadge"><span>' + tr('Tu cuadrante', 'Your quadrant') + '</span><b>' + quadName(qi.q) + '</b></div></div>' +
+      '<div class="qwrap">' + quadSvg(st) + '</div>' + (function () { var off = st.result.brands.filter(function (b, k) { return k && !b.visibility && b.tone == null; }); return off.length ? '<p class="small" style="margin:6px 0 0">' + tr('Sin presencia en ninguna respuesta (fuera del mapa): ', 'Not in any answer (off the map): ') + off.map(function (b) { return esc(b.name); }).join(', ') + '.</p>' : ''; })() + '<p class="qmsg"><b>' + esc(me.name) + ':</b> ' + msg + ' <span class="small">' + tr('Pulsa una burbuja para leer sus respuestas.', 'Tap a bubble to read its answers.') + '</span></p></section>';
+  }
+  function funnelInfo(st) {
+    var S2 = (st.result.byStage || []).filter(function (x) { return x.n; }); if (S2.length < 2) return null;
+    var worst = S2.slice().sort(function (a, b) { return a.vis[0] - b.vis[0]; })[0], best = S2.slice().sort(function (a, b) { return b.vis[0] - a.vis[0]; })[0];
+    var lk = worst.vis.map(function (v, k) { return [v, k]; }).slice(1).sort(function (a, b) { return b[0] - a[0]; })[0];
+    return { stages: S2, worst: worst, best: best, leaderK: lk && lk[0] > worst.vis[0] ? lk[1] : null };
+  }
+  function funnelHtml(st) {
+    var F = funnelInfo(st); if (!F) return '';
+    var B = st.result.brands;
+    var rows = B.map(function (b, k) { return k; }).sort(function (a, b) { return (b === 0) - (a === 0) || B[b].visibility - B[a].visibility; });
+    var t = '<div class="hmwrap"><table class="hm fn"><thead><tr><th></th>' + F.stages.map(function (x) { return '<th><span class="fs">' + stgName(x.stage) + '</span><span class="fq">' + stgQ(x.stage) + '</span></th>'; }).join('') + '</tr></thead><tbody>' +
+      rows.map(function (k) { return '<tr' + (k === 0 ? ' class="me"' : '') + '><th class="p" scope="row"><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:' + col(k) + ';margin-right:6px"></span>' + esc(B[k].name) + '</th>' + F.stages.map(function (x) { var v = x.vis[k]; return v == null ? '<td class="na">—</td>' : '<td style="background:' + seq(v) + ';color:' + inkOn(v) + '" data-tip="' + esc(B[k].name) + ' · ' + stgName(x.stage) + ' · ' + pct(v) + '">' + pct(v) + '</td>'; }).join('') + '</tr>'; }).join('') + '</tbody></table></div>';
+    var me = B[0], w = F.worst, d = w.vis[0] < F.best.vis[0]
+      ? tr('Te pierdes en la fase de <b>' + stgName(w.stage).toLowerCase() + '</b>: apareces en el ' + pct(w.vis[0]) + ' de las respuestas, frente al ' + pct(F.best.vis[0]) + ' en ' + stgName(F.best.stage).toLowerCase() + '.' + (F.leaderK != null ? ' Ahí la IA recomienda antes a <b>' + esc(B[F.leaderK].name) + '</b> (' + pct(w.vis[F.leaderK]) + ').' : ''), 'You drop out at the <b>' + stgName(w.stage).toLowerCase() + '</b> stage: you appear in ' + pct(w.vis[0]) + ' of answers, vs ' + pct(F.best.vis[0]) + ' in ' + stgName(F.best.stage).toLowerCase() + '.' + (F.leaderK != null ? ' There AI recommends <b>' + esc(B[F.leaderK].name) + '</b> first (' + pct(w.vis[F.leaderK]) + ').' : ''))
+      : tr('Tu presencia es pareja en todas las fases del recorrido del comprador.', 'Your presence is even across every stage of the buyer journey.');
+    return '<section class="panel sec"><h3>' + tr('Recorrido del comprador', 'Buyer journey') + '</h3><p class="sub">' + tr('En qué momento de la compra te recomienda la IA: % de respuestas de cada fase que mencionan a cada marca', 'At which moment of the purchase AI recommends you: % of answers in each stage that mention each brand') + '</p>' + t + '<p class="qmsg">' + d + '</p></section>';
+  }
+  function repHtml(st) {
+    var R = st.result; if (!R.risk && !(R.cons || []).length && !(R.pros || []).length) return '';
+    var rt = R.risk ? R.risk.tone : null, cls = rt == null ? '' : rt > .2 ? 'good' : rt < -.2 ? 'bad' : 'mid';
+    var li = function (a, ic) { return (a || []).length ? '<ul class="rl">' + a.map(function (x) { return '<li><span>' + ic + '</span>' + esc(x) + '</li>'; }).join('') + '</ul>' : '<p class="small">' + tr('La IA no destaca nada concreto.', 'AI doesn’t point out anything specific.') + '</p>'; };
+    var qs = R.risk ? R.risk.prompts.map(function (p) { var i = -1; st.answers.forEach(function (a, k) { if (i < 0 && a.prompt === p) i = k; }); return i < 0 ? '' : '<button type="button" class="rq" data-goto="' + i + '">«' + esc(p) + '» →</button>'; }).join('') : '';
+    return '<section class="panel sec rep"><div class="qhead"><div><h3>' + tr('Reputación: lo que la IA dice cuando preguntan por tus puntos débiles', 'Reputation: what AI says when asked about your weak spots') + '</h3><p class="sub">' + tr('Preguntamos a la IA por problemas, quejas y motivos para no elegirte. Es lo que leerá un comprador que duda.', 'We asked AI about problems, complaints and reasons not to choose you. It’s what a hesitant buyer will read.') + '</p></div>' +
+      (R.risk ? '<div class="qbadge ' + cls + '"><span>' + tr('Tono en esas respuestas', 'Tone in those answers') + '</span><b>' + toneWord(rt) + '</b></div>' : '') + '</div>' +
+      '<div class="g2" style="margin-top:6px"><div><h4>' + tr('Críticas y riesgos que repite', 'Criticisms and risks it repeats') + '</h4>' + li(R.cons, '⚠️') + '</div><div><h4>' + tr('Puntos fuertes que destaca', 'Strengths it highlights') + '</h4>' + li(R.pros, '✓') + '</div></div>' +
+      (qs ? '<div class="rqs">' + qs + '</div>' : '') + '</section>';
+  }
+  function ceoRisks(st) {
+    var R = st.result, B = R.brands, me = B[0], out = [], F = funnelInfo(st);
+    var leader = B.slice(1).sort(function (x, y) { return y.visibility - x.visibility; })[0];
+    if (leader && leader.visibility > me.visibility) out.push(tr(esc(leader.name) + ' aparece en el ' + pct(leader.visibility) + ' de las respuestas; nosotros, en el ' + pct(me.visibility) + '.', esc(leader.name) + ' appears in ' + pct(leader.visibility) + ' of answers; we do in ' + pct(me.visibility) + '.'));
+    if (F && F.worst.vis[0] < F.best.vis[0]) out.push(tr('Desaparecemos en la fase de ' + stgName(F.worst.stage).toLowerCase() + ' (' + pct(F.worst.vis[0]) + ' de presencia).', 'We disappear at the ' + stgName(F.worst.stage).toLowerCase() + ' stage (' + pct(F.worst.vis[0]) + ' presence).'));
+    (R.cons || []).slice(0, 2).forEach(function (c) { out.push(tr('La IA repite: «' + esc(c) + '».', 'AI repeats: “' + esc(c) + '”.')); });
+    if (R.ownCited < .3) out.push(tr('Nuestra web casi no se usa como fuente (' + pct(R.ownCited) + ').', 'Our website is barely used as a source (' + pct(R.ownCited) + ').'));
+    if (me.visibility === 0) out.unshift(tr('No aparecemos en ninguna respuesta de nuestra categoría.', 'We don’t appear in any answer for our category.'));
+    return out.slice(0, 3);
+  }
+  function ceoHtml(st) {
+    var R = st.result, B = R.brands, me = B[0], s = st.setup, P = plan(st), qi = hasTone(st) ? quadInfo(st) : null;
+    var acts = P[0].slice(0, 2).concat(P[1].slice(0, 1)).map(function (it) { return '<li><b>' + it.t + '</b><span>' + it.why + '</span></li>'; }).join('');
+    var d = new Date(st.created_at).toLocaleDateString(L() === 'es' ? 'es-ES' : 'en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+    return '<div class="ceo-card" role="dialog" aria-modal="true" aria-label="' + tr('Resumen para tu CEO', 'Summary for your CEO') + '"><div class="ceo-bar"><span class="eyebrow">' + tr('Resumen ejecutivo', 'Executive summary') + '</span><div class="ceo-act"><button class="btn ghost" type="button" id="ceoPrint">' + tr('Imprimir o guardar PDF', 'Print or save PDF') + '</button>' + (st.id && !st.demo && S.cfg && S.cfg.user ? '<button class="btn ghost" type="button" id="ceoShare">' + tr('Compartir enlace', 'Share link') + '</button>' : '') + '<button class="btn ghost" type="button" id="ceoClose" aria-label="' + tr('Cerrar', 'Close') + '">✕</button></div></div>' +
+      '<div class="ceo-body"><div class="ceo-top"><div><div class="small">' + tr('Visibilidad de marca en asistentes de IA', 'Brand visibility in AI assistants') + ' · ' + d + '</div><h2>' + esc(me.name) + '</h2><div class="small">' + esc(s.category) + (s.country ? ' · ' + esc(s.country) : '') + ' · ' + tr('frente a ', 'vs ') + (B.length - 1) + tr(' competidores', ' competitors') + '</div></div>' +
+      '<div class="ceo-k"><div><b>' + R.score + '</b><span>AI Visibility Score</span></div><div><b>' + R.rank + '/' + B.length + '</b><span>' + tr('Puesto', 'Rank') + '</span></div><div><b>' + pct(me.visibility) + '</b><span>' + tr('Visibilidad', 'Visibility') + '</span></div><div><b>' + (qi ? quadName(qi.q) : toneWord(R.sentiment)) + '</b><span>' + (qi ? tr('Cuadrante', 'Quadrant') : tr('Tono', 'Tone')) + '</span></div></div></div>' +
+      (qi ? '<div class="ceo-map">' + quadSvg(st, true) + '</div>' : '') +
+      '<div class="ceo-cols"><div><h4>' + tr('3 riesgos', '3 risks') + '</h4><ol>' + ceoRisks(st).map(function (x) { return '<li>' + x + '</li>'; }).join('') + '</ol></div><div><h4>' + tr('3 acciones', '3 actions') + '</h4><ol class="acts">' + acts + '</ol></div></div>' +
+      '<div class="ceo-foot">' + tr('Fuente: respuestas reales de ' + [...new Set(st.answers.map(function (a) { return ENG_NAME[a.engine]; }))].join(', ') + ' a ' + s.prompts.length + ' preguntas de compradores. Resultados orientativos.', 'Source: real answers from ' + [...new Set(st.answers.map(function (a) { return ENG_NAME[a.engine]; }))].join(', ') + ' to ' + s.prompts.length + ' buyer questions. Indicative results.') + ' · plaiground AI Brand Barometer · plaigroundmarketing.com/ai-barometer</div></div></div>';
+  }
+  function openCeo(st) {
+    var o = $('ceo'); if (!o) { o = document.createElement('div'); o.id = 'ceo'; o.className = 'ceo'; document.body.appendChild(o); }
+    o.innerHTML = ceoHtml(st); document.body.classList.add('ceo-open'); tips(o);
+    var close = function () { document.body.classList.remove('ceo-open'); o.remove(); document.removeEventListener('keydown', esc1); }, esc1 = function (e) { if (e.key === 'Escape') close(); };
+    $('ceoClose').onclick = close; o.onclick = function (e) { if (e.target === o) close(); }; document.addEventListener('keydown', esc1);
+    $('ceoPrint').onclick = function () { window.print(); };
+    var sh = $('ceoShare'); if (sh) sh.onclick = function () { close(); openShare(st); };
+    $('ceoClose').focus();
+  }
+  // Ir a una respuesta concreta en "Lee las respuestas"
+  function gotoAnswer(i) {
+    if (i < 0 || !S.study || !S.study.answers[i]) return;
+    S.exSel = i; document.querySelectorAll('#exl button').forEach(function (x) { x.setAttribute('aria-pressed', +x.dataset.x === i); }); showAnswer(i);
+    var b = document.querySelector('#exl button[data-x="' + i + '"]'); if (b) b.scrollIntoView({ block: 'nearest' });
+    var a = $('ans'); if (a) a.closest('section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  function bindPhase1(st) {
+    document.querySelectorAll('#results .qb').forEach(function (g) {
+      var go = function () { var k = +g.dataset.k, nm = st.result.brands[k]; var i = -1; st.result.rows.forEach(function (r, j) { if (i < 0 && r.pos[k] != null) i = st.answers.findIndex(function (a) { return a.prompt === r.prompt && a.engine === r.engine; }); }); if (i >= 0) gotoAnswer(i); };
+      g.onclick = go; g.onkeydown = function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } };
+    });
+    document.querySelectorAll('#results [data-goto]').forEach(function (b) { b.onclick = function () { gotoAnswer(+b.dataset.goto); }; });
+    document.querySelectorAll('#results .hm:not(.fn) tr[data-q]').forEach(function (tr0) { tr0.onclick = function () { gotoAnswer(st.answers.findIndex(function (a) { return a.prompt === tr0.dataset.q; })); }; });
+    var cb = $('ceoBtn'); if (cb) cb.onclick = function () { openCeo(st); };
   }
 
   /* ---------- ¿Y ahora qué? Plan de acción a partir de los resultados ---------- */
@@ -393,6 +528,11 @@
     short.push({ hi: false, t: tr('Reclama tus fichas oficiales', 'Claim your official profiles'), why: tr('Son fuentes que los asistentes usan para describir marcas.', 'They’re sources assistants use to describe brands.'),
       s: [tr('Verifica tu ficha de empresa en ChatGPT (beta de OpenAI), Google Business Profile y Bing Places.', 'Verify your company profile in ChatGPT (OpenAI beta), Google Business Profile and Bing Places.'), tr('Usa el mismo nombre, descripción y categoría en todas.', 'Use the same name, description and category everywhere.')] });
     if (neg) short.push({ hi: true, t: tr('Corrige lo que la IA dice mal de ti', 'Fix what AI gets wrong about you'), why: tr('El tono hacia tu marca sale negativo.', 'The tone towards your brand comes out negative.'), s: [tr('Lee las respuestas de arriba y apunta cada dato erróneo o queja repetida.', 'Read the answers above and note every wrong fact or repeated complaint.'), tr('Publica en tu web la respuesta o la mejora, con fecha, para que pueda citarse.', 'Publish the answer or improvement on your site, dated, so it can be cited.')] });
+    var FI = funnelInfo(st);
+    if ((R.cons || []).length) short.push({ hi: R.risk && R.risk.tone != null && R.risk.tone < 0, t: tr('Responde a las críticas que repite la IA', 'Address the criticisms AI repeats'), why: tr('Cuando preguntan por tus puntos débiles, la IA dice: «' + esc(R.cons[0]) + '».', 'When asked about your weak spots, AI says: “' + esc(R.cons[0]) + '”.'),
+      s: [tr('Publica una respuesta clara y honesta a esa crítica (FAQ, página de soporte o garantías).', 'Publish a clear, honest answer to that criticism (FAQ, support or guarantees page).'), tr('Si es un problema real, arréglalo y cuéntalo: la IA recoge las noticias y reseñas recientes.', 'If it’s a real problem, fix it and say so: AI picks up recent news and reviews.')] });
+    if (FI && FI.worst.vis[0] < FI.best.vis[0]) mid.push({ hi: true, t: tr('Gana la fase de ' + stgName(FI.worst.stage).toLowerCase(), 'Win the ' + stgName(FI.worst.stage).toLowerCase() + ' stage'), why: tr('Es donde más te pierde la IA: ' + pct(FI.worst.vis[0]) + ' de presencia.', 'It’s where AI loses you most: ' + pct(FI.worst.vis[0]) + ' presence.'),
+      s: [FI.worst.stage === 'precio' ? tr('Publica precios o rangos claros y comparables; la IA no recomienda lo que no puede explicar.', 'Publish clear, comparable prices or ranges; AI won’t recommend what it can’t explain.') : FI.worst.stage === 'comparacion' ? tr('Crea comparativas honestas frente a tus competidores y tablas de diferencias.', 'Create honest comparisons against competitors and difference tables.') : FI.worst.stage === 'confianza' ? tr('Consigue reseñas recientes y casos de clientes en webs de terceros.', 'Get recent reviews and customer cases on third-party sites.') : tr('Aparece en listados de «mejores opciones» de medios y comparadores de tu sector.', 'Get into “best options” lists in your industry’s media and comparison sites.')] });
     mid.push({ hi: ext.length > 0, t: tr('Entra en las fuentes que cita la IA', 'Get into the sources AI cites'), why: ext.length ? tr('Las más citadas en tu categoría: ' + ext.join(', ') + '.', 'Most cited in your category: ' + ext.join(', ') + '.') : tr('Las respuestas citaron pocas fuentes.', 'The answers cited few sources.'),
       s: [tr('Crea o completa tu perfil en esas webs (reseñas, comparadores, directorios).', 'Create or complete your profile on those sites (reviews, comparison sites, directories).'), tr('Pide a tus clientes reseñas allí: cantidad y actualidad cuentan.', 'Ask your customers for reviews there: volume and recency matter.'), tr('Contacta con los autores de listas tipo «mejores…» para que te incluyan.', 'Reach out to authors of “best…” lists to be included.')] });
     if (behind) mid.push({ hi: true, t: tr('Compite de frente con ' + esc(leader.name), 'Go head to head with ' + esc(leader.name)), why: tr(esc(leader.name) + ' aparece en el ' + pct(leader.visibility) + ' de las respuestas; tú en el ' + pct(me.visibility) + '.', esc(leader.name) + ' appears in ' + pct(leader.visibility) + ' of answers; you in ' + pct(me.visibility) + '.'),

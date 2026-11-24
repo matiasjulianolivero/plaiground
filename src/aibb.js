@@ -10,7 +10,7 @@
 
 const DAILY_CALLS_DEFAULT = 300;   // tope global de llamadas a LLM al día (la capa gratuita de Flash-Lite ronda las 500)
 const STUDIES_PER_USER_DAY = 3;    // estudios reales por usuario y día
-const MAX_PROMPTS = 8, MAX_COMPETITORS = 7; // más de 7 competidores: informe Premium
+const MAX_PROMPTS = 10, MAX_COMPETITORS = 7; // más de 7 competidores: informe Premium
 const TEASER_PROMPTS = 3, TEASER_ASKS_PER_IP_DAY = 64; // sin registro: vista previa de 3 preguntas + preparación del resto en segundo plano (2 estudios al día por IP)
 
 const ENGINES = [
@@ -162,24 +162,29 @@ export function createAibb(h) {
     const es = lang !== 'en';
     const cat = es ? 'software de gestión para empresas' : 'business management software';
     const comps = ['Alfaplus', 'Betaware', 'Gammix', 'Deltio']; // competidores ficticios del modo demo
-    return { domain, brand, category: cat, country: es ? 'España' : 'United States', language: es ? 'es' : 'en', competitors: comps, prompts: templatePrompts(brand, cat, es ? 'España' : 'the US', comps[0], es) };
+    return { domain, brand, category: cat, country: es ? 'España' : 'United States', language: es ? 'es' : 'en', competitors: comps, prompts: templatePrompts(brand, cat, es ? 'España' : 'the US', comps[0], es), stages: TEMPLATE_STAGES.slice() };
   }
   function manualSetup(domain, site, lang) {
     const es = lang !== 'en', brand = site.siteName || titleCase(rootOf(domain));
     const cat = clip((site.description || site.title || '').split(/[.|·\-–—:]/)[0].trim(), 70);
     return { domain, brand, category: cat, country: '', language: es ? 'es' : 'en', competitors: [],
-      prompts: es ? [`¿Qué opinan los clientes de ${brand}?`, `¿Cuáles son las mejores alternativas a ${brand}?`, `¿Es ${brand} una buena opción? ¿Qué pros y contras tiene?`, `¿Qué empresas hacen lo mismo que ${brand} y cuál recomiendas?`, `¿Cuánto cuesta trabajar con ${brand} o con empresas similares?`, `¿Qué empresa recomiendas en el sector de ${brand} para una pyme?`]
-        : [`What do customers think of ${brand}?`, `What are the best alternatives to ${brand}?`, `Is ${brand} a good choice? What are the pros and cons?`, `Which companies do the same as ${brand} and which do you recommend?`, `How much does it cost to work with ${brand} or similar companies?`, `Which company in ${brand}’s industry do you recommend for a small business?`] };
+      prompts: es ? [`¿Qué opinan los clientes de ${brand}?`, `¿Cuáles son las mejores alternativas a ${brand}?`, `¿Es ${brand} una buena opción? ¿Qué pros y contras tiene?`, `¿Qué empresas hacen lo mismo que ${brand} y cuál recomiendas?`, `¿Cuánto cuesta trabajar con ${brand} o con empresas similares?`, `¿Qué empresa recomiendas en el sector de ${brand} para una pyme?`, `¿Qué problemas o quejas tiene ${brand}?`, `¿Por qué no elegiría ${brand}? ¿Qué desventajas tiene?`]
+        : [`What do customers think of ${brand}?`, `What are the best alternatives to ${brand}?`, `Is ${brand} a good choice? What are the pros and cons?`, `Which companies do the same as ${brand} and which do you recommend?`, `How much does it cost to work with ${brand} or similar companies?`, `Which company in ${brand}’s industry do you recommend for a small business?`, `What problems or complaints does ${brand} have?`, `Why wouldn't I choose ${brand}? What are its downsides?`] };
   }
   function templatePrompts(brand, cat, country, comp, es) {
     return es ? [
-      `¿Cuáles son las mejores opciones de ${cat} en ${country}?`, `Recomiéndame un proveedor de ${cat} para una pyme`, `${brand} o ${comp}: ¿cuál me conviene más?`,
-      `¿Qué opinan los clientes de ${brand}?`, `¿Qué alternativas hay a ${comp}?`, `¿Cuánto cuesta ${cat} y qué opciones hay?`,
-      `Top 5 de ${cat} más recomendadas este año`, `¿Qué ${cat} tiene mejor relación calidad-precio?`]
-      : [`What are the best ${cat} options in ${country}?`, `Recommend a ${cat} provider for a small business`, `${brand} or ${comp}: which one should I choose?`,
-        `What do customers think of ${brand}?`, `What are the alternatives to ${comp}?`, `How much does ${cat} cost and what are the options?`,
-        `Top 5 most recommended ${cat} this year`, `Which ${cat} offers the best value for money?`];
+      `¿Cuáles son las mejores opciones de ${cat} en ${country}?`, `Recomiéndame un proveedor de ${cat} para una pyme`, `Top 5 de ${cat} más recomendadas este año`,
+      `${brand} o ${comp}: ¿cuál me conviene más?`, `¿Qué alternativas hay a ${comp}?`,
+      `¿Cuánto cuesta ${cat} y qué opciones hay?`, `¿Qué ${cat} tiene mejor relación calidad-precio?`,
+      `¿Qué opinan los clientes de ${brand}?`,
+      `¿Qué problemas o quejas tiene ${brand}?`, `¿Por qué no elegiría ${brand}? ¿Qué desventajas tiene?`]
+      : [`What are the best ${cat} options in ${country}?`, `Recommend a ${cat} provider for a small business`, `Top 5 most recommended ${cat} this year`,
+        `${brand} or ${comp}: which one should I choose?`, `What are the alternatives to ${comp}?`,
+        `How much does ${cat} cost and what are the options?`, `Which ${cat} offers the best value for money?`,
+        `What do customers think of ${brand}?`,
+        `What problems or complaints does ${brand} have?`, `Why wouldn't I choose ${brand}? What are its downsides?`];
   }
+  const TEMPLATE_STAGES = ['descubrimiento', 'descubrimiento', 'descubrimiento', 'comparacion', 'comparacion', 'precio', 'precio', 'confianza', 'riesgo', 'riesgo'];
   async function liveSetup(env, user, domain, site, lang) {
     const es = lang !== 'en';
     const prompt = `Analiza esta web y devuelve SOLO un JSON.
@@ -190,17 +195,23 @@ Nombre del sitio: ${site.siteName}
 H1: ${site.h1}
 Idioma de la web: ${site.lang || 'desconocido'}
 
-Devuelve: {"brand": nombre comercial de la marca, "category": categoría de producto/servicio en 2-5 palabras (en ${es ? 'español' : 'inglés'}), "country": país principal de mercado, "competitors": [entre 3 y 7 competidores directos reales en ese mercado, solo nombres de marca: incluye todos los que de verdad compiten con ella por los mismos clientes (si hay 6 o 7 relevantes, pon 6 o 7; si solo hay 3 claros, pon 3), sin rellenar con marcas poco relevantes], "prompts": [${MAX_PROMPTS} preguntas que haría un comprador a un asistente de IA en ${es ? 'español' : 'inglés'}, variadas: mejores opciones de la categoría, recomendación para su caso, comparativa con un competidor, opiniones de la marca, alternativas a un competidor, precio, top 5, mejor relación calidad-precio. No menciones la marca en más de 3 de ellas]}`;
+Devuelve: {"brand": nombre comercial de la marca, "category": categoría de producto/servicio en 2-5 palabras (en ${es ? 'español' : 'inglés'}), "country": país principal de mercado, "competitors": [entre 3 y 7 competidores directos reales en ese mercado, solo nombres de marca: incluye todos los que de verdad compiten con ella por los mismos clientes (si hay 6 o 7 relevantes, pon 6 o 7; si solo hay 3 claros, pon 3), sin rellenar con marcas poco relevantes], "prompts": [${MAX_PROMPTS} objetos {"q": pregunta, "stage": fase} que haría un comprador a un asistente de IA, en ${es ? 'español' : 'inglés'}, naturales y concretas para este mercado, EN ESTE ORDEN: 3 de "descubrimiento" (mejores opciones de la categoría, recomendación para un caso concreto de cliente, top 5; sin nombrar la marca), 2 de "comparacion" (la marca frente a su competidor principal; alternativas a un competidor), 2 de "precio" (cuánto cuesta y qué opciones hay; mejor relación calidad-precio), 1 de "confianza" (qué opinan los clientes de la marca), 2 de "riesgo" (problemas o quejas habituales de la marca; por qué no elegir la marca o qué desventajas tiene)]}`;;
     const r = await callEngine(env, 'gemini', prompt, { json: true, temperature: 0.4 });
     await logUse(env, user, 'gemini', 'setup', !r.error);
     if (r.error) return { error: r.error };
     const j = parseJson(r.text) || {};
     const base = demoSetup(domain, site, lang);
     const comps = (Array.isArray(j.competitors) ? j.competitors : []).map(c => clip(String(c).trim(), 60)).filter(Boolean).slice(0, MAX_COMPETITORS);
-    const prompts = (Array.isArray(j.prompts) ? j.prompts : []).map(p => clip(String(p).trim(), 240)).filter(Boolean).slice(0, MAX_PROMPTS);
+    const items = (Array.isArray(j.prompts) ? j.prompts : []).map(p => typeof p === 'string' ? { q: p } : (p || {})).map(p => ({ q: clip(String(p.q || p.question || '').trim(), 240), stage: STAGES.includes(p.stage) ? p.stage : null })).filter(p => p.q).slice(0, MAX_PROMPTS);
+    const brandName = clip(j.brand || base.brand, 60);
+    const prompts = items.map(p => p.q), stages = items.map(p => p.stage || stageOf(p.q, brandName));
+    // Siempre al menos una pregunta de riesgo (negativa) sobre la marca
+    if (prompts.length >= 4 && !stages.includes('riesgo') && prompts.length < MAX_PROMPTS) { prompts.push(es ? `¿Qué problemas o quejas tiene ${brandName}?` : `What problems or complaints does ${brandName} have?`); stages.push('riesgo'); }
+    const tpl = prompts.length < 4;
     return {
       domain, brand: clip(j.brand || base.brand, 60), category: clip(j.category || base.category, 80), country: clip(j.country || base.country, 60), language: es ? 'es' : 'en',
-      competitors: comps.length ? comps : [], prompts: prompts.length >= 4 ? prompts : templatePrompts(clip(j.brand || base.brand, 60), clip(j.category || base.category, 80), clip(j.country || base.country, 60), comps[0] || (es ? 'la competencia' : 'the competition'), es)
+      competitors: comps.length ? comps : [], prompts: !tpl ? prompts : templatePrompts(brandName, clip(j.category || base.category, 80), clip(j.country || base.country, 60), comps[0] || (es ? 'la competencia' : 'the competition'), es),
+      stages: !tpl ? stages : TEMPLATE_STAGES.slice()
     };
   }
   function cleanSetup(s) {
@@ -209,7 +220,8 @@ Devuelve: {"brand": nombre comercial de la marca, "category": categoría de prod
     return {
       domain, brand: clip(String(s.brand || '').trim(), 60) || titleCase(rootOf(domain || 'marca')), category: clip(s.category, 80), country: clip(s.country, 60), language: s.language === 'en' ? 'en' : 'es',
       competitors: (Array.isArray(s.competitors) ? s.competitors : []).map(c => clip(String(c).trim(), 60)).filter(Boolean).slice(0, MAX_COMPETITORS),
-      prompts: (Array.isArray(s.prompts) ? s.prompts : []).map(p => clip(String(p).trim(), 240)).filter(Boolean).slice(0, MAX_PROMPTS)
+      prompts: (Array.isArray(s.prompts) ? s.prompts : []).map(p => clip(String(p).trim(), 240)).filter(Boolean).slice(0, MAX_PROMPTS),
+      stages: (Array.isArray(s.stages) ? s.stages : []).slice(0, MAX_PROMPTS).map(x => STAGES.includes(x) ? x : null)
     };
   }
   const askSystem = lang => lang === 'en'
@@ -251,33 +263,57 @@ Devuelve: {"brand": nombre comercial de la marca, "category": categoría de prod
     let s = 0; POS.forEach(p => { if (w.includes(p)) s++; }); NEG.forEach(n => { if (w.includes(n)) s--; });
     return Math.max(-1, Math.min(1, s / 3));
   }
+  // Fases del recorrido del comprador. 'riesgo' son preguntas negativas sobre la marca (no cuentan para la visibilidad)
+  const STAGES = ['descubrimiento', 'comparacion', 'precio', 'confianza', 'riesgo'];
+  function stageOf(q, brand) {
+    const t = norm(q), b = norm(brand || '');
+    if (/(problema|queja|desventaja|contras\b|por que no|riesgo|fiable|estafa|peor|malas? (opinion|experiencia)|complain|problem|drawback|downside|why not|scam|reliable|issues?)/.test(t) && (!b || t.includes(b))) return 'riesgo';
+    if (/(precio|cuesta|cuanto|tarifa|barat|calidad-precio|relacion calidad|price|cost|cheap|value for money|pricing)/.test(t)) return 'precio';
+    if (/(opinion|opinan|resena|valoracion|experiencia|review|think of|reputation|reputacion)/.test(t)) return 'confianza';
+    if (/(\bvs\b|\bo\b.*\?|compar|alternativ|diferencia|mejor que|or\b.*\?|versus|alternative|better than)/.test(t)) return 'comparacion';
+    return 'descubrimiento';
+  }
+  function stagesFor(s) {
+    return s.prompts.map((p, i) => (Array.isArray(s.stages) && STAGES.includes(s.stages[i])) ? s.stages[i] : stageOf(p, s.brand));
+  }
   function analyze(setup, answers, judge) {
     const brands = [{ name: setup.brand, aliases: brandAliases(setup.brand, setup.domain), target: true }].concat(setup.competitors.map(c => ({ name: c, aliases: brandAliases(c, '') })));
-    const rows = answers.map((a, i) => {
+    const J = judge && !Array.isArray(judge) ? judge : null, legacy = Array.isArray(judge) ? judge : null;
+    const stageMap = {}; stagesFor(setup).forEach((st, k) => { stageMap[setup.prompts[k]] = st; });
+    const stg = answers.map(a => stageMap[a.prompt]);
+    const tone = (i, k, t, idx) => { if (idx < 0) return null; const v = J ? J.tone[i][k] : (k === 0 && legacy ? legacy[i] : undefined); return v !== undefined && v !== null ? v : heuristicSentiment(t, idx); };
+    const all = answers.map((a, i) => {
       const t = norm(a.text);
       const hits = brands.map(b => ({ i: findFirst(t, b.aliases), n: countAll(t, b.aliases) }));
       const order = hits.map((x, k) => [x.i, k]).filter(x => x[0] >= 0).sort((x, y) => x[0] - y[0]).map(x => x[1]);
       const pos = brands.map((b, k) => { const p = order.indexOf(k); return p < 0 ? null : p + 1; });
       const src = sourcesOf(a.text);
-      return { prompt: a.prompt, engine: a.engine, pos, count: hits.map(x => x.n), sources: src, own: src.some(d => setup.domain && (d === setup.domain || d.endsWith('.' + setup.domain))), sentiment: judge && judge[i] != null ? judge[i] : heuristicSentiment(t, hits[0].i) };
+      return { prompt: a.prompt, engine: a.engine, pos, count: hits.map(x => x.n), sources: src, own: src.some(d => setup.domain && (d === setup.domain || d.endsWith('.' + setup.domain))), sentiment: tone(i, 0, t, hits[0].i), tones: brands.map((b, k) => tone(i, k, t, hits[k].i)), stage: stg[i] || stageOf(a.prompt, setup.brand) };
     });
+    // Las preguntas de riesgo nombran a la marca: se analizan aparte y no inflan la visibilidad
+    const rows = all.filter(r => r.stage !== 'riesgo'), riskRows = all.filter(r => r.stage === 'riesgo');
     const N = rows.length || 1, totalMentions = rows.reduce((s, r) => s + r.count.reduce((x, y) => x + y, 0), 0) || 1;
     const brandStats = brands.map((b, k) => {
       const m = rows.filter(r => r.pos[k] != null);
       const avgPos = m.length ? m.reduce((s, r) => s + r.pos[k], 0) / m.length : null;
-      return { name: b.name, target: !!b.target, visibility: m.length / N, avgPos, top1: rows.filter(r => r.pos[k] === 1).length / N, sov: rows.reduce((s, r) => s + r.count[k], 0) / totalMentions };
+      const tv = all.map(r => r.tones[k]).filter(x => x != null);
+      return { name: b.name, target: !!b.target, visibility: m.length / N, avgPos, top1: rows.filter(r => r.pos[k] === 1).length / N, sov: rows.reduce((s, r) => s + r.count[k], 0) / totalMentions, tone: tv.length ? tv.reduce((x, y) => x + y, 0) / tv.length : null };
     });
     const engines = [...new Set(rows.map(r => r.engine))];
     const byEngine = engines.map(e => ({ engine: e, vis: brands.map((b, k) => { const rr = rows.filter(r => r.engine === e); return rr.length ? rr.filter(r => r.pos[k] != null).length / rr.length : 0; }) }));
-    const srcCount = {}; rows.forEach(r => r.sources.forEach(d => { srcCount[d] = (srcCount[d] || 0) + 1; }));
+    const srcCount = {}; all.forEach(r => r.sources.forEach(d => { srcCount[d] = (srcCount[d] || 0) + 1; }));
     const sources = Object.entries(srcCount).sort((a, b) => b[1] - a[1]).slice(0, 12).map(([d, n]) => ({ domain: d, n, own: !!setup.domain && (d === setup.domain || d.endsWith('.' + setup.domain)) }));
     const tgt = brandStats[0], nB = brands.length;
-    const sents = rows.map(r => r.sentiment).filter(x => x != null);
+    const sents = all.map(r => r.sentiment).filter(x => x != null);
     const sentiment = sents.length ? sents.reduce((a, b) => a + b, 0) / sents.length : null;
     const posScore = tgt.avgPos ? Math.max(0, 1 - (tgt.avgPos - 1) / Math.max(1, nB)) : 0;
     const score = Math.round(100 * (0.5 * tgt.visibility + 0.3 * posScore * (tgt.visibility > 0 ? 1 : 0) + 0.2 * Math.min(1, tgt.sov * nB / 1.5)));
     const ownCited = rows.filter(r => r.own).length / N;
-    return { brands: brandStats, rows, byEngine, sources, score, sentiment, ownCited, rank: [...brandStats].sort((a, b) => b.visibility - a.visibility || (a.avgPos || 99) - (b.avgPos || 99)).findIndex(b => b.target) + 1 };
+    // Visibilidad de cada marca en cada fase del recorrido del comprador
+    const byStage = STAGES.filter(x => x !== 'riesgo').map(st => { const rr = rows.filter(r => r.stage === st); return { stage: st, n: rr.length, vis: brands.map((b, k) => rr.length ? rr.filter(r => r.pos[k] != null).length / rr.length : null) }; }).filter(x => x.n);
+    const rt = riskRows.map(r => r.tones[0]).filter(x => x != null);
+    const risk = riskRows.length ? { n: riskRows.length, tone: rt.length ? rt.reduce((a, b) => a + b, 0) / rt.length : null, prompts: riskRows.map(r => r.prompt) } : null;
+    return { v: 2, brands: brandStats, rows: all, byEngine, byStage, risk, pros: J ? J.pros : [], cons: J ? J.cons : [], sources, score, sentiment, ownCited, rank: [...brandStats].sort((a, b) => b.visibility - a.visibility || (a.avgPos || 99) - (b.avgPos || 99)).findIndex(b => b.target) + 1 };
   }
 
   /* ---------- modo demo: respuestas de ejemplo deterministas ---------- */
@@ -305,11 +341,20 @@ Devuelve: {"brand": nombre comercial de la marca, "category": categoría de prod
   // Valora el tono (juez Gemini), calcula el resultado y, si hay dueño, guarda el estudio y avisa al titular
   async function saveStudy(env, s, answers, demo, partial, owner, judge, unlockToken) {
     if (!demo && !partial && env.GEMINI_API_KEY && owner && !(await quota(env, owner, 'judge'))) {
-      const jp = `Marca: ${s.brand} (${s.domain}). Para cada respuesta numerada, valora el tono hacia la marca: 1 positivo, 0 neutro, -1 negativo, null si no se menciona. Devuelve SOLO un JSON {"scores":[...]} con ${answers.length} valores en orden.\n\n` + answers.map((a, i) => `#${i + 1}\n${clip(a.text, 1500)}`).join('\n\n');
+      // Un juez valora el tono de cada respuesta hacia cada marca y resume lo bueno y lo malo que la IA dice de la marca
+      const names = [s.brand].concat(s.competitors), es = s.language !== 'en';
+      const jp = `Marcas, en este orden: ${names.map((n, k) => `${k}=${n}`).join(', ')}. Marca analizada: ${s.brand} (${s.domain}).
+Para cada respuesta numerada, valora el tono hacia CADA marca: 1 positivo, 0 neutro, -1 negativo, null si no se menciona.
+Además, resume lo que las respuestas dicen de ${s.brand}: hasta 3 puntos fuertes y hasta 3 críticas o riesgos concretos (frases de 3 a 9 palabras, en ${es ? 'español' : 'inglés'}; lista vacía si no hay).
+Devuelve SOLO un JSON {"tone":[[...${names.length} valores...], ...una fila por respuesta...], "pros":[...], "cons":[...]} con ${answers.length} filas en orden.
+
+` + answers.map((a, i) => `#${i + 1}\n${clip(a.text, 1400)}`).join('\n\n');
       const r = await callEngine(env, 'gemini', jp, { json: true, temperature: 0 });
       await logUse(env, owner, 'gemini', 'judge', !r.error);
       const j = r.error ? null : parseJson(r.text);
-      if (j && Array.isArray(j.scores) && j.scores.length === answers.length) judge = j.scores.map(x => x == null ? null : Math.max(-1, Math.min(1, +x || 0)));
+      const cl = x => x == null || x === '' ? null : Math.max(-1, Math.min(1, +x || 0));
+      if (j && Array.isArray(j.tone) && j.tone.length === answers.length) judge = { tone: j.tone.map(row => names.map((_, k) => Array.isArray(row) ? cl(row[k]) : null)), pros: (j.pros || []).slice(0, 3).map(x => clip(String(x), 90)), cons: (j.cons || []).slice(0, 3).map(x => clip(String(x), 90)) };
+      else if (j && Array.isArray(j.scores) && j.scores.length === answers.length) judge = j.scores.map(cl);
     }
       const result = analyze(s, answers, judge);
     const study = { v: 1, demo, partial, created_at: Date.now(), setup: s, answers: answers.map(a => ({ prompt: a.prompt, engine: a.engine, text: clip(a.text, 4000) })), result, engines: engineList(env) };
