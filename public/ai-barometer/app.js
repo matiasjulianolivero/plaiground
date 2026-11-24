@@ -50,8 +50,8 @@
   /* ---------- paso 2: revisar y lanzar ---------- */
   function renderSetup() {
     var s = S.setup; if (!s) return;
-    var gate = S.mode === 'login', live = S.mode === 'live' || gate;
-    var why = gate ? tr('<b>Tu estudio está listo</b> con tus competidores y las preguntas de tu categoría. Para lanzarlo a la IA y guardar el resultado, entra con tu email (gratis, sin contraseña):', '<b>Your study is ready</b> with your competitors and your category’s questions. To run it on AI and save the result, sign in with your email (free, no password):')
+    var gate = S.mode === 'login', live = S.mode === 'live' || gate, T = (S.cfg && S.cfg.teaser) || 3;
+    var why = gate ? tr('<b>Tu estudio está listo</b> con tus competidores y las preguntas de tu categoría. Lánzalo y en unos segundos verás una <b>vista previa gratis</b> con las ' + T + ' primeras preguntas. El informe completo te lo desbloqueamos con tu email.', '<b>Your study is ready</b> with your competitors and your category’s questions. Run it and in a few seconds you’ll see a <b>free preview</b> with the first ' + T + ' questions. We unlock the full report with your email.')
       : S.reason === 'user_limit' ? tr('Has llegado al máximo de estudios preparados hoy, así que te mostramos un <b>ejemplo</b>. Vuelve mañana.', 'You’ve hit today’s limit of prepared studies, so here’s a <b>sample</b>. Come back tomorrow.')
       : S.reason === 'login' ? tr('Este es un <b>estudio de ejemplo</b> (respuestas simuladas) para que veas cómo funciona. Para preguntar de verdad a las IA y guardar tu histórico, entra con tu email:', 'This is a <b>sample study</b> (simulated answers) so you can see how it works. To actually ask the AIs and keep your history, sign in with your email:')
       : S.reason === 'nokey' ? tr('La conexión con las IA todavía no está activada en esta beta, así que verás un <b>estudio de ejemplo</b> con respuestas simuladas.', 'The connection to the AIs isn’t switched on yet in this beta, so you’ll see a <b>sample study</b> with simulated answers.')
@@ -63,14 +63,14 @@
     }).join('');
     $('setup').innerHTML = '<section class="card sec" id="setupCard">' +
       '<div class="banner ' + (live ? 'live' : '') + '"><span class="ic">' + (gate ? '🔑' : live ? '🛰️' : '🧪') + '</span><div>' + (gate ? why : live ? tr('<b>Estudio real.</b> Preguntaremos a las IA conectadas y guardaremos el resultado en tu histórico. Revisa los datos antes de lanzarlo.', '<b>Live study.</b> We’ll ask the connected AIs and save the result to your history. Check the details before running it.') : why) +
-      (gate || S.reason === 'login' ? '<form class="lform" id="lform"><input class="t" id="lem" type="email" autocomplete="email" placeholder="' + tr('tu@empresa.com', 'you@company.com') + '"><button class="btn" type="submit">' + tr('Recibir enlace de acceso', 'Get sign-in link') + '</button></form><label class="small" style="display:flex;gap:8px;margin-top:8px"><input type="checkbox" id="lacc"> <span>' + tr('Acepto los <a href="/legal/terminos/" target="_blank">términos</a> y la <a href="/legal/privacidad/" target="_blank">política de privacidad</a>.', 'I accept the <a href="/legal/terminos/" target="_blank">terms</a> and the <a href="/legal/privacidad/" target="_blank">privacy policy</a>.') + '</span></label><div class="err" id="lerr"></div>' : '') + '</div></div>' +
+      (!gate && S.reason === 'login' ? '<form class="lform" id="lform"><input class="t" id="lem" type="email" autocomplete="email" placeholder="' + tr('tu@empresa.com', 'you@company.com') + '"><button class="btn" type="submit">' + tr('Recibir enlace de acceso', 'Get sign-in link') + '</button></form><label class="small" style="display:flex;gap:8px;margin-top:8px"><input type="checkbox" id="lacc"> <span>' + tr('Acepto los <a href="/legal/terminos/" target="_blank">términos</a> y la <a href="/legal/privacidad/" target="_blank">política de privacidad</a>.', 'I accept the <a href="/legal/terminos/" target="_blank">terms</a> and the <a href="/legal/privacidad/" target="_blank">privacy policy</a>.') + '</span></label><div class="err" id="lerr"></div>' : '') + '</div></div>' +
       '<h2 style="font-size:30px;margin:24px 0 16px">' + tr('Revisa tu estudio', 'Review your study') + '</h2>' +
       '<div class="grid2"><div><label class="f" for="sb">' + tr('Marca', 'Brand') + '</label><input class="t" id="sb" maxlength="60" value="' + esc(s.brand) + '"></div><div><label class="f" for="sc">' + tr('Categoría', 'Category') + '</label><input class="t" id="sc" maxlength="80" value="' + esc(s.category) + '"></div></div>' +
       '<div class="sec"><label class="f">' + tr('Competidores', 'Competitors') + ' <span style="text-transform:none;letter-spacing:0;font-weight:500">(' + tr('máx. ', 'max ') + (S.cfg ? S.cfg.limits.competitors : 5) + ')</span></label><div class="chips" id="comps">' + s.competitors.map(function (c, i) { return '<span class="chip">' + esc(c) + '<button type="button" data-rc="' + i + '" aria-label="' + tr('Quitar', 'Remove') + ' ' + esc(c) + '">×</button></span>'; }).join('') + (s.competitors.length < 5 ? '<span class="chip add"><input id="addc" maxlength="60" placeholder="+ ' + tr('Añadir competidor', 'Add competitor') + '"></span>' : '') + '</div></div>' +
       '<div class="sec"><label class="f">' + tr('Preguntas que haría un comprador', 'Questions a buyer would ask') + '</label><div class="plist">' + s.prompts.map(function (p, i) { return '<div class="prow"><span class="n">' + (i + 1) + '</span><input class="t" data-p="' + i + '" maxlength="240" value="' + esc(p) + '"><button type="button" data-rp="' + i + '" aria-label="' + tr('Quitar pregunta', 'Remove question') + '">×</button></div>'; }).join('') + '</div>' + (s.prompts.length < 8 ? '<button type="button" class="btn ghost" id="addp" style="margin-top:10px;padding:10px 16px;font-size:14px">+ ' + tr('Añadir pregunta', 'Add question') + '</button>' : '') + '</div>' +
       '<div class="sec"><label class="f">' + tr('Asistentes de IA', 'AI assistants') + '</label><div class="eng">' + eng + '</div></div>' +
       (live && S.engines.some(function (x) { return !x.active; }) ? '<p class="small" style="margin-top:10px">' + tr('ChatGPT, Claude y Perplexity llegarán con el <b>informe Premium</b>. <a href="/#contacto">Quiero que me avisen</a>', 'ChatGPT, Claude and Perplexity will come with the <b>Premium report</b>. <a href="/#contacto">Let me know</a>') + '</p>' : '') +
-      '<div class="row"><span class="small">' + (gate ? tr('¿Solo quieres ver cómo es el informe? ', 'Just want to see what the report looks like? ') + '<a href="#" id="demoLink">' + tr('Ver un ejemplo con datos simulados', 'See a sample with simulated data') + '</a>' : live ? tr('Tarda 1–2 minutos. Las respuestas se guardan tal cual las dan los modelos.', 'Takes 1–2 minutes. Answers are stored exactly as the models give them.') : tr('Las respuestas del modo demo son inventadas y solo sirven para ver el informe.', 'Demo answers are made up and only show what the report looks like.')) + '</span><button class="btn" id="runBtn" type="button">' + (gate ? tr('Entrar y lanzar', 'Sign in and run') : live ? tr('Lanzar estudio', 'Run study') : tr('Ver estudio de ejemplo', 'See sample study')) + ' →</button></div></section>';
+      '<div class="row"><span class="small">' + (gate ? tr('¿Solo quieres ver cómo es el informe? ', 'Just want to see what the report looks like? ') + '<a href="#" id="demoLink">' + tr('Ver un ejemplo con datos simulados', 'See a sample with simulated data') + '</a>' : live ? tr('Tarda 1–2 minutos. Las respuestas se guardan tal cual las dan los modelos.', 'Takes 1–2 minutes. Answers are stored exactly as the models give them.') : tr('Las respuestas del modo demo son inventadas y solo sirven para ver el informe.', 'Demo answers are made up and only show what the report looks like.')) + '</span><button class="btn" id="runBtn" type="button">' + (gate ? tr('Ver mis resultados gratis', 'See my results free') : live ? tr('Lanzar estudio', 'Run study') : tr('Ver estudio de ejemplo', 'See sample study')) + ' →</button></div></section>';
     bindSetup();
   }
   function readSetup() {
@@ -84,17 +84,28 @@
     document.querySelectorAll('[data-rp]').forEach(function (b) { b.onclick = function () { readSetup(); S.setup.prompts.splice(+b.dataset.rp, 1); renderSetup(); }; });
     var ac = $('addc'); if (ac) ac.onkeydown = function (e) { if (e.key === 'Enter' && ac.value.trim()) { e.preventDefault(); readSetup(); S.setup.competitors.push(ac.value.trim()); renderSetup(); var n = $('addc'); if (n) n.focus(); } };
     var ap = $('addp'); if (ap) ap.onclick = function () { readSetup(); S.setup.prompts.push(''); renderSetup(); var all = document.querySelectorAll('[data-p]'); all[all.length - 1].focus(); };
-    var lf = $('lform'); if (lf) lf.onsubmit = function (e) {
+    bindLogin();
+    $('runBtn').onclick = function () { readSetup(); if (!S.setup.prompts.length) return; S.mode === 'login' ? runLive(true) : S.mode === 'live' ? runLive() : runDemo(); };
+    var dl = $('demoLink'); if (dl) dl.onclick = function (e) { e.preventDefault(); readSetup(); runDemo(); };
+  }
+
+  function loginFormHtml() {
+    return '<form class="lform" id="lform"><input class="t" id="lem" type="email" autocomplete="email" placeholder="' + tr('tu@empresa.com', 'you@company.com') + '"><button class="btn" type="submit">' + tr('Desbloquear informe', 'Unlock report') + '</button></form><label class="small" style="display:flex;gap:8px;margin-top:8px;text-align:left"><input type="checkbox" id="lacc"> <span>' + tr('Acepto los <a href="/legal/terminos/" target="_blank">términos</a> y la <a href="/legal/privacidad/" target="_blank">política de privacidad</a>.', 'I accept the <a href="/legal/terminos/" target="_blank">terms</a> and the <a href="/legal/privacidad/" target="_blank">privacy policy</a>.') + '</span></label><div class="err" id="lerr"></div>';
+  }
+  function bindLogin() {
+    var lf = $('lform'); if (!lf) return;
+    lf.onsubmit = function (e) {
       e.preventDefault(); var em = $('lem').value.trim(), er = $('lerr');
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(em)) { er.textContent = tr('Escribe un email válido.', 'Enter a valid email.'); return; }
       if (!$('lacc').checked) { er.textContent = tr('Acepta los términos para continuar.', 'Accept the terms to continue.'); return; }
-      readSetup(); try { localStorage.setItem('plg-aibb-url', $('url').value.trim()); localStorage.setItem('plg-aibb-setup', JSON.stringify(S.setup)); } catch (x) { }
+      if ($('sb')) readSetup();
+      try { localStorage.setItem('plg-aibb-url', $('url').value.trim() || (S.setup && S.setup.domain) || ''); if (S.setup) localStorage.setItem('plg-aibb-setup', JSON.stringify(S.setup)); localStorage.setItem('plg-aibb-autorun', '1'); } catch (x) { }
+      var b = lf.querySelector('button'); b.disabled = true;
       api('/api/auth/request', { method: 'POST', body: JSON.stringify({ email: em, accepted: true, lang: L(), next: '/ai-barometer/' }) }).then(function (r) {
-        er.style.color = r.ok ? 'var(--teal)' : ''; er.textContent = r.ok ? tr('¡Listo! Revisa tu email y abre el enlace: volverás aquí con la sesión iniciada.', 'Done! Check your email and open the link: you’ll come back here signed in.') : r.d.error === 'email_not_configured' ? tr('El acceso por email no está disponible ahora mismo.', 'Email sign-in isn’t available right now.') : tr('No se pudo enviar. Inténtalo en unos minutos.', 'Couldn’t send it. Try again in a few minutes.');
+        b.disabled = false; er.style.color = r.ok ? 'var(--teal)' : '';
+        er.textContent = r.ok ? tr('¡Listo! Te hemos enviado un enlace a ' + em + '. Ábrelo y verás aquí tu informe completo.', 'Done! We’ve sent a link to ' + em + '. Open it and your full report will be here.') : r.d.error === 'too_many_requests' ? tr('Demasiados intentos. Espera unos minutos.', 'Too many attempts. Wait a few minutes.') : r.d.error === 'email_not_configured' ? tr('El acceso por email no está disponible ahora mismo.', 'Email sign-in isn’t available right now.') : tr('No se pudo enviar. Inténtalo en unos minutos.', 'Couldn’t send it. Try again in a few minutes.');
       });
     };
-    $('runBtn').onclick = function () { readSetup(); if (!S.setup.prompts.length) return; if (S.mode === 'login') { var em = $('lem'); em.scrollIntoView({ behavior: 'smooth', block: 'center' }); em.focus(); return; } S.mode === 'live' ? runLive() : runDemo(); };
-    var dl = $('demoLink'); if (dl) dl.onclick = function (e) { e.preventDefault(); readSetup(); runDemo(); };
   }
 
   /* ---------- paso 3: ejecutar ---------- */
@@ -106,10 +117,12 @@
       S.study = r.d.study; $('setup').innerHTML = ''; renderResults(); $('results').scrollIntoView({ behavior: 'smooth' });
     });
   }
-  function runLive() {
-    var engines = S.engines.filter(function (e) { return e.active && S.sel[e.id]; }).map(function (e) { return e.id; });
+  function runLive(teaser) {
+    var engines = S.engines.filter(function (e) { return e.active && (teaser || S.sel[e.id]); }).map(function (e) { return e.id; });
+    if (teaser) engines = engines.slice(0, 1);
     if (!engines.length) return;
-    var jobs = []; engines.forEach(function (e) { S.setup.prompts.forEach(function (p) { jobs.push({ engine: e, prompt: p, st: '' }); }); });
+    var ps = teaser ? S.setup.prompts.slice(0, (S.cfg && S.cfg.teaser) || 3) : S.setup.prompts;
+    var jobs = []; engines.forEach(function (e) { ps.forEach(function (p) { jobs.push({ engine: e, prompt: p, st: '' }); }); });
     S.running = true; $('setup').innerHTML = ''; renderRun(jobs, 0, jobs.length + 1);
     var answers = [], i = 0;
     (function next() {
@@ -117,13 +130,13 @@
       var j = jobs[i]; j.st = 'on'; renderRun(jobs, i, jobs.length + 1);
       api('/api/aibb/ask', { method: 'POST', body: JSON.stringify({ setup: S.setup, engine: j.engine, prompt: j.prompt }) }).then(function (r) {
         if (r.ok && r.d.text) { j.st = 'ok'; answers.push({ engine: j.engine, prompt: j.prompt, text: r.d.text }); }
-        else { j.st = 'ko'; if (r.status === 429 && (r.d.error === 'global_limit')) { i = jobs.length; return finish(); } }
+        else { j.st = 'ko'; if (r.status === 429 && (r.d.error === 'global_limit' || r.d.error === 'teaser_limit')) { S.limitHit = r.d.error; i = jobs.length; return finish(); } }
         i++; renderRun(jobs, i, jobs.length + 1);
-        setTimeout(next, 4200); // respeta el límite por minuto de la capa gratuita
+        setTimeout(next, i < jobs.length ? 4200 : 0); // respeta el límite por minuto de la capa gratuita
       });
     })();
     function finish() {
-      if (!answers.length) { S.running = false; $('run').innerHTML = '<div class="card sec"><b>' + tr('Las IA no han respondido ahora mismo (cupo gratuito saturado). Prueba en unos minutos.', 'The AIs didn’t answer right now (free quota busy). Try again in a few minutes.') + '</b></div>'; return; }
+      if (!answers.length) { S.running = false; $('run').innerHTML = '<div class="card sec"><b>' + (S.limitHit === 'teaser_limit' ? tr('Ya has usado las vistas previas gratuitas de hoy. Entra con tu email para ver el informe completo:', 'You’ve used today’s free previews. Sign in with your email to see the full report:') + '</b>' + loginFormHtml() : tr('Las IA no han respondido ahora mismo (cupo gratuito saturado). Prueba en unos minutos.', 'The AIs didn’t answer right now (free quota busy). Try again in a few minutes.') + '</b>') + '</div>'; bindLogin(); return; }
       api('/api/aibb/finish', { method: 'POST', body: JSON.stringify({ setup: S.setup, answers: answers }) }).then(function (r) {
         S.running = false; $('run').innerHTML = '';
         if (!r.ok) { $('goErr').textContent = tr('No se pudo calcular el estudio.', 'Couldn’t compute the study.'); return; }
@@ -148,7 +161,7 @@
     var miss = R.rows.filter(function (r) { return r.pos[0] == null; }).map(function (r) { return r.prompt; }).filter(function (v, i, a) { return a.indexOf(v) === i; });
     if (miss.length && me.visibility > 0) out.push(['🕳️', tr('Huecos: no sales en <b>' + miss.length + ' pregunta' + (miss.length > 1 ? 's' : '') + '</b>, por ejemplo «' + esc(miss[0]) + '».', 'Gaps: you don’t show up in <b>' + miss.length + ' question' + (miss.length > 1 ? 's' : '') + '</b>, e.g. “' + esc(miss[0]) + '”.')]);
     out.push(R.ownCited > 0 ? ['🔗', tr('Tu web aparece como fuente en el <b>' + pct(R.ownCited) + '</b> de las respuestas.', 'Your website appears as a source in <b>' + pct(R.ownCited) + '</b> of answers.')] : ['🔗', tr('<b>Tu web no aparece como fuente.</b> ' + (R.sources[0] ? 'La más citada es ' + esc(R.sources[0].domain) + ': ahí es donde conviene estar.' : ''), '<b>Your website isn’t cited as a source.</b> ' + (R.sources[0] ? 'The most cited is ' + esc(R.sources[0].domain) + ': that’s where you want to be.' : ''))]);
-    if (R.sentiment != null) out.push([R.sentiment > .2 ? '💚' : R.sentiment < -.2 ? '⚠️' : '😐', tr('Tono hacia tu marca: <b>' + (R.sentiment > .2 ? 'positivo' : R.sentiment < -.2 ? 'negativo' : 'neutro') + '</b>.', 'Tone towards your brand: <b>' + (R.sentiment > .2 ? 'positive' : R.sentiment < -.2 ? 'negative' : 'neutral') + '</b>.')]);
+    if (R.sentiment != null && !st.partial) out.push([R.sentiment > .2 ? '💚' : R.sentiment < -.2 ? '⚠️' : '😐', tr('Tono hacia tu marca: <b>' + (R.sentiment > .2 ? 'positivo' : R.sentiment < -.2 ? 'negativo' : 'neutro') + '</b>.', 'Tone towards your brand: <b>' + (R.sentiment > .2 ? 'positive' : R.sentiment < -.2 ? 'negative' : 'neutral') + '</b>.')]);
     return out;
   }
   function ring(v) {
@@ -194,17 +207,19 @@
     var ins = '<ul class="ins">' + insights(st).map(function (x) { return '<li><span class="em">' + x[0] + '</span><span>' + x[1] + '</span></li>'; }).join('') + '</ul>';
     var exl = st.answers.map(function (a, i) { return '<button type="button" data-x="' + i + '" aria-pressed="' + (i === S.exSel) + '"><span class="e">' + ENG_NAME[a.engine] + '</span><span>' + esc(a.prompt) + '</span></button>'; }).join('');
     $('results').innerHTML = '<div class="rhead"><div><div class="eyebrow">' + tr('Resultados', 'Results') + ' · ' + esc(s.domain) + '</div><h2 style="margin-top:10px">' + esc(s.brand) + '</h2><div class="meta">' + esc(s.category) + ' · ' + d.toLocaleDateString(L() === 'es' ? 'es-ES' : 'en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) + ' · ' + st.answers.length + tr(' respuestas analizadas', ' answers analyzed') + '</div></div>' +
-      '<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">' + (st.demo ? '<span class="tag demo">🧪 ' + tr('Ejemplo · datos simulados', 'Sample · simulated data') + '</span>' : '<span class="tag live">🛰️ ' + tr('Estudio real', 'Live study') + '</span>') + '<button class="btn ghost" type="button" id="again" style="padding:11px 16px;font-size:14px">' + tr('Nuevo estudio', 'New study') + '</button></div></div>' +
+      '<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">' + (st.demo ? '<span class="tag demo">🧪 ' + tr('Ejemplo · datos simulados', 'Sample · simulated data') + '</span>' : st.partial ? '<span class="tag live">👀 ' + tr('Vista previa', 'Preview') + '</span>' : '<span class="tag live">🛰️ ' + tr('Estudio real', 'Live study') + '</span>') + '<button class="btn ghost" type="button" id="again" style="padding:11px 16px;font-size:14px">' + tr('Nuevo estudio', 'New study') + '</button></div></div>' +
+      (st.partial ? '<div class="banner live" style="margin-bottom:16px"><span class="ic">👀</span><div>' + tr('<b>Vista previa:</b> resultados con ' + st.answers.length + ' de ' + s.prompts.length + ' preguntas. Desbloquea abajo el informe completo, gratis.', '<b>Preview:</b> results from ' + st.answers.length + ' of ' + s.prompts.length + ' questions. Unlock the full report below, for free.') + '</div></div>' : '') +
       (st.demo ? '<div class="banner" style="margin-bottom:16px"><span class="ic">🧪</span><div>' + tr('Estas cifras salen de <b>respuestas inventadas</b> para enseñarte el informe. No describen la visibilidad real de ninguna marca.', 'These figures come from <b>made-up answers</b> to show you the report. They don’t describe any brand’s real visibility.') + '</div></div>' : '') +
       kpis +
       '<div class="g2"><section class="panel"><h3>' + tr('Ranking de visibilidad', 'Visibility ranking') + '</h3><p class="sub">' + tr('% de respuestas en las que aparece cada marca · posición media · cuota de voz', '% of answers mentioning each brand · average position · share of voice') + '</p>' + rank + '</section>' +
       '<section class="panel"><h3>' + tr('Lo que hay que saber', 'What you need to know') + '</h3><p class="sub">' + tr('Lectura automática de los resultados', 'Automatic reading of the results') + '</p>' + ins + '</section></div>' +
+      (st.partial ? '<div class="lockwrap"><div class="lockcard card"><div class="eyebrow">🔒 ' + tr('Informe completo', 'Full report') + '</div><h3>' + tr('Desbloquea tu informe completo gratis', 'Unlock your full report for free') + '</h3><p class="sub">' + tr('Las ' + s.prompts.length + ' preguntas, posición pregunta a pregunta, fuentes que cita la IA, el tono hacia tu marca, todas las respuestas y tu histórico mes a mes. Solo tu email, sin contraseña.', 'All ' + s.prompts.length + ' questions, position question by question, the sources AI cites, the tone towards your brand, every answer and your month-by-month history. Just your email, no password.') + '</p>' + loginFormHtml() + '</div><div class="locked" aria-hidden="true">' : '') +
       '<section class="panel sec"><h3>' + tr('Posición por pregunta', 'Position by question') + '</h3><p class="sub">' + tr('En qué puesto sale cada marca en cada respuesta (1 = la primera que menciona la IA)', 'Where each brand ranks in each answer (1 = the first one the AI mentions)') + '</p>' + hm + '</section>' +
       '<div class="g2"><section class="panel"><h3>' + tr('Visibilidad por asistente', 'Visibility by assistant') + '</h3><p class="sub">' + tr('% de respuestas de cada IA que mencionan a cada marca', '% of each AI’s answers mentioning each brand') + '</p>' + eh + '</section>' +
       '<section class="panel"><h3>' + tr('Fuentes que cita la IA', 'Sources the AI cites') + '</h3><p class="sub">' + tr('Webs mencionadas como fuente en las respuestas', 'Websites mentioned as sources in the answers') + '</p>' + src + '</section></div>' +
       '<section class="panel sec prem-card" id="premium"><div><span class="tag prem">✦ Premium · ' + tr('próximamente', 'coming soon') + '</span><h3 style="margin-top:12px">' + tr('El informe completo: ChatGPT, Claude y Perplexity', 'The full report: ChatGPT, Claude and Perplexity') + '</h3><p class="sub" style="margin:6px 0 0">' + tr('Este estudio usa Gemini. El informe Premium pregunta también a ChatGPT, Claude y Perplexity, compara los cuatro y sigue tu marca cada mes. Apúntate y te aviso en cuanto esté.', 'This study uses Gemini. The Premium report also asks ChatGPT, Claude and Perplexity, compares all four and tracks your brand every month. Sign up and I’ll let you know as soon as it’s ready.') + '</p></div><a class="btn" href="/#contacto">' + tr('Quiero el Premium', 'I want Premium') + ' →</a></section>' +
-      '<section class="panel sec"><h3>' + tr('Lee las respuestas', 'Read the answers') + '</h3><p class="sub">' + tr('Tal cual las dio cada asistente, con las marcas resaltadas', 'Exactly as each assistant gave them, with brands highlighted') + '</p><div class="ex"><div class="exl" id="exl">' + exl + '</div><div class="ans" id="ans"></div></div></section>';
-    showAnswer(S.exSel);
+      '<section class="panel sec"><h3>' + tr('Lee las respuestas', 'Read the answers') + '</h3><p class="sub">' + tr('Tal cual las dio cada asistente, con las marcas resaltadas', 'Exactly as each assistant gave them, with brands highlighted') + '</p><div class="ex"><div class="exl" id="exl">' + exl + '</div><div class="ans" id="ans"></div></div></section>' + (st.partial ? '</div></div>' : '');
+    showAnswer(S.exSel); bindLogin();
     document.querySelectorAll('#exl button').forEach(function (b) { b.onclick = function () { S.exSel = +b.dataset.x; document.querySelectorAll('#exl button').forEach(function (x) { x.setAttribute('aria-pressed', x === b); }); showAnswer(S.exSel); }; });
     $('again').onclick = function () { S.study = null; S.exSel = 0; $('results').innerHTML = ''; window.scrollTo({ top: 0, behavior: 'smooth' }); $('url').focus(); };
     tips($('results'));
@@ -252,11 +267,14 @@
   }
 
   /* ---------- arranque ---------- */
-  api('/api/aibb/config').then(function (r) {
+  var tok = new URLSearchParams(location.search).get('login');
+  var boot = tok && /^[a-f0-9]{64}$/.test(tok) ? (history.replaceState(null, '', location.pathname), api('/api/auth/verify', { method: 'POST', body: JSON.stringify({ token: tok, src: 'aibb' }) }).then(function (r) { if (!r.ok) $('goErr').textContent = tr('Ese enlace ha caducado o ya se usó. Vuelve a pedirlo desde tu estudio.', 'That link has expired or was already used. Request a new one from your study.'); })) : Promise.resolve();
+  boot.then(function () { return api('/api/aibb/config'); }).then(function (r) {
     S.cfg = r.ok ? r.d : { engines: [], live: false, user: null, limits: { competitors: 5, prompts: 8 } };
     renderWho(); loadHistory();
     var saved = null, ss = null; try { saved = localStorage.getItem('plg-aibb-url'); ss = JSON.parse(localStorage.getItem('plg-aibb-setup') || 'null'); localStorage.removeItem('plg-aibb-url'); localStorage.removeItem('plg-aibb-setup'); } catch (e) { }
-    if (ss && S.cfg.user && S.cfg.live && ss.domain) { $('url').value = saved || ss.domain; S.setup = ss; S.mode = 'live'; S.reason = ''; S.engines = S.cfg.engines; S.sel = {}; S.engines.forEach(function (x) { S.sel[x.id] = x.active; }); renderSetup(); setTimeout(function () { $('setup').scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 300); return; }
+    var auto = null; try { auto = localStorage.getItem('plg-aibb-autorun'); localStorage.removeItem('plg-aibb-autorun'); } catch (e) { }
+    if (ss && S.cfg.user && S.cfg.live && ss.domain) { $('url').value = saved || ss.domain; S.setup = ss; S.mode = 'live'; S.reason = ''; S.engines = S.cfg.engines; S.sel = {}; S.engines.forEach(function (x) { S.sel[x.id] = x.active; }); renderSetup(); if (auto) { runLive(); return; } setTimeout(function () { $('setup').scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 300); return; }
     var q = new URLSearchParams(location.search).get('url');
     if (saved || q) { $('url').value = saved || q; if (S.cfg.user) $('goForm').requestSubmit ? $('goForm').requestSubmit() : $('goBtn').click(); }
   });
