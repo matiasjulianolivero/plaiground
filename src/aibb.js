@@ -304,6 +304,8 @@ Devuelve: {"brand": nombre comercial de la marca, "category": categoría de prod
         study.id = randomToken(8);
         await env.DB.prepare('INSERT INTO aibb_studies (id, user_id, created_at, domain, brand, lang, score, visibility, data) VALUES (?,?,?,?,?,?,?,?,?)')
           .bind(study.id, user.id, study.created_at, s.domain, s.brand, s.language, result.score, result.brands[0].visibility, JSON.stringify(study)).run();
+        const tb = result.brands[0];
+        if (h.notifyOwner) await h.notifyOwner(env, `🔎 Estudio AI Barometer: ${s.brand} (${s.domain}) · score ${result.score}`, [['Email', user.email], ['Marca', s.brand], ['Web', s.domain], ['Categoría', s.category], ['Competidores', s.competitors.join(', ')], ['AI Visibility Score', String(result.score)], ['Visibilidad', Math.round(tb.visibility * 100) + '%'], ['Puesto', result.rank + ' de ' + result.brands.length], ['Asistentes', [...new Set(answers.map(a => a.engine))].join(', ')]], user.email);
       }
       return json({ study });
     }
