@@ -567,7 +567,7 @@ async function boot(){
   if(d&&(r.ok||(d.error==='unauthorized'&&d.configured!==false))){MODE='live';if(r.ok){me=d;AI=!!d.ai;}}}catch(e){}
  if(MODE==='live'){
   if(tok){const op0=qp.get('open');if(op0){try{localStorage.setItem('plg-open',op0)}catch(e){}}history.replaceState(null,'',location.pathname);app.innerHTML=`<div class="proc card"><h2>${tr('Entrando…','Signing in…')}</h2></div>`;
-   const r=await api('/api/auth/verify',{method:'POST',body:JSON.stringify({token:tok})});
+   const r=await api('/api/auth/verify',{method:'POST',body:JSON.stringify({token:tok,src:qp.get('next')==='ai-barometer'?'aibb':'data'})});
    if(r.ok&&qp.get('next')==='ai-barometer'){location.replace('/ai-barometer/');return;}
    if(r.ok){const m2=await api('/api/me');me=m2.ok?m2.data:{email:r.data.email};AI=!!(m2.ok&&m2.data.ai);toast(tr('Sesión iniciada','Signed in'));}else flash=tr('El enlace ha caducado o ya se usó. Pide uno nuevo.','The link has expired or was already used. Request a new one.');}
   const op=qp.get('open');if(op){try{localStorage.setItem('plg-open',op)}catch(e){}history.replaceState(null,'',location.pathname);}

@@ -226,6 +226,15 @@ ${card('/#servicios', tr('Servicios', 'Services'), tr('Estrategia de IA, datos, 
   return { subject: tr(`Tu pase de plaiground (${l.code})`, `Your plaiground pass (${l.code})`), html: emailShell(inner), text: tr(`¡Gracias, ${l.name}! Te escribiré en menos de 48 horas laborables.`, `Thanks, ${l.name}! I’ll get back to you within 48 working hours.`) + (confirmLink ? '\n\n' + tr('Confirma la newsletter: ', 'Confirm the newsletter: ') + confirmLink : '') + `\n\n${base}/barometer/\n${base}/data/\n${base}/cv/` };
 }
 
+// Aviso al titular de que alguien se ha registrado o ha usado una herramienta (lead)
+async function notifyOwner(env, title, rows, replyTo) {
+  if (!env.LEAD_NOTIFY_EMAIL) return;
+  const row = (k, v) => v ? `<tr><td style="padding:8px 12px;color:#555A7A;font-size:13px;width:140px;vertical-align:top">${esc(k)}</td><td style="padding:8px 12px;font-size:14px"><b>${esc(v)}</b></td></tr>` : '';
+  const inner = `<tr><td style="background:#14162E;color:#fff;padding:22px 26px"><div style="font-size:12px;letter-spacing:2px;text-transform:uppercase;opacity:.7">Nuevo lead · plaiground</div><div style="font-size:22px;font-weight:bold;margin-top:6px">${esc(title)}</div></td></tr>
+<tr><td style="padding:14px 14px 4px"><table role="presentation" width="100%" style="border-collapse:collapse">${rows.map(r => row(r[0], r[1])).join('')}</table></td></tr>${replyTo ? `<tr><td style="padding:10px 26px 24px;font-size:13px;color:#555A7A">Responde a este email para escribir directamente a ${esc(replyTo)}.</td></tr>` : ''}`;
+  try { await sendEmail(env, env.LEAD_NOTIFY_EMAIL, { from: env.LEAD_FROM, subject: title.slice(0, 180), html: emailShell(inner), text: [title].concat(rows.filter(r => r[1]).map(r => r[0] + ': ' + r[1])).join('\n'), replyTo }); }
+  catch (e) { console.error('notifyOwner', e); }
+}
 function notifyEmail(l) {
   const row = (k, v) => v ? `<tr><td style="padding:8px 12px;color:#555A7A;font-size:13px;width:140px;vertical-align:top">${k}</td><td style="padding:8px 12px;font-size:14px"><b>${esc(v)}</b></td></tr>` : '';
   const inner = `<tr><td style="background:#14162E;color:#fff;padding:22px 26px"><div style="font-size:12px;letter-spacing:2px;text-transform:uppercase;opacity:.7">Nuevo lead · ${esc(l.code)}</div><div style="font-size:24px;font-weight:bold;margin-top:6px">${esc(l.name)}${l.company ? ' · ' + esc(l.company) : ''}</div></td></tr>
@@ -446,6 +455,8 @@ async function verifyLogin(req, env) {
     user = { id: crypto.randomUUID() };
     await env.DB.prepare('INSERT INTO users (id, email, created_at, terms_accepted_at, last_login_at, lang) VALUES (?,?,?,?,?,?)')
       .bind(user.id, used.email, now, used.accepted ? now : null, now, used.lang).run();
+    const via = body.src === 'aibb' ? 'AI Brand Barometer' : 'Data plaiground';
+    await notifyOwner(env, `🆕 Nuevo registro: ${used.email} (${via})`, [['Email', used.email], ['Se registró en', via], ['Idioma', used.lang], ['Fecha', new Date(now).toLocaleString('es-ES', { timeZone: 'Europe/Madrid' })]], used.email);
   } else {
     await env.DB.prepare('UPDATE users SET last_login_at = ?, terms_accepted_at = COALESCE(terms_accepted_at, ?) WHERE id = ?').bind(now, now, user.id).run();
   }
@@ -637,7 +648,7 @@ async function api(req, env, url, ctx) {
     return new Response('ok', { status: 200 });
   }
   if (m !== 'GET' && !sameOrigin(req, url)) return json({ error: 'forbidden' }, 403);
-  if (pathname.startsWith('/api/aibb/')) { aibb = aibb || createAibb({ json, currentUser, randomToken, sha256 }); return aibb(req, env, url, pathname, m); }
+  if (pathname.startsWith('/api/aibb/')) { aibb = aibb || createAibb({ json, currentUser, randomToken, sha256, notifyOwner }); return aibb(req, env, url, pathname, m); }
 
   if (pathname === '/api/auth/request' && m === 'POST') return requestLogin(req, env, url);
   if (pathname === '/api/auth/verify' && m === 'POST') return verifyLogin(req, env);
