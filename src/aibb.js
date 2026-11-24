@@ -11,6 +11,7 @@
 const DAILY_CALLS_DEFAULT = 300;   // tope global de llamadas a LLM al día (la capa gratuita de Flash-Lite ronda las 500)
 const STUDIES_PER_USER_DAY = 3;    // estudios reales por usuario y día
 const MAX_PROMPTS = 8, MAX_COMPETITORS = 5;
+const TEASER_PROMPTS = 3, TEASER_ASKS_PER_IP_DAY = 6; // vista previa sin registro: 3 preguntas, 2 al día por IP
 
 const ENGINES = [
   { id: 'gemini', name: 'Gemini', key: 'GEMINI_API_KEY', model: 'GEMINI_MODEL', def: 'gemini-3.5-flash-lite' },
@@ -251,7 +252,7 @@ Devuelve: {"brand": nombre comercial de la marca, "category": categoría de prod
     const liveOk = !!(env.GEMINI_API_KEY || env.OPENAI_API_KEY || env.ANTHROPIC_API_KEY || env.PERPLEXITY_API_KEY);
     const body = m === 'POST' ? await req.json().catch(() => ({})) : {};
 
-    if (pathname === '/api/aibb/config' && m === 'GET') return json({ engines: engineList(env), live: liveOk, user: user ? { email: user.email } : null, limits: { perDay: STUDIES_PER_USER_DAY, prompts: MAX_PROMPTS, competitors: MAX_COMPETITORS } });
+    if (pathname === '/api/aibb/config' && m === 'GET') return json({ teaser: TEASER_PROMPTS, engines: engineList(env), live: liveOk, user: user ? { email: user.email } : null, limits: { perDay: STUDIES_PER_USER_DAY, prompts: MAX_PROMPTS, competitors: MAX_COMPETITORS } });
 
     if (pathname === '/api/aibb/setup' && m === 'POST') {
       const raw = String(body.url || '').trim(), lang = body.lang === 'en' ? 'en' : 'es';
@@ -269,13 +270,18 @@ Devuelve: {"brand": nombre comercial de la marca, "category": categoría de prod
     }
 
     if (pathname === '/api/aibb/ask' && m === 'POST') {
-      if (!user) return json({ error: 'unauthorized' }, 401);
+      let who = user;
+      if (!who) {
+        who = { id: 'ip:' + (await h.sha256((req.headers.get('cf-connecting-ip') || '') + ':aibb')).slice(0, 24) };
+        const n = await env.DB.prepare("SELECT COUNT(*) AS n FROM aibb_usage WHERE ts > ? AND user_id = ? AND kind = 'ask'").bind(Date.now() - 864e5, who.id).first();
+        if (n.n >= TEASER_ASKS_PER_IP_DAY) return json({ error: 'teaser_limit' }, 429);
+      }
       const s = cleanSetup(body.setup), engine = String(body.engine || ''), prompt = clip(String(body.prompt || '').trim(), 240);
       if (!prompt) return json({ error: 'bad_request' }, 400);
       const e = ENGINES.find(x => x.id === engine); if (!e || !engineActive(env, e)) return json({ error: 'engine_off' }, 400);
-      const q = await quota(env, user, 'ask'); if (q) return json({ error: q }, 429);
+      const q = await quota(env, who, 'ask'); if (q) return json({ error: q }, 429);
       const r = await callEngine(env, engine, prompt, { system: askSystem(s.language) });
-      await logUse(env, user, engine, 'ask', !r.error);
+      await logUse(env, who, engine, 'ask', !r.error);
       if (r.error) return json({ error: r.error }, 502);
       return json({ text: clip(r.text, 6000) });
     }
@@ -283,14 +289,15 @@ Devuelve: {"brand": nombre comercial de la marca, "category": categoría de prod
     if (pathname === '/api/aibb/finish' && m === 'POST') {
       const s = cleanSetup(body.setup);
       if (!s.domain || !s.prompts.length) return json({ error: 'bad_request' }, 400);
-      const demo = body.demo === true || !user || !liveOk;
+      const demo = body.demo === true || !liveOk;
+      const partial = !demo && !user;
       let answers, judge = null;
       if (demo) { s.competitors = ['Alfaplus', 'Betaware', 'Gammix', 'Deltio']; s.prompts = s.prompts.map(p => p); answers = demoAnswers(s, ['gemini', 'chatgpt', 'claude', 'perplexity']); }
       else {
-        answers = (Array.isArray(body.answers) ? body.answers : []).slice(0, MAX_PROMPTS * ENGINES.length).map(a => ({ prompt: clip(a.prompt, 240), engine: String(a.engine || ''), text: clip(a.text, 6000) })).filter(a => a.text);
+        answers = (Array.isArray(body.answers) ? body.answers : []).slice(0, partial ? TEASER_PROMPTS : MAX_PROMPTS * ENGINES.length).map(a => ({ prompt: clip(a.prompt, 240), engine: String(a.engine || ''), text: clip(a.text, 6000) })).filter(a => a.text);
         if (!answers.length) return json({ error: 'no_answers' }, 400);
         // Un juez (Gemini) valora el tono hacia la marca en cada respuesta: -1 negativo · 0 neutro · 1 positivo · null si no aparece
-        if (env.GEMINI_API_KEY && !(await quota(env, user, 'judge'))) {
+        if (!partial && env.GEMINI_API_KEY && !(await quota(env, user, 'judge'))) {
           const jp = `Marca: ${s.brand} (${s.domain}). Para cada respuesta numerada, valora el tono hacia la marca: 1 positivo, 0 neutro, -1 negativo, null si no se menciona. Devuelve SOLO un JSON {"scores":[...]} con ${answers.length} valores en orden.\n\n` + answers.map((a, i) => `#${i + 1}\n${clip(a.text, 1500)}`).join('\n\n');
           const r = await callEngine(env, 'gemini', jp, { json: true, temperature: 0 });
           await logUse(env, user, 'gemini', 'judge', !r.error);
@@ -299,7 +306,7 @@ Devuelve: {"brand": nombre comercial de la marca, "category": categoría de prod
         }
       }
       const result = analyze(s, answers, judge);
-      const study = { v: 1, demo, created_at: Date.now(), setup: s, answers: answers.map(a => ({ prompt: a.prompt, engine: a.engine, text: clip(a.text, 4000) })), result, engines: engineList(env) };
+      const study = { v: 1, demo, partial, created_at: Date.now(), setup: s, answers: answers.map(a => ({ prompt: a.prompt, engine: a.engine, text: clip(a.text, 4000) })), result, engines: engineList(env) };
       if (!demo && user) {
         study.id = randomToken(8);
         await env.DB.prepare('INSERT INTO aibb_studies (id, user_id, created_at, domain, brand, lang, score, visibility, data) VALUES (?,?,?,?,?,?,?,?,?)')

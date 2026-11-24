@@ -124,20 +124,21 @@ async function currentUser(req, env) {
 }
 
 /* ---------- email ---------- */
-function loginEmail(link, lang) {
+function loginEmail(link, lang, product) {
   const en = lang === 'en';
-  const subject = en ? 'Your access link to Data plaiground' : 'Tu enlace de acceso a Data plaiground';
+  const P = product || 'Data plaiground', tag = product ? 'AI Brand Barometer' : 'Data';
+  const subject = en ? `Your access link to ${P}` : `Tu enlace de acceso a ${P}`;
   const html = `<!DOCTYPE html><html><body style="margin:0;background:#F4F5FB;font-family:Arial,Helvetica,sans-serif;color:#14162E">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F4F5FB;padding:32px 16px"><tr><td align="center">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#ffffff;border-radius:18px;padding:32px">
-<tr><td style="font-size:22px;font-weight:bold;letter-spacing:-0.5px">pl<span style="color:#4338CA">ai</span>ground <span style="font-size:13px;color:#555A7A;font-weight:normal">Data</span></td></tr>
-<tr><td style="padding:22px 0 8px;font-size:20px;font-weight:bold">${en ? 'Sign in to Data plaiground' : 'Entra en Data plaiground'}</td></tr>
+<tr><td style="font-size:22px;font-weight:bold;letter-spacing:-0.5px">pl<span style="color:#4338CA">ai</span>ground <span style="font-size:13px;color:#555A7A;font-weight:normal">${tag}</span></td></tr>
+<tr><td style="padding:22px 0 8px;font-size:20px;font-weight:bold">${en ? (product ? 'See your full AI visibility report' : 'Sign in to Data plaiground') : (product ? 'Ve tu informe completo de visibilidad en IA' : 'Entra en Data plaiground')}</td></tr>
 <tr><td style="font-size:15px;line-height:1.55;color:#555A7A">${en ? 'Click the button to sign in. The link expires in 15 minutes and can only be used once.' : 'Pulsa el botón para entrar. El enlace caduca en 15 minutos y solo se puede usar una vez.'}</td></tr>
-<tr><td style="padding:24px 0"><a href="${esc(link)}" style="display:inline-block;background:#4338CA;color:#ffffff;text-decoration:none;font-weight:bold;padding:14px 24px;border-radius:999px">${en ? 'Sign in' : 'Entrar'}</a></td></tr>
+<tr><td style="padding:24px 0"><a href="${esc(link)}" style="display:inline-block;background:#4338CA;color:#ffffff;text-decoration:none;font-weight:bold;padding:14px 24px;border-radius:999px">${en ? (product ? 'See my report' : 'Sign in') : (product ? 'Ver mi informe' : 'Entrar')}</a></td></tr>
 <tr><td style="font-size:13px;line-height:1.5;color:#555A7A">${en ? 'If the button doesn’t work, copy this link into your browser:' : 'Si el botón no funciona, copia este enlace en tu navegador:'}<br><span style="word-break:break-all;color:#4338CA">${esc(link)}</span></td></tr>
 <tr><td style="padding-top:22px;font-size:12px;color:#8A8EAD;border-top:1px solid #E6E8F5">${en ? 'If you didn’t request this, you can ignore this email.' : 'Si no lo has pedido tú, ignora este email.'} · plaigroundmarketing.com</td></tr>
 </table></td></tr></table></body></html>`;
-  const text = (en ? 'Sign in to Data plaiground (link valid for 15 minutes): ' : 'Entra en Data plaiground (enlace válido 15 minutos): ') + link;
+  const text = (en ? `Sign in to ${P} (link valid for 15 minutes): ` : `Entra en ${P} (enlace válido 15 minutos): `) + link;
   return { subject, html, text };
 }
 
@@ -432,9 +433,9 @@ async function requestLogin(req, env, url) {
     .bind(await sha256(token), email, now, now + TOKEN_TTL_MIN * 60e3, ip, 1, lang).run();
 
   const base = (env.APP_URL || url.origin).replace(/\/$/, '');
-  const next = body.next === '/ai-barometer/' ? '&next=ai-barometer' : '';
-  const link = `${base}/data/app/?login=${token}${next}`;
-  const ok = await sendEmail(env, email, loginEmail(link, lang));
+  const aibb = body.next === '/ai-barometer/';
+  const link = aibb ? `${base}/ai-barometer/?login=${token}` : `${base}/data/app/?login=${token}`;
+  const ok = await sendEmail(env, email, loginEmail(link, lang, aibb ? 'AI Brand Barometer' : ''));
   if (!ok) return json({ error: 'email_failed' }, 502);
   return json({ ok: true });
 }
