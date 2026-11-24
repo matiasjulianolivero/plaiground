@@ -11,7 +11,7 @@
 const DAILY_CALLS_DEFAULT = 300;   // tope global de llamadas a LLM al día (la capa gratuita de Flash-Lite ronda las 500)
 const STUDIES_PER_USER_DAY = 3;    // estudios reales por usuario y día
 const MAX_PROMPTS = 8, MAX_COMPETITORS = 7; // más de 7 competidores: informe Premium
-const TEASER_PROMPTS = 3, TEASER_ASKS_PER_IP_DAY = 16; // sin registro: vista previa de 3 preguntas + preparación del resto en segundo plano (2 estudios al día por IP)
+const TEASER_PROMPTS = 3, TEASER_ASKS_PER_IP_DAY = 64; // sin registro: vista previa de 3 preguntas + preparación del resto en segundo plano (2 estudios al día por IP)
 
 const ENGINES = [
   { id: 'gemini', name: 'Gemini', key: 'GEMINI_API_KEY', model: 'GEMINI_MODEL', def: 'gemini-3.1-flash-lite', alt: ['gemini-flash-lite-latest', 'gemini-3.5-flash-lite', 'gemini-2.5-flash-lite', 'gemini-flash-latest'] },
@@ -24,7 +24,7 @@ const engineList = env => ENGINES.map(e => ({ id: e.id, name: e.name, active: en
 
 export function createAibb(h) {
   const { json, currentUser, randomToken } = h;
-  const STUDIES_PER_IP_DAY = 5;
+  const STUDIES_PER_IP_DAY = 8;
 
   /* ---------- utilidades ---------- */
   const norm = s => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');

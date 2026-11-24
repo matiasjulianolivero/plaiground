@@ -31,7 +31,22 @@
   function rerender() { ph(); if (S.setup && !S.study && !S.running) renderSetup(); if (S.study) renderResults(); renderHistory(); renderWho(); }
   function renderWho() {
     var u = S.cfg && S.cfg.user, w = $('who');
-    if (!u || S.viewer) { w.innerHTML = ''; w.classList.remove('open'); return; }
+    if (S.viewer) { w.innerHTML = ''; return; }
+    if (!u) {
+      w.innerHTML = '<button type="button" class="ubtn" id="ubtn" aria-haspopup="true" aria-expanded="false" style="padding:8px 14px">' + tr('Entrar', 'Sign in') + '</button>' +
+        '<div class="umenu" role="dialog" aria-label="' + tr('Entrar', 'Sign in') + '"><div class="em"><b style="color:var(--ink)">' + tr('Entra para ver tu histórico', 'Sign in to see your history') + '</b><br>' + tr('Te enviamos un enlace al email, sin contraseña.', 'We email you a link, no password.') + '</div>' +
+        '<form id="hform" style="padding:4px 8px 8px"><input class="t" id="hem" type="email" autocomplete="email" placeholder="' + tr('tu@empresa.com', 'you@company.com') + '" style="margin-bottom:8px"><label class="small" style="display:flex;gap:8px;margin-bottom:10px"><input type="checkbox" id="hacc"> <span>' + tr('Acepto los <a href="/legal/terminos/" target="_blank">términos</a> y la <a href="/legal/privacidad/" target="_blank">privacidad</a>.', 'I accept the <a href="/legal/terminos/" target="_blank">terms</a> and <a href="/legal/privacidad/" target="_blank">privacy</a>.') + '</span></label><button class="btn" type="submit" style="width:100%;justify-content:center;padding:12px">' + tr('Enviar enlace', 'Send link') + '</button><div class="err" id="herr" style="font-size:13.5px"></div></form></div>';
+      $('ubtn').onclick = function (e) { e.stopPropagation(); var o = !w.classList.contains('open'); w.classList.toggle('open', o); this.setAttribute('aria-expanded', o); if (o) setTimeout(function () { $('hem').focus(); }, 50); };
+      $('hform').onsubmit = function (e) {
+        e.preventDefault(); var em = $('hem').value.trim(), er = $('herr');
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(em)) { er.textContent = tr('Escribe un email válido.', 'Enter a valid email.'); return; }
+        if (!$('hacc').checked) { er.textContent = tr('Acepta los términos para continuar.', 'Accept the terms to continue.'); return; }
+        api('/api/auth/request', { method: 'POST', body: JSON.stringify({ email: em, accepted: true, lang: L(), next: '/ai-barometer/' }) }).then(function (r) {
+          er.style.color = r.ok ? 'var(--teal)' : ''; er.textContent = r.ok ? tr('¡Listo! Abre el enlace que te hemos enviado a ' + em + '.', 'Done! Open the link we sent to ' + em + '.') : r.d.error === 'too_many_requests' ? tr('Demasiados intentos. Espera unos minutos.', 'Too many attempts. Wait a few minutes.') : tr('No se pudo enviar. Inténtalo de nuevo.', 'Couldn’t send it. Try again.');
+        });
+      };
+      return;
+    }
     w.innerHTML = '<button type="button" class="ubtn" id="ubtn" aria-haspopup="true" aria-expanded="false" aria-label="' + tr('Tu cuenta', 'Your account') + '"><i>' + esc(u.email[0].toUpperCase()) + '</i><span>' + esc(u.email) + '</span></button>' +
       '<div class="umenu" role="menu"><div class="em">' + tr('Sesión iniciada como', 'Signed in as') + '<br><b style="color:var(--ink)">' + esc(u.email) + '</b></div>' +
       '<button type="button" role="menuitem" id="uHist">' + tr('Mi histórico', 'My history') + '</button><button type="button" role="menuitem" id="uNew">' + tr('Nuevo estudio', 'New study') + '</button><button type="button" role="menuitem" class="out" id="uOut">' + tr('Cerrar sesión', 'Sign out') + '</button></div>';
@@ -64,7 +79,7 @@
     var stopPrep = prepAnim();
     api('/api/aibb/setup', { method: 'POST', body: JSON.stringify({ url: v, lang: L() }) }).then(function (r) {
       stopPrep(); b.disabled = false;
-      if (!r.ok) { $('setup').innerHTML = ''; $('goErr').textContent = r.d.error === 'user_limit' ? tr('Has llegado al máximo de estudios de hoy. Vuelve mañana.', 'You’ve reached today’s study limit. Come back tomorrow.') : r.d.error === 'global_limit' ? tr('Hoy se ha agotado el cupo gratuito de la beta. Vuelve mañana.', 'Today’s free beta quota is used up. Come back tomorrow.') : r.d.error === 'invalid_url' ? tr('Esa web no parece válida.', 'That website doesn’t look valid.') : tr('No se pudo preparar el estudio. Inténtalo de nuevo.', 'Couldn’t prepare the study. Try again.'); return; }
+      if (!r.ok) { $('setup').innerHTML = ''; $('goErr').innerHTML = r.d.error === 'user_limit' ? tr('Has llegado al máximo de estudios gratuitos de hoy desde este dispositivo. Vuelve mañana' + (S.cfg && S.cfg.user ? '.' : ' o <a href="#" id="limitLogin">entra con tu email</a> para ver tus estudios.'), 'You’ve reached today’s free study limit on this device. Come back tomorrow' + (S.cfg && S.cfg.user ? '.' : ' or <a href="#" id="limitLogin">sign in with your email</a> to see your studies.')) : r.d.error === 'global_limit' ? tr('Hoy se ha agotado el cupo gratuito de la beta. Vuelve mañana.', 'Today’s free beta quota is used up. Come back tomorrow.') : r.d.error === 'invalid_url' ? tr('Esa web no parece válida.', 'That website doesn’t look valid.') : tr('No se pudo preparar el estudio. Inténtalo de nuevo.', 'Couldn’t prepare the study. Try again.'); var ll = $('limitLogin'); if (ll) ll.onclick = function (e) { e.preventDefault(); e.stopPropagation(); window.scrollTo({ top: 0, behavior: 'smooth' }); $('who').classList.add('open'); setTimeout(function () { var hh = $('hem'); if (hh) hh.focus(); }, 300); }; return; }
       S.setup = r.d.setup; S.mode = r.d.mode; S.reason = r.d.reason || ''; S.engines = r.d.engines || [];
       S.sel = {}; S.engines.forEach(function (x) { S.sel[x.id] = x.active; });
       // Flujo directo: se analiza todo sin paso intermedio. Solo se pide revisar si no se detectaron competidores.
