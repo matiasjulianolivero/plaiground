@@ -221,7 +221,7 @@
     } else { $('results').innerHTML = ''; renderRun(jobs, 0, jobs.length + 1); $('run').scrollIntoView({ behavior: 'smooth', block: 'start' }); }
     // Cola de trabajo: si una pregunta falla (IA saturada), se reintenta una vez al final sin cambiar el orden en pantalla.
     var queue = jobs.map(function (x, k) { return k; }), done = 0, fails = 0;
-    S.bgJob = null; if (jobs.length > 2) bgBox(); else removeBg();
+    S.bgJob = null; if (jobs.length > 2) { bgBox(); $('bgbox').scrollIntoView({ behavior: 'smooth', block: 'start' }); } else removeBg();
     (function next() {
       if (S.bgJob) return; // el estudio sigue en el servidor (avísame por email)
       if (!queue.length) return finish();
@@ -238,9 +238,9 @@
     })();
     // Caja "puede tardar unos minutos · te avisamos por email": crea un trabajo en el servidor que sigue aunque se cierre la página
     function bgBox() {
-      var bx = $('bgbox'); if (!bx) { bx = document.createElement('div'); bx.id = 'bgbox'; $('run').insertAdjacentElement('afterend', bx); }
+      var bx = $('bgbox'); if (!bx) { bx = document.createElement('div'); bx.id = 'bgbox'; $('run').insertAdjacentElement('beforebegin', bx); }
       var logged = S.cfg && S.cfg.user;
-      bx.innerHTML = '<section class="card sec" style="margin-top:14px"><div class="eyebrow">⏱️ ' + tr('Puede tardar unos minutos', 'This can take a few minutes') + '</div><p style="margin:8px 0 14px;color:var(--muted)">' +
+      bx.innerHTML = '<section class="card sec" style="margin-bottom:14px"><div class="eyebrow">⏱️ ' + tr('Puede tardar unos minutos', 'This can take a few minutes') + '</div><p style="margin:8px 0 14px;color:var(--muted)">' +
         (logged ? tr('Si no quieres esperar, te enviamos un email a <b>' + esc(S.cfg.user.email) + '</b> cuando el informe esté listo y puedes cerrar esta página. O espera aquí el progreso.', 'If you don’t want to wait, we’ll email <b>' + esc(S.cfg.user.email) + '</b> when the report is ready and you can close this page. Or wait here.') + '</p><button class="btn" id="bgGo">' + tr('Avísame por email', 'Email me when ready') + '</button>'
           : tr('Déjanos tu email y te avisamos cuando el informe completo esté listo: puedes cerrar esta página. O espera aquí el progreso.', 'Leave your email and we’ll let you know when the full report is ready: you can close this page. Or wait here.') + '</p><form class="lform" id="bgForm"><input class="t" id="bgEm" type="email" autocomplete="email" placeholder="' + tr('tu@empresa.com', 'you@company.com') + '"><button class="btn" type="submit" id="bgGo">' + tr('Avísame por email', 'Email me when ready') + '</button></form><label class="small" style="display:flex;gap:8px;margin-top:8px"><input type="checkbox" id="bgAcc"> <span>' + tr('Acepto los <a href="/legal/terminos/" target="_blank">términos</a> y la <a href="/legal/privacidad/" target="_blank">política de privacidad</a>.', 'I accept the <a href="/legal/terminos/" target="_blank">terms</a> and the <a href="/legal/privacidad/" target="_blank">privacy policy</a>.') + '</span></label>') +
         '<div class="err" id="bgErr"></div></section>';
@@ -253,7 +253,7 @@
         api('/api/aibb/notify', { method: 'POST', body: JSON.stringify({ setup: S.setup, answers: answers, engines: engines, email: em, accepted: true, lang: L() }) }).then(function (r) {
           if (!r.ok) { $('bgGo').disabled = false; er.textContent = r.d.error === 'too_many_requests' ? tr('Demasiados intentos. Espera unos minutos.', 'Too many attempts. Wait a few minutes.') : tr('No se pudo activar el aviso. Inténtalo de nuevo.', 'Couldn’t set up the email. Try again.'); return; }
           S.bgJob = r.d.job; if (r.d.unlock) { S.unlock = r.d.unlock; S.unlockEmail = r.d.email; }
-          bx.innerHTML = '<section class="card sec" style="margin-top:14px"><div class="eyebrow">✉️ ' + tr('Te avisamos por email', 'We’ll email you') + '</div><p style="margin:8px 0 0">' + tr('Listo: te enviaremos el informe completo a <b>' + esc(r.d.email) + '</b> en cuanto termine. Ya puedes cerrar esta página, o seguir aquí: se abrirá solo.', 'Done: we’ll send the full report to <b>' + esc(r.d.email) + '</b> as soon as it’s finished. You can close this page now, or stay here: it will open by itself.') + '</p></section>';
+          bx.innerHTML = '<section class="card sec" style="margin-bottom:14px"><div class="eyebrow">✉️ ' + tr('Te avisamos por email', 'We’ll email you') + '</div><p style="margin:8px 0 0">' + tr('Listo: te enviaremos el informe completo a <b>' + esc(r.d.email) + '</b> en cuanto termine. Ya puedes cerrar esta página, o seguir aquí: se abrirá solo.', 'Done: we’ll send the full report to <b>' + esc(r.d.email) + '</b> as soon as it’s finished. You can close this page now, or stay here: it will open by itself.') + '</p></section>';
           pollJob();
         });
       }
