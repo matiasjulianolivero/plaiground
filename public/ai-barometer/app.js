@@ -221,10 +221,13 @@
     } else { $('results').innerHTML = ''; renderRun(jobs, 0, jobs.length + 1); $('run').scrollIntoView({ behavior: 'smooth', block: 'start' }); }
     // Cola de trabajo: si una pregunta falla (IA saturada), se reintenta una vez al final sin cambiar el orden en pantalla.
     var queue = jobs.map(function (x, k) { return k; }), done = 0, fails = 0;
+    S.bgJob = null; if (jobs.length > 2) bgBox(); else removeBg();
     (function next() {
+      if (S.bgJob) return; // el estudio sigue en el servidor (avísame por email)
       if (!queue.length) return finish();
       var j = jobs[queue.shift()]; j.st = 'on'; renderRun(jobs, done, jobs.length + 1);
       api('/api/aibb/ask', { method: 'POST', body: JSON.stringify({ setup: S.setup, engine: j.engine, prompt: j.prompt, unlock: teaser ? undefined : S.unlock }) }).then(function (r) {
+        if (S.bgJob) return;
         if (r.ok && r.d.text) { j.st = 'ok'; answers.push({ engine: j.engine, prompt: j.prompt, text: r.d.text }); if (teaser || !(S.cfg && S.cfg.user)) cachePut(answers.slice()); }
         else { j.st = 'ko'; if (r.status === 429 && (r.d.error === 'global_limit' || r.d.error === 'teaser_limit')) { S.limitHit = r.d.error; queue = []; return finish(); } if (!j.retried) { j.retried = true; j.st = 'wait'; queue.push(jobs.indexOf(j)); }
           // Si las 3 primeras preguntas fallan sin ninguna respuesta, la IA gratuita está caída: se para y se avisa en vez de esperar minutos
@@ -233,11 +236,47 @@
         setTimeout(next, queue.length ? 4200 : 0); // respeta el límite por minuto de la capa gratuita
       });
     })();
+    // Caja "puede tardar unos minutos · te avisamos por email": crea un trabajo en el servidor que sigue aunque se cierre la página
+    function bgBox() {
+      var bx = $('bgbox'); if (!bx) { bx = document.createElement('div'); bx.id = 'bgbox'; $('run').insertAdjacentElement('afterend', bx); }
+      var logged = S.cfg && S.cfg.user;
+      bx.innerHTML = '<section class="card sec" style="margin-top:14px"><div class="eyebrow">⏱️ ' + tr('Puede tardar unos minutos', 'This can take a few minutes') + '</div><p style="margin:8px 0 14px;color:var(--muted)">' +
+        (logged ? tr('Si no quieres esperar, te enviamos un email a <b>' + esc(S.cfg.user.email) + '</b> cuando el informe esté listo y puedes cerrar esta página. O espera aquí el progreso.', 'If you don’t want to wait, we’ll email <b>' + esc(S.cfg.user.email) + '</b> when the report is ready and you can close this page. Or wait here.') + '</p><button class="btn" id="bgGo">' + tr('Avísame por email', 'Email me when ready') + '</button>'
+          : tr('Déjanos tu email y te avisamos cuando el informe completo esté listo: puedes cerrar esta página. O espera aquí el progreso.', 'Leave your email and we’ll let you know when the full report is ready: you can close this page. Or wait here.') + '</p><form class="lform" id="bgForm"><input class="t" id="bgEm" type="email" autocomplete="email" placeholder="' + tr('tu@empresa.com', 'you@company.com') + '"><button class="btn" type="submit" id="bgGo">' + tr('Avísame por email', 'Email me when ready') + '</button></form><label class="small" style="display:flex;gap:8px;margin-top:8px"><input type="checkbox" id="bgAcc"> <span>' + tr('Acepto los <a href="/legal/terminos/" target="_blank">términos</a> y la <a href="/legal/privacidad/" target="_blank">política de privacidad</a>.', 'I accept the <a href="/legal/terminos/" target="_blank">terms</a> and the <a href="/legal/privacidad/" target="_blank">privacy policy</a>.') + '</span></label>') +
+        '<div class="err" id="bgErr"></div></section>';
+      function go(e) {
+        if (e) e.preventDefault();
+        var er = $('bgErr'), em = logged ? '' : ($('bgEm').value || '').trim();
+        if (!logged && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(em)) { er.textContent = tr('Escribe un email válido.', 'Enter a valid email.'); return; }
+        if (!logged && !$('bgAcc').checked) { er.textContent = tr('Acepta los términos para continuar.', 'Accept the terms to continue.'); return; }
+        $('bgGo').disabled = true; er.textContent = '';
+        api('/api/aibb/notify', { method: 'POST', body: JSON.stringify({ setup: S.setup, answers: answers, engines: engines, email: em, accepted: true, lang: L() }) }).then(function (r) {
+          if (!r.ok) { $('bgGo').disabled = false; er.textContent = r.d.error === 'too_many_requests' ? tr('Demasiados intentos. Espera unos minutos.', 'Too many attempts. Wait a few minutes.') : tr('No se pudo activar el aviso. Inténtalo de nuevo.', 'Couldn’t set up the email. Try again.'); return; }
+          S.bgJob = r.d.job; if (r.d.unlock) { S.unlock = r.d.unlock; S.unlockEmail = r.d.email; }
+          bx.innerHTML = '<section class="card sec" style="margin-top:14px"><div class="eyebrow">✉️ ' + tr('Te avisamos por email', 'We’ll email you') + '</div><p style="margin:8px 0 0">' + tr('Listo: te enviaremos el informe completo a <b>' + esc(r.d.email) + '</b> en cuanto termine. Ya puedes cerrar esta página, o seguir aquí: se abrirá solo.', 'Done: we’ll send the full report to <b>' + esc(r.d.email) + '</b> as soon as it’s finished. You can close this page now, or stay here: it will open by itself.') + '</p></section>';
+          pollJob();
+        });
+      }
+      var f = $('bgForm'); if (f) f.onsubmit = go; else $('bgGo').onclick = go;
+    }
+    function pollJob() {
+      if (!S.bgJob) return;
+      api('/api/aibb/job/' + S.bgJob).then(function (r) {
+        if (!r.ok) return setTimeout(pollJob, 8000);
+        var d = r.d;
+        jobs.forEach(function (x, k) { x.st = k < d.done ? 'ok' : k === d.done && d.status === 'running' ? 'on' : x.st === 'ok' ? 'ok' : ''; });
+        renderRun(jobs, Math.min(d.done, jobs.length), jobs.length + 1);
+        if (d.status === 'done' && d.study) { S.bgJob = null; S.running = false; removeBg(); $('run').innerHTML = ''; S.study = d.study; renderResults(); loadHistory(); $('results').scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
+        if (d.status === 'failed') { S.bgJob = null; S.running = false; removeBg(); return busyCard(teaser); }
+        setTimeout(pollJob, 4000);
+      });
+    }
     function busyCard(t) {
       $('run').innerHTML = '<section class="card sec"><div class="eyebrow">' + tr('IA saturada', 'AI overloaded') + '</div><h2 style="font-size:28px;margin-top:8px">' + tr('La IA gratuita está saturada ahora mismo', 'The free AI is overloaded right now') + '</h2><p style="color:var(--muted);margin:10px 0 18px">' + tr('Google Gemini no está respondiendo por exceso de demanda. No es un problema de tu web. Prueba de nuevo en un rato: tu estudio está preparado.', 'Google Gemini isn’t answering due to high demand. It’s not a problem with your website. Try again in a while: your study is ready to go.') + '</p><button class="btn" id="busyRetry">' + tr('Reintentar ahora', 'Try again now') + '</button></section>';
-      var br = $('busyRetry'); if (br) br.onclick = function () { runLive(t); };
+      removeBg(); var br = $('busyRetry'); if (br) br.onclick = function () { runLive(t); };
     }
     function finish() {
+      removeBg();
       if (!answers.length) { S.running = false; $('run').innerHTML = '<div class="card sec"><b>' + (S.limitHit === 'teaser_limit' ? tr('Ya has usado las vistas previas gratuitas de hoy. Entra con tu email para ver el informe completo:', 'You’ve used today’s free previews. Sign in with your email to see the full report:') + '</b>' + loginFormHtml() : tr('Las IA no han respondido ahora mismo (cupo gratuito saturado). Prueba en unos minutos.', 'The AIs didn’t answer right now (free quota busy). Try again in a few minutes.') + '</b>') + '</div>'; bindLogin(); return; }
       api('/api/aibb/finish', { method: 'POST', body: JSON.stringify({ setup: S.setup, answers: answers, unlock: teaser ? undefined : S.unlock }) }).then(function (r) {
         S.running = false; $('run').innerHTML = '';
@@ -247,6 +286,7 @@
       });
     }
   }
+  function removeBg() { var bx = $('bgbox'); if (bx) bx.remove(); }
   function renderRun(jobs, done, total) {
     var p = Math.round(done / total * 100);
     $('run').innerHTML = '<section class="card sec"><div class="runh"><div><div class="eyebrow">' + tr('En marcha', 'Running') + '</div><h2 style="font-size:30px;margin-top:8px">' + tr('Analizando tu marca en la IA…', 'Analyzing your brand in AI…') + '</h2></div><b style="font:800 34px var(--display)">' + p + '%</b></div><div class="bar"><i style="width:' + p + '%"></i></div>' +

@@ -779,6 +779,12 @@ export default {
     return env.ASSETS.fetch(req);
   },
   async scheduled(event, env, ctx) {
+    // Cada minuto: estudios del barómetro que siguen en segundo plano. A las 09:00: newsletter de bienvenida
+    if (event.cron === '* * * * *') {
+      aibb = aibb || createAibb({ json, currentUser, randomToken, sha256, notifyOwner, issueLoginLink, validEmail });
+      ctx.waitUntil(aibb.runJobs(env).catch(e => console.error('aibb jobs', e)));
+      return;
+    }
     ctx.waitUntil(nlWelcome(env).then(r => console.log('newsletter bienvenida', JSON.stringify(r))).catch(e => console.error('newsletter bienvenida', e)));
   }
 };

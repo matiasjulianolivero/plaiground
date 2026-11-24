@@ -42,6 +42,7 @@ export function createAibb(h) {
       env.DB.prepare(`CREATE TABLE IF NOT EXISTS aibb_shares (token TEXT PRIMARY KEY, study_id TEXT NOT NULL, user_id TEXT NOT NULL, created_at INTEGER NOT NULL, expires_at INTEGER NOT NULL, revoked_at INTEGER)`),
       env.DB.prepare(`CREATE INDEX IF NOT EXISTS idx_aibb_shares_study ON aibb_shares(study_id)`),
       env.DB.prepare(`CREATE TABLE IF NOT EXISTS aibb_log (ts INTEGER NOT NULL, msg TEXT)`),
+      env.DB.prepare(`CREATE TABLE IF NOT EXISTS aibb_jobs (id TEXT PRIMARY KEY, email TEXT NOT NULL, owner_id TEXT NOT NULL, lang TEXT, setup TEXT NOT NULL, answers TEXT NOT NULL, pending TEXT NOT NULL, total INTEGER, status TEXT NOT NULL, created_at INTEGER NOT NULL, lock_until INTEGER DEFAULT 0, study_id TEXT)`),
       env.DB.prepare(`CREATE TABLE IF NOT EXISTS aibb_models (model TEXT PRIMARY KEY, good_at INTEGER DEFAULT 0, bad_until INTEGER DEFAULT 0)`),
       env.DB.prepare(`CREATE TABLE IF NOT EXISTS aibb_unlocks (token TEXT PRIMARY KEY, email TEXT NOT NULL, created_at INTEGER NOT NULL, ip TEXT, uses INTEGER DEFAULT 0)`)
     ]);
@@ -300,8 +301,69 @@ Devuelve: {"brand": nombre comercial de la marca, "category": categoría de prod
     return out;
   }
 
+
+  // Valora el tono (juez Gemini), calcula el resultado y, si hay dueño, guarda el estudio y avisa al titular
+  async function saveStudy(env, s, answers, demo, partial, owner, judge, unlockToken) {
+    if (!demo && !partial && env.GEMINI_API_KEY && owner && !(await quota(env, owner, 'judge'))) {
+      const jp = `Marca: ${s.brand} (${s.domain}). Para cada respuesta numerada, valora el tono hacia la marca: 1 positivo, 0 neutro, -1 negativo, null si no se menciona. Devuelve SOLO un JSON {"scores":[...]} con ${answers.length} valores en orden.\n\n` + answers.map((a, i) => `#${i + 1}\n${clip(a.text, 1500)}`).join('\n\n');
+      const r = await callEngine(env, 'gemini', jp, { json: true, temperature: 0 });
+      await logUse(env, owner, 'gemini', 'judge', !r.error);
+      const j = r.error ? null : parseJson(r.text);
+      if (j && Array.isArray(j.scores) && j.scores.length === answers.length) judge = j.scores.map(x => x == null ? null : Math.max(-1, Math.min(1, +x || 0)));
+    }
+      const result = analyze(s, answers, judge);
+    const study = { v: 1, demo, partial, created_at: Date.now(), setup: s, answers: answers.map(a => ({ prompt: a.prompt, engine: a.engine, text: clip(a.text, 4000) })), result, engines: engineList(env) };
+    if (!demo && owner) {
+      const user = owner;
+      if (unlockToken) await env.DB.prepare('UPDATE aibb_unlocks SET uses = uses + 1 WHERE token = ?').bind(unlockToken).run();
+      study.id = randomToken(8);
+      await env.DB.prepare('INSERT INTO aibb_studies (id, user_id, created_at, domain, brand, lang, score, visibility, data) VALUES (?,?,?,?,?,?,?,?,?)')
+        .bind(study.id, user.id, study.created_at, s.domain, s.brand, s.language, result.score, result.brands[0].visibility, JSON.stringify(study)).run();
+      const tb = result.brands[0];
+      if (h.notifyOwner) await h.notifyOwner(env, `🔎 Estudio AI Barometer: ${s.brand} (${s.domain}) · score ${result.score}`, [['Email', user.email + (user.pending ? ' (sin confirmar aún)' : '')], ['Marca', s.brand], ['Web', s.domain], ['Categoría', s.category], ['Competidores', s.competitors.join(', ')], ['AI Visibility Score', String(result.score)], ['Visibilidad', Math.round(tb.visibility * 100) + '%'], ['Puesto', result.rank + ' de ' + result.brands.length], ['Asistentes', [...new Set(answers.map(a => a.engine))].join(', ')]], user.email);
+    }
+    return study;
+  }
+
+  /* ---------- estudios en segundo plano: siguen aunque se cierre la página y avisan por email ---------- */
+  // Procesa preguntas pendientes de un trabajo durante unos ~maxMs; lo bloquea para que no lo procesen dos a la vez
+  async function stepJob(env, id, maxMs) {
+    const now = Date.now();
+    const lk = await env.DB.prepare("UPDATE aibb_jobs SET lock_until = ? WHERE id = ? AND status = 'running' AND lock_until < ?").bind(now + maxMs + 60e3, id, now).run();
+    if (!lk.meta || !lk.meta.changes) return;
+    const j = await env.DB.prepare('SELECT * FROM aibb_jobs WHERE id = ?').bind(id).first();
+    const s = JSON.parse(j.setup), answers = JSON.parse(j.answers), pending = JSON.parse(j.pending);
+    const owner = { id: j.owner_id, email: j.email, pending: j.owner_id.startsWith('pending:') };
+    const t0 = Date.now();
+    let first = true;
+    while (pending.length && (first || Date.now() - t0 < maxMs)) {
+      first = false;
+      const q = await quota(env, owner, 'ask'); if (q) break;
+      const x = pending.shift();
+      const r = await callEngine(env, x.engine, x.prompt, { system: askSystem(s.language) });
+      await logUse(env, owner, x.engine, 'ask', !r.error);
+      if (r.text) answers.push({ engine: x.engine, prompt: x.prompt, text: clip(r.text, 6000) });
+      else if ((x.tries = (x.tries || 0) + 1) < 3) pending.push(x); // se reintenta más tarde, hasta 3 veces
+      await env.DB.prepare('UPDATE aibb_jobs SET answers = ?, pending = ? WHERE id = ?').bind(JSON.stringify(answers), JSON.stringify(pending), id).run();
+      if (pending.length) await new Promise(res => setTimeout(res, 3000));
+    }
+    if (pending.length) { await env.DB.prepare('UPDATE aibb_jobs SET lock_until = 0 WHERE id = ?').bind(id).run(); return; }
+    if (!answers.length) { await env.DB.prepare("UPDATE aibb_jobs SET status = 'failed', lock_until = 0 WHERE id = ?").bind(id).run(); return; }
+    const study = await saveStudy(env, s, answers, false, false, owner, null, null);
+    await env.DB.prepare("UPDATE aibb_jobs SET status = 'done', study_id = ?, lock_until = 0 WHERE id = ?").bind(study.id, id).run();
+    // Email con el enlace al informe (entra y lo abre; para emails sin confirmar, además lo guarda en su histórico)
+    if (env.RESEND_API_KEY) await h.issueLoginLink(env, (env.APP_URL || 'https://plaigroundmarketing.com').replace(/\/$/, ''), j.email, j.lang, '', true);
+  }
+  // Cron cada minuto: avanza los trabajos pendientes de las últimas 6 horas
+  async function runJobs(env) {
+    if (!env.DB) return;
+    await ensure(env);
+    const r = await env.DB.prepare("SELECT id FROM aibb_jobs WHERE status = 'running' AND lock_until < ? AND created_at > ? ORDER BY created_at LIMIT 3").bind(Date.now(), Date.now() - 6 * 3600e3).all();
+    for (const x of (r.results || [])) await stepJob(env, x.id, 40e3);
+    await env.DB.prepare("UPDATE aibb_jobs SET status = 'failed' WHERE status = 'running' AND created_at < ?").bind(Date.now() - 6 * 3600e3).run();
+  }
   /* ---------- rutas ---------- */
-  return async function handle(req, env, url, pathname, m) {
+  const handle = async function handle(req, env, url, pathname, m) {
     if (!pathname.startsWith('/api/aibb/')) return null;
     if (env.DB) await ensure(env);
     const user = env.DB ? await currentUser(req, env) : null;
@@ -392,29 +454,47 @@ Devuelve: {"brand": nombre comercial de la marca, "category": categoría de prod
       else {
         answers = (Array.isArray(body.answers) ? body.answers : []).slice(0, partial ? TEASER_PROMPTS : MAX_PROMPTS * ENGINES.length).map(a => ({ prompt: clip(a.prompt, 240), engine: String(a.engine || ''), text: clip(a.text, 6000) })).filter(a => a.text);
         if (!answers.length) return json({ error: 'no_answers' }, 400);
-        // Un juez (Gemini) valora el tono hacia la marca en cada respuesta: -1 negativo · 0 neutro · 1 positivo · null si no aparece
-        if (!partial && env.GEMINI_API_KEY && !(await quota(env, owner, 'judge'))) {
-          const jp = `Marca: ${s.brand} (${s.domain}). Para cada respuesta numerada, valora el tono hacia la marca: 1 positivo, 0 neutro, -1 negativo, null si no se menciona. Devuelve SOLO un JSON {"scores":[...]} con ${answers.length} valores en orden.\n\n` + answers.map((a, i) => `#${i + 1}\n${clip(a.text, 1500)}`).join('\n\n');
-          const r = await callEngine(env, 'gemini', jp, { json: true, temperature: 0 });
-          await logUse(env, owner, 'gemini', 'judge', !r.error);
-          const j = r.error ? null : parseJson(r.text);
-          if (j && Array.isArray(j.scores) && j.scores.length === answers.length) judge = j.scores.map(x => x == null ? null : Math.max(-1, Math.min(1, +x || 0)));
-        }
+        judge = undefined; // el juez se calcula en saveStudy
       }
-      const result = analyze(s, answers, judge);
-      const study = { v: 1, demo, partial, created_at: Date.now(), setup: s, answers: answers.map(a => ({ prompt: a.prompt, engine: a.engine, text: clip(a.text, 4000) })), result, engines: engineList(env) };
-      if (!demo && owner) {
-        const user = owner;
-        if (unlocked) await env.DB.prepare('UPDATE aibb_unlocks SET uses = uses + 1 WHERE token = ?').bind(body.unlock).run();
-        study.id = randomToken(8);
-        await env.DB.prepare('INSERT INTO aibb_studies (id, user_id, created_at, domain, brand, lang, score, visibility, data) VALUES (?,?,?,?,?,?,?,?,?)')
-          .bind(study.id, user.id, study.created_at, s.domain, s.brand, s.language, result.score, result.brands[0].visibility, JSON.stringify(study)).run();
-        const tb = result.brands[0];
-        if (h.notifyOwner) await h.notifyOwner(env, `🔎 Estudio AI Barometer: ${s.brand} (${s.domain}) · score ${result.score}`, [['Email', user.email + (user.pending ? ' (sin confirmar aún)' : '')], ['Marca', s.brand], ['Web', s.domain], ['Categoría', s.category], ['Competidores', s.competitors.join(', ')], ['AI Visibility Score', String(result.score)], ['Visibilidad', Math.round(tb.visibility * 100) + '%'], ['Puesto', result.rank + ' de ' + result.brands.length], ['Asistentes', [...new Set(answers.map(a => a.engine))].join(', ')]], user.email);
-      }
+      const study = await saveStudy(env, s, answers, demo, partial, owner, judge === undefined ? null : judge, unlocked ? body.unlock : null);
       return json({ study });
     }
 
+
+    // Avísame por email: el estudio sigue en el servidor aunque se cierre la página
+    if (pathname === '/api/aibb/notify' && m === 'POST') {
+      const s = cleanSetup(body.setup), lang = body.lang === 'en' ? 'en' : 'es';
+      if (!s.domain || !s.prompts.length) return json({ error: 'bad_request' }, 400);
+      let email = user ? user.email : String(body.email || '').trim().toLowerCase(), unlock = null;
+      if (!user) {
+        if (!h.validEmail(email)) return json({ error: 'invalid_email' }, 400);
+        if (body.accepted !== true) return json({ error: 'terms_required' }, 400);
+        const ip = req.headers.get('cf-connecting-ip') || '';
+        const n = await env.DB.prepare('SELECT COUNT(*) AS n FROM aibb_unlocks WHERE (ip = ? OR email = ?) AND created_at > ?').bind(ip, email, Date.now() - 3600e3).first();
+        if (n.n >= 6) return json({ error: 'too_many_requests' }, 429);
+        unlock = randomToken(16);
+        await env.DB.prepare('INSERT INTO aibb_unlocks (token, email, created_at, ip) VALUES (?,?,?,?)').bind(unlock, email, Date.now(), ip).run();
+      }
+      const owner_id = user ? user.id : 'pending:' + email;
+      const answers = (Array.isArray(body.answers) ? body.answers : []).slice(0, MAX_PROMPTS * ENGINES.length).map(a => ({ prompt: clip(a.prompt, 240), engine: String(a.engine || ''), text: clip(a.text, 6000) })).filter(a => a.text);
+      const engines = ENGINES.filter(e => engineActive(env, e) && (!Array.isArray(body.engines) || body.engines.includes(e.id))).map(e => e.id).slice(0, 1);
+      const pending = [];
+      engines.forEach(e => s.prompts.forEach(p => { if (!answers.some(a => a.engine === e && a.prompt === p)) pending.push({ engine: e, prompt: p }); }));
+      const id = randomToken(16);
+      await env.DB.prepare("INSERT INTO aibb_jobs (id, email, owner_id, lang, setup, answers, pending, total, status, created_at) VALUES (?,?,?,?,?,?,?,?,'running',?)")
+        .bind(id, email, owner_id, lang, JSON.stringify(s), JSON.stringify(answers), JSON.stringify(pending), answers.length + pending.length, Date.now()).run();
+      return json({ job: id, unlock, email });
+    }
+    // Estado del trabajo; si la página sigue abierta, de paso avanza una pregunta (así no hay que esperar al cron)
+    const jm = pathname.match(/^\/api\/aibb\/job\/([a-f0-9]{32})$/);
+    if (jm && m === 'GET') {
+      await stepJob(env, jm[1], 1);
+      const j = await env.DB.prepare('SELECT status, answers, pending, total, study_id FROM aibb_jobs WHERE id = ?').bind(jm[1]).first();
+      if (!j) return json({ error: 'not_found' }, 404);
+      const out = { status: j.status, done: JSON.parse(j.answers).length, left: JSON.parse(j.pending).length, total: j.total };
+      if (j.status === 'done' && j.study_id) { const st = await env.DB.prepare('SELECT data FROM aibb_studies WHERE id = ?').bind(j.study_id).first(); if (st) out.study = JSON.parse(st.data); }
+      return json(out, 200, { 'cache-control': 'no-store' });
+    }
     if (pathname === '/api/aibb/studies' && m === 'GET') {
       if (!user) return json({ error: 'unauthorized' }, 401);
       const r = await env.DB.prepare('SELECT id, created_at, domain, brand, score, visibility FROM aibb_studies WHERE user_id = ? ORDER BY created_at DESC LIMIT 200').bind(user.id).all();
@@ -450,4 +530,6 @@ Devuelve: {"brand": nombre comercial de la marca, "category": categoría de prod
     }
     return json({ error: 'not_found' }, 404);
   };
+  handle.runJobs = runJobs;
+  return handle;
 }

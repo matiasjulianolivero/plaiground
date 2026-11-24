@@ -33,6 +33,7 @@
   },
   "observability": { "enabled": true },
   // Secreto necesario (no va aquí): RESEND_API_KEY → Workers → plaiground → Settings → Variables and Secrets
+  // Cada minuto: estudios del AI Brand Barometer que siguen en segundo plano (avisan por email al terminar)
   // Cada día a las 09:00 UTC (10:00 en Madrid en invierno, 11:00 en verano): newsletter de bienvenida
-  "triggers": { "crons": ["0 9 * * *"] }
+  "triggers": { "crons": ["0 9 * * *", "* * * * *"] }
 }
