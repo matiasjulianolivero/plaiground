@@ -48,7 +48,7 @@ export function createAibb(h) {
     const since = Date.now() - 864e5;
     const all = await env.DB.prepare('SELECT COUNT(*) AS n FROM aibb_usage WHERE ts > ?').bind(since).first();
     if (all.n >= (+env.AIBB_DAILY_CALLS || DAILY_CALLS_DEFAULT)) return 'global_limit';
-    if (kind === 'setup') {
+    if (kind === 'setup' && !(user.email && env.LEAD_NOTIFY_EMAIL && user.email.toLowerCase() === env.LEAD_NOTIFY_EMAIL.toLowerCase())) {
       const mine = await env.DB.prepare("SELECT COUNT(*) AS n FROM aibb_usage WHERE ts > ? AND user_id = ? AND kind = 'setup'").bind(since, user.id).first();
       if (mine.n >= (String(user.id).startsWith('ip:') ? STUDIES_PER_IP_DAY : STUDIES_PER_USER_DAY + 2)) return 'user_limit';
     }
@@ -67,7 +67,11 @@ export function createAibb(h) {
           body: JSON.stringify(Object.assign({ contents: [{ role: 'user', parts: [{ text: prompt }] }], generationConfig: Object.assign({ temperature, maxOutputTokens: 1500 }, wantJson ? { responseMimeType: 'application/json' } : {}) }, system ? { systemInstruction: { parts: [{ text: system }] } } : {}))
         });
         const d = await r.json().catch(() => ({}));
-        if (!r.ok) { console.error('Gemini', r.status, JSON.stringify(d).slice(0, 300)); return { error: r.status === 429 ? 'rate_limited' : 'engine_failed' }; }
+        if (!r.ok) {
+          console.error('Gemini', r.status, JSON.stringify(d).slice(0, 300));
+          if ((r.status === 429 || r.status >= 500) && !arguments[3]) { await new Promise(res => setTimeout(res, 1500)); return callEngine(env, id, prompt, { json: wantJson, temperature, system }, true); }
+          return { error: r.status === 429 ? 'rate_limited' : 'engine_failed' };
+        }
         return { text: ((d.candidates || [])[0]?.content?.parts || []).map(p => p.text || '').join('') };
       }
       if (id === 'chatgpt' || id === 'perplexity') {
@@ -116,6 +120,12 @@ export function createAibb(h) {
     const cat = es ? 'software de gestión para empresas' : 'business management software';
     const comps = ['Alfaplus', 'Betaware', 'Gammix', 'Deltio']; // competidores ficticios del modo demo
     return { domain, brand, category: cat, country: es ? 'España' : 'United States', language: es ? 'es' : 'en', competitors: comps, prompts: templatePrompts(brand, cat, es ? 'España' : 'the US', comps[0], es) };
+  }
+  function manualSetup(domain, site, lang) {
+    const es = lang !== 'en', brand = site.siteName || titleCase(rootOf(domain));
+    return { domain, brand, category: '', country: '', language: es ? 'es' : 'en', competitors: [],
+      prompts: es ? [`¿Qué opinan los clientes de ${brand}?`, `¿Cuáles son las mejores alternativas a ${brand}?`, `¿Es ${brand} una buena opción? ¿Qué pros y contras tiene?`, `¿Qué empresas hacen lo mismo que ${brand} y cuál recomiendas?`, `¿Cuánto cuesta trabajar con ${brand} o con empresas similares?`, `¿Qué empresa recomiendas en el sector de ${brand} para una pyme?`]
+        : [`What do customers think of ${brand}?`, `What are the best alternatives to ${brand}?`, `Is ${brand} a good choice? What are the pros and cons?`, `Which companies do the same as ${brand} and which do you recommend?`, `How much does it cost to work with ${brand} or similar companies?`, `Which company in ${brand}’s industry do you recommend for a small business?`] };
   }
   function templatePrompts(brand, cat, country, comp, es) {
     return es ? [
@@ -266,9 +276,10 @@ Devuelve: {"brand": nombre comercial de la marca, "category": categoría de prod
       // La preparación (marca, competidores reales y preguntas) también funciona sin sesión, con su propio tope por IP;
       // lanzar las preguntas a las IA sí exige iniciar sesión.
       const who = user || { id: 'ip:' + (await h.sha256((req.headers.get('cf-connecting-ip') || '') + ':aibb')).slice(0, 24) };
-      const q = await quota(env, who, 'setup'); if (q) return json({ mode: 'demo', reason: q, setup: demoSetup(domain, site, lang), engines: engineList(env), site });
+      const q = await quota(env, who, 'setup'); if (q) return json({ error: q }, 429);
       const s = await liveSetup(env, who, domain, site, lang);
-      if (s.error) return json({ mode: 'demo', reason: s.error, setup: demoSetup(domain, site, lang), engines: engineList(env), site });
+      // Si la IA no responde, nunca mostramos datos simulados para una web real: preparación manual para completar y lanzar
+      if (s.error) return json({ mode: user ? 'live' : 'login', reason: 'auto_failed', detail: s.error, setup: manualSetup(domain, site, lang), engines: engineList(env), site });
       return json({ mode: user ? 'live' : 'login', setup: s, engines: engineList(env), site });
     }
 
