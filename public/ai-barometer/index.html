@@ -36,9 +36,16 @@ html[data-theme="dark"] .nav{background:linear-gradient(160deg,rgba(60,64,130,.3
 .pill{display:flex;padding:3px;border-radius:999px;background:rgba(255,255,255,.35);border:1px solid var(--line)}html[data-theme="dark"] .pill{background:rgba(255,255,255,.07)}
 .pill button{border:0;background:none;color:var(--muted);font:700 12px var(--body);padding:7px 11px;border-radius:999px;cursor:pointer}
 html[data-lang="es"] .pill [data-l="es"],html[data-lang="en"] .pill [data-l="en"]{background:var(--ink);color:var(--bg)}
-.who{font:600 13px var(--body);color:var(--muted);max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.who{position:relative}.ubtn{display:flex;align-items:center;gap:8px;border:1px solid var(--line);background:rgba(255,255,255,.35);color:var(--ink);border-radius:999px;padding:4px 12px 4px 4px;font:600 13px var(--body);cursor:pointer;max-width:240px}
+html[data-theme="dark"] .ubtn{background:rgba(255,255,255,.07)}.ubtn i{flex:none;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-style:normal;font-weight:800;color:#fff;background:linear-gradient(135deg,#4338CA,#7C5CFF,#FF7A59)}
+.ubtn span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.umenu{position:absolute;right:0;top:calc(100% + 10px);min-width:240px;background:var(--paper);border:1px solid var(--line);border-radius:18px;box-shadow:var(--sh);padding:8px;display:none;z-index:70}
+.who.open .umenu{display:block}.umenu .em{padding:10px 12px 8px;font-size:13px;color:var(--muted);word-break:break-all}
+.umenu button,.umenu a{display:block;width:100%;text-align:left;border:0;background:none;color:var(--ink);font:600 15px var(--body);padding:11px 12px;border-radius:12px;cursor:pointer;text-decoration:none}
+.umenu button:hover,.umenu a:hover{background:var(--soft)}.umenu .out{color:var(--bad)}
+@media (max-width:640px){.ubtn{padding:4px}.ubtn span{display:none}.umenu{position:fixed;left:12px;right:12px;top:84px;min-width:0}}
 .tbtn{border:1px solid var(--line);background:rgba(255,255,255,.35);color:var(--ink);width:38px;height:38px;border-radius:50%;cursor:pointer;display:grid;place-items:center}html[data-theme="dark"] .tbtn{background:rgba(255,255,255,.07)}
-@media (max-width:640px){.crumb,.who{display:none}}
+@media (max-width:640px){.crumb{display:none}}
 /* hero */
 .hero{padding:56px 0 30px;position:relative}
 .hero h1{font-size:clamp(42px,6.4vw,84px);line-height:.98;font-weight:800;margin:16px 0 18px;max-width:900px}
@@ -160,7 +167,7 @@ footer{margin-top:60px;padding:30px 0 50px;border-top:1px solid var(--line);colo
 <body>
 <header><nav class="nav">
   <a class="brand" href="/" aria-label="plaiground">pl<span class="ai">ai</span>ground</a><span class="crumb">AI Brand Barometer · <span lang="es">visibilidad en IA</span><span lang="en">AI visibility</span></span>
-  <span class="sp"></span><span class="who" id="who"></span>
+  <span class="sp"></span><div class="who" id="who"></div>
   <div class="pill" role="group" aria-label="Idioma / Language"><button type="button" data-l="es">ES</button><button type="button" data-l="en">EN</button></div>
   <button class="tbtn" id="themeBtn" type="button" aria-label="Modo claro / oscuro · Light / dark mode"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
 </nav></header>
