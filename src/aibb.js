@@ -277,6 +277,15 @@ Devuelve: {"brand": nombre comercial de la marca, "category": categoría de prod
     const liveOk = !!(env.GEMINI_API_KEY || env.OPENAI_API_KEY || env.ANTHROPIC_API_KEY || env.PERPLEXITY_API_KEY);
     const body = m === 'POST' ? await req.json().catch(() => ({})) : {};
 
+    // Comprobación pública y sin datos sensibles de que Gemini responde (máx. 12 por hora)
+    if (pathname === '/api/aibb/health' && m === 'GET') {
+      const n = await env.DB.prepare("SELECT COUNT(*) AS n FROM aibb_usage WHERE ts > ? AND kind = 'health'").bind(Date.now() - 3600e3).first();
+      if (n.n >= 12) return json({ error: 'try_later' }, 429);
+      await logUse(env, null, 'gemini', 'health', 1);
+      const t = env.GEMINI_API_KEY ? await callEngine(env, 'gemini', 'Responde solo: OK') : { error: 'no_key' };
+      const last = await env.DB.prepare('SELECT ts, msg FROM aibb_log ORDER BY ts DESC LIMIT 5').all();
+      return json({ ok: !!t.text, error: t.error || null, reply: t.text ? t.text.slice(0, 40) : null, recent: (last.results || []).map(r => ({ at: new Date(r.ts).toISOString(), msg: r.msg.replace(/AIza[\w-]+|AQ\.[\w-]+/g, '[key]') })) }, 200, { 'cache-control': 'no-store' });
+    }
     if (pathname === '/api/aibb/diag' && m === 'GET') {
       if (!user || !env.LEAD_NOTIFY_EMAIL || user.email.toLowerCase() !== env.LEAD_NOTIFY_EMAIL.toLowerCase()) return json({ error: 'forbidden' }, 403);
       const t = await callEngine(env, 'gemini', 'Responde solo: OK');
