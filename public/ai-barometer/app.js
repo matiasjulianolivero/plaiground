@@ -98,7 +98,7 @@
     function draw() {
       if (done) return;
       var el = (Date.now() - t0) / 1000, p = Math.min(94, Math.round(100 * (1 - Math.exp(-el / 5)))), k = Math.min(steps.length - 1, Math.floor(p / 25));
-      $('setup').innerHTML = '<section class="card sec"><div class="runh"><div><div class="eyebrow">' + tr('Preparando tu estudio', 'Preparing your study') + '</div><h2 style="font-size:30px;margin-top:8px">' + steps[k] + '…</h2></div><b style="font:800 34px var(--display)">' + p + '%</b></div><div class="bar"><i style="width:' + p + '%"></i></div>' +
+      $('setup').innerHTML = '<section class="card sec"><div class="runh"><div><div class="eyebrow">' + tr('Preparando tu estudio', 'Preparing your study') + '</div><h2 style="font-size:30px;margin-top:8px">' + steps[k] + '…</h2>' + (el > 25 ? '<p style="margin:8px 0 0;color:var(--muted)">' + tr('La IA está muy solicitada ahora mismo. Seguimos intentándolo, puede tardar hasta 2 minutos…', 'The AI is in high demand right now. We’re still trying, it can take up to 2 minutes…') + '</p>' : '') + '</div><b style="font:800 34px var(--display)">' + p + '%</b></div><div class="bar"><i style="width:' + p + '%"></i></div>' +
         '<div class="tasks">' + steps.map(function (x, i) { return '<div class="task ' + (i < k ? 'ok' : i === k ? 'on' : '') + '"><span class="st">' + (i < k ? '✓' : '') + '</span><span>' + x + '</span></div>'; }).join('') + '</div></section>';
       setTimeout(draw, 400);
     }
@@ -238,7 +238,7 @@
   }
   function renderRun(jobs, done, total) {
     var p = Math.round(done / total * 100);
-    $('run').innerHTML = '<section class="card sec"><div class="runh"><div><div class="eyebrow">' + tr('En marcha', 'Running') + '</div><h2 style="font-size:30px;margin-top:8px">' + tr('Analizando tu marca en la IA…', 'Analyzing your brand in AI…') + '</h2>' + (el > 25 ? '<p style="margin:8px 0 0;color:var(--muted)">' + tr('La IA está muy solicitada ahora mismo. Seguimos intentándolo, puede tardar hasta 2 minutos…', 'The AI is in high demand right now. We’re still trying, it can take up to 2 minutes…') + '</p>' : '') + '</div><b style="font:800 34px var(--display)">' + p + '%</b></div><div class="bar"><i style="width:' + p + '%"></i></div>' +
+    $('run').innerHTML = '<section class="card sec"><div class="runh"><div><div class="eyebrow">' + tr('En marcha', 'Running') + '</div><h2 style="font-size:30px;margin-top:8px">' + tr('Analizando tu marca en la IA…', 'Analyzing your brand in AI…') + '</h2></div><b style="font:800 34px var(--display)">' + p + '%</b></div><div class="bar"><i style="width:' + p + '%"></i></div>' +
       (jobs.length ? '<div class="tasks">' + jobs.map(function (j) { return '<div class="task ' + j.st + '"><span class="st">' + (j.st === 'ok' ? '✓' : j.st === 'ko' ? '!' : '') + '</span><span>' + esc(j.prompt) + '</span><span class="e">' + ENG_NAME[j.engine] + '</span></div>'; }).join('') + '</div>' : '') + '</section>';
   }
 
