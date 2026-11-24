@@ -13,8 +13,8 @@
     "directory": "./public",
     "not_found_handling": "404-page",
     "binding": "ASSETS",
-    // Solo las rutas /api/ pasan por el código; las páginas se sirven directamente
-    "run_worker_first": ["/api/*"]
+    // /api/ y las páginas que se comparten pasan por el código (vista previa en inglés con ?lang=en); el resto se sirve directamente
+    "run_worker_first": ["/api/*", "/", "/ai-barometer/", "/data/"]
   },
   // Base de datos de Data plaiground (usuarios, sesiones y dashboards).
   // Sin database_id: Cloudflare la crea automáticamente en el primer despliegue.

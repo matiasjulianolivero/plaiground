@@ -769,6 +769,32 @@ async function api(req, env, url, ctx) {
   return json({ error: 'not_found' }, 404);
 }
 
+
+/* ---------- vista previa al compartir, según el idioma (?lang=en) ---------- */
+const SITE = 'https://plaigroundmarketing.com';
+const SHARE_META = {
+  '/': { en: { title: 'plaiground · What does AI say about your brand?', desc: 'AI marketing lab: see what AI says about your brand, turn your data into decisions and explore interactive brand studies. Free tools by plaiground.', img: '/og-en.jpg?v=2' } },
+  '/ai-barometer/': { en: { title: 'AI Brand Barometer · Your brand’s visibility in AI', desc: 'What does an AI answer when someone asks about your category? Measure your visibility in LLMs against your competitors. Free.', img: '/og-en.jpg?v=2' } },
+  '/data/': { en: { title: 'Data plaiground · Your data, turned into an AI dashboard', desc: 'Upload your Excel, CSV or Google Sheets and get an interactive dashboard built for your business and your audience.', img: '/og-data.jpg' } }
+};
+async function shareMeta(req, env, url) {
+  const res = await env.ASSETS.fetch(req);
+  const lang = url.searchParams.get('lang');
+  if (lang !== 'en' || !res.ok || !(res.headers.get('content-type') || '').includes('text/html')) return res;
+  const m = SHARE_META[url.pathname].en, pageUrl = SITE + url.pathname + '?lang=en';
+  const set = (sel, attr, val) => [sel, { element(el) { el.setAttribute(attr, val); } }];
+  let rw = new HTMLRewriter();
+  [set('html', 'lang', 'en'), set('html', 'data-lang', 'en'),
+   set('meta[property="og:title"]', 'content', m.title), set('meta[name="twitter:title"]', 'content', m.title),
+   set('meta[property="og:description"]', 'content', m.desc), set('meta[name="description"]', 'content', m.desc), set('meta[name="twitter:description"]', 'content', m.desc),
+   set('meta[property="og:image"]', 'content', SITE + m.img), set('meta[name="twitter:image"]', 'content', SITE + m.img),
+   set('meta[property="og:url"]', 'content', pageUrl), set('meta[property="og:locale"]', 'content', 'en_GB')
+  ].forEach(([sel, h]) => { rw = rw.on(sel, h); });
+  const out = rw.transform(res);
+  const headers = new Headers(out.headers); headers.set('cache-control', 'public, max-age=300'); headers.append('vary', 'accept-language');
+  return new Response(out.body, { status: out.status, headers });
+}
+
 export default {
   async fetch(req, env, ctx) {
     const url = new URL(req.url);
@@ -776,6 +802,8 @@ export default {
       try { return await api(req, env, url, ctx); }
       catch (e) { console.error(e); return json({ error: 'server_error' }, 500); }
     }
+    // Páginas que se comparten: con ?lang=en la vista previa (título, descripción, imagen) sale en inglés
+    if (SHARE_META[url.pathname] && (req.method === 'GET' || req.method === 'HEAD')) return shareMeta(req, env, url);
     return env.ASSETS.fetch(req);
   },
   async scheduled(event, env, ctx) {
