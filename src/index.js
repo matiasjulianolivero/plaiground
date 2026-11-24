@@ -127,14 +127,14 @@ async function currentUser(req, env) {
 function loginEmail(link, lang, product) {
   const en = lang === 'en';
   const P = product || 'Data plaiground', tag = product ? 'AI Brand Barometer' : 'Data';
-  const subject = en ? `Your access link to ${P}` : `Tu enlace de acceso a ${P}`;
+  const subject = product ? (en ? 'Your AI Brand Barometer report is ready' : 'Tu informe del AI Brand Barometer está listo') : (en ? `Your access link to ${P}` : `Tu enlace de acceso a ${P}`);
   const html = `<!DOCTYPE html><html><body style="margin:0;background:#F4F5FB;font-family:Arial,Helvetica,sans-serif;color:#14162E">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F4F5FB;padding:32px 16px"><tr><td align="center">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#ffffff;border-radius:18px;padding:32px">
 <tr><td style="font-size:22px;font-weight:bold;letter-spacing:-0.5px">pl<span style="color:#4338CA">ai</span>ground <span style="font-size:13px;color:#555A7A;font-weight:normal">${tag}</span></td></tr>
-<tr><td style="padding:22px 0 8px;font-size:20px;font-weight:bold">${en ? (product ? 'See your full AI visibility report' : 'Sign in to Data plaiground') : (product ? 'Ve tu informe completo de visibilidad en IA' : 'Entra en Data plaiground')}</td></tr>
-<tr><td style="font-size:15px;line-height:1.55;color:#555A7A">${en ? 'Click the button to sign in. The link expires in 15 minutes and can only be used once.' : 'Pulsa el botón para entrar. El enlace caduca en 15 minutos y solo se puede usar una vez.'}</td></tr>
-<tr><td style="padding:24px 0"><a href="${esc(link)}" style="display:inline-block;background:#4338CA;color:#ffffff;text-decoration:none;font-weight:bold;padding:14px 24px;border-radius:999px">${en ? (product ? 'See my report' : 'Sign in') : (product ? 'Ver mi informe' : 'Entrar')}</a></td></tr>
+<tr><td style="padding:22px 0 8px;font-size:20px;font-weight:bold">${en ? (product ? 'Save your AI visibility report' : 'Sign in to Data plaiground') : (product ? 'Guarda tu informe de visibilidad en IA' : 'Entra en Data plaiground')}</td></tr>
+<tr><td style="font-size:15px;line-height:1.55;color:#555A7A">${product ? (en ? 'Your report is ready. Click the button to save it in your history, compare it month by month and share it. The link works for 7 days and can only be used once.' : 'Tu informe ya está listo. Pulsa el botón para guardarlo en tu histórico, compararlo mes a mes y compartirlo. El enlace funciona durante 7 días y solo se puede usar una vez.') : (en ? 'Click the button to sign in. The link expires in 15 minutes and can only be used once.' : 'Pulsa el botón para entrar. El enlace caduca en 15 minutos y solo se puede usar una vez.')}</td></tr>
+<tr><td style="padding:24px 0"><a href="${esc(link)}" style="display:inline-block;background:#4338CA;color:#ffffff;text-decoration:none;font-weight:bold;padding:14px 24px;border-radius:999px">${en ? (product ? 'Save and open my report' : 'Sign in') : (product ? 'Guardar y abrir mi informe' : 'Entrar')}</a></td></tr>
 <tr><td style="font-size:13px;line-height:1.5;color:#555A7A">${en ? 'If the button doesn’t work, copy this link into your browser:' : 'Si el botón no funciona, copia este enlace en tu navegador:'}<br><span style="word-break:break-all;color:#4338CA">${esc(link)}</span></td></tr>
 <tr><td style="padding-top:22px;font-size:12px;color:#8A8EAD;border-top:1px solid #E6E8F5">${en ? 'If you didn’t request this, you can ignore this email.' : 'Si no lo has pedido tú, ignora este email.'} · plaigroundmarketing.com</td></tr>
 </table></td></tr></table></body></html>`;
@@ -412,6 +412,15 @@ async function nlPoll(env, i) {
 
 let aibb = null;
 /* ---------- handlers ---------- */
+// Crea un enlace de acceso de un solo uso y lo envía (usado también por el AI Brand Barometer)
+async function issueLoginLink(env, base, email, lang, ip, aibb) {
+  const now = Date.now(), token = randomToken();
+  const ttl = aibb ? 7 * 24 * 60 : TOKEN_TTL_MIN; // el enlace para guardar un informe del barómetro dura 7 días
+  await env.DB.prepare('INSERT INTO login_tokens (token_hash, email, created_at, expires_at, ip, accepted, lang) VALUES (?,?,?,?,?,?,?)')
+    .bind(await sha256(token), email, now, now + ttl * 60e3, ip, 1, lang).run();
+  const link = aibb ? `${base}/ai-barometer/?login=${token}` : `${base}/data/app/?login=${token}`;
+  return sendEmail(env, email, loginEmail(link, lang, aibb ? 'AI Brand Barometer' : ''));
+}
 async function requestLogin(req, env, url) {
   if (!env.RESEND_API_KEY) return json({ error: 'email_not_configured' }, 503);
   const body = await readJson(req);
@@ -461,6 +470,8 @@ async function verifyLogin(req, env) {
   } else {
     await env.DB.prepare('UPDATE users SET last_login_at = ?, terms_accepted_at = COALESCE(terms_accepted_at, ?) WHERE id = ?').bind(now, now, user.id).run();
   }
+  // Informes del AI Brand Barometer desbloqueados con este email antes de confirmar: pasan a su histórico
+  try { await env.DB.prepare('UPDATE aibb_studies SET user_id = ? WHERE user_id = ?').bind(user.id, 'pending:' + used.email).run(); } catch (e) { /* la tabla aún no existe */ }
   const session = randomToken();
   await env.DB.prepare('INSERT INTO sessions (token_hash, user_id, created_at, expires_at) VALUES (?,?,?,?)')
     .bind(await sha256(session), user.id, now, now + SESSION_TTL_DAYS * 864e5).run();
@@ -651,7 +662,7 @@ async function api(req, env, url, ctx) {
     return new Response('ok', { status: 200 });
   }
   if (m !== 'GET' && !sameOrigin(req, url)) return json({ error: 'forbidden' }, 403);
-  if (pathname.startsWith('/api/aibb/')) { aibb = aibb || createAibb({ json, currentUser, randomToken, sha256, notifyOwner }); return aibb(req, env, url, pathname, m); }
+  if (pathname.startsWith('/api/aibb/')) { aibb = aibb || createAibb({ json, currentUser, randomToken, sha256, notifyOwner, issueLoginLink, validEmail }); return aibb(req, env, url, pathname, m); }
 
   if (pathname === '/api/auth/request' && m === 'POST') return requestLogin(req, env, url);
   if (pathname === '/api/auth/verify' && m === 'POST') return verifyLogin(req, env);
