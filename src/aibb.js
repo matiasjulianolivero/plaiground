@@ -14,7 +14,7 @@ const MAX_PROMPTS = 8, MAX_COMPETITORS = 7; // más de 7 competidores: informe P
 const TEASER_PROMPTS = 3, TEASER_ASKS_PER_IP_DAY = 64; // sin registro: vista previa de 3 preguntas + preparación del resto en segundo plano (2 estudios al día por IP)
 
 const ENGINES = [
-  { id: 'gemini', name: 'Gemini', key: 'GEMINI_API_KEY', model: 'GEMINI_MODEL', def: 'gemini-3.1-flash-lite', alt: ['gemini-flash-lite-latest', 'gemini-3.5-flash-lite', 'gemini-2.5-flash-lite', 'gemini-flash-latest'] },
+  { id: 'gemini', name: 'Gemini', key: 'GEMINI_API_KEY', model: 'GEMINI_MODEL', def: 'gemini-3.1-flash-lite', alt: ['gemini-flash-lite-latest', 'gemini-3.5-flash-lite', 'gemini-flash-latest'] },
   { id: 'chatgpt', name: 'ChatGPT', key: 'OPENAI_API_KEY', model: 'OPENAI_MODEL' },
   { id: 'claude', name: 'Claude', key: 'ANTHROPIC_API_KEY', model: 'AIBB_ANTHROPIC_MODEL' },
   { id: 'perplexity', name: 'Perplexity', key: 'PERPLEXITY_API_KEY', model: 'PERPLEXITY_MODEL' }
@@ -50,7 +50,7 @@ export function createAibb(h) {
     const all = await env.DB.prepare('SELECT COUNT(*) AS n FROM aibb_usage WHERE ts > ?').bind(since).first();
     if (all.n >= (+env.AIBB_DAILY_CALLS || DAILY_CALLS_DEFAULT)) return 'global_limit';
     if (kind === 'setup' && !(user.email && env.LEAD_NOTIFY_EMAIL && user.email.toLowerCase() === env.LEAD_NOTIFY_EMAIL.toLowerCase())) {
-      const mine = await env.DB.prepare("SELECT COUNT(*) AS n FROM aibb_usage WHERE ts > ? AND user_id = ? AND kind = 'setup'").bind(since, user.id).first();
+      const mine = await env.DB.prepare("SELECT COUNT(*) AS n FROM aibb_usage WHERE ts > ? AND user_id = ? AND kind = 'setup' AND ok = 1").bind(since, user.id).first();
       if (mine.n >= (String(user.id).startsWith('ip:') ? STUDIES_PER_IP_DAY : STUDIES_PER_USER_DAY + 2)) return 'user_limit';
     }
     return '';
@@ -65,7 +65,10 @@ export function createAibb(h) {
       if (id === 'gemini') {
         // Los modelos Gemini 3.5+ no admiten temperature/top_p: no se envían. Si un modelo no existe, se prueba el siguiente.
         const models = [model].concat(env[e.model] ? [] : (e.alt || []));
-        let last = 'engine_failed';
+        let last = 'engine_failed', busy = false;
+        // Si todos los modelos están saturados (503 'high demand'), se espera y se repite la cadena hasta 2 veces más.
+        for (let round = 0; round < 3; round++) {
+        if (round) { if (!busy) break; busy = false; await new Promise(res => setTimeout(res, round * 2500)); }
         for (const mdl of models) {
           const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(mdl)}:generateContent`, {
             method: 'POST', headers: { 'content-type': 'application/json', 'x-goog-api-key': env[e.key] },
@@ -80,9 +83,10 @@ export function createAibb(h) {
           await logErr(env, `gemini ${mdl} ${r.status}: ${JSON.stringify(d).slice(0, 400)}`);
           // 400/404: modelo no disponible; 403/429 con cupo 0: el modelo no está en la capa gratuita → probar el siguiente
           // Modelo no disponible, sin cupo gratuito o saturado (503 'high demand'): probar el siguiente modelo
+          if (r.status >= 500 || r.status === 429) busy = true;
           if (r.status === 400 || r.status === 404 || r.status === 403 || r.status >= 500 || (r.status === 429 && /limit: ?0|free_tier|FreeTier/i.test(JSON.stringify(d)))) { last = r.status === 429 ? 'rate_limited' : 'engine_failed'; continue; }
-          if ((r.status === 429 || r.status >= 500) && !retried) { await new Promise(res => setTimeout(res, 1500)); return callEngine(env, id, prompt, { json: wantJson, temperature, system }, true); }
-          return { error: r.status === 429 ? 'rate_limited' : 'engine_failed' };
+          last = 'rate_limited'; continue; // 429 normal: se reintenta en la siguiente ronda
+        }
         }
         return { error: last };
       }
