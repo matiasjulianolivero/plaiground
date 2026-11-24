@@ -678,6 +678,9 @@
   boot.then(function () { return api('/api/aibb/config'); }).then(function (r) {
     S.cfg = r.ok ? r.d : { engines: [], live: false, user: null, limits: { competitors: 5, prompts: 8 } };
     renderWho(); loadHistory();
+    // Llegada desde el formulario de la home (?url=tuweb.com): se rellena y se lanza el análisis
+    var qurl = new URLSearchParams(location.search).get('url');
+    if (qurl) { history.replaceState(null, '', location.pathname); $('url').value = qurl.trim().slice(0, 200); setTimeout(function () { var f = $('goForm'); if (f.requestSubmit) f.requestSubmit(); else f.dispatchEvent(new Event('submit', { cancelable: true })); }, 60); return; }
     var saved = null, ss = null; try { saved = localStorage.getItem('plg-aibb-url'); ss = JSON.parse(localStorage.getItem('plg-aibb-setup') || 'null'); localStorage.removeItem('plg-aibb-url'); localStorage.removeItem('plg-aibb-setup'); } catch (e) { }
     var auto = null; try { auto = localStorage.getItem('plg-aibb-autorun'); localStorage.removeItem('plg-aibb-autorun'); } catch (e) { }
     if (ss && S.cfg.user && S.cfg.live && ss.domain) { $('url').value = saved || ss.domain; S.setup = ss; S.mode = 'live'; S.reason = ''; S.engines = S.cfg.engines; S.sel = {}; S.engines.forEach(function (x) { S.sel[x.id] = x.active; }); renderSetup(); if (auto) { runLive(); return; } setTimeout(function () { $('setup').scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 300); return; }

@@ -15,9 +15,9 @@ document.documentElement.setAttribute('data-theme',t);})();
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-<meta name="description" content="plaiground: marketing, analítica y growth con inteligencia artificial. Proyectos y experimentos interactivos de Matías Olivero.">
+<meta name="description" content="plaiground, laboratorio de marketing con IA: descubre gratis qué dice la IA de tu marca, convierte tus datos en decisiones y explora estudios de marca interactivos. Por Matías Olivero.">
 <meta property="og:title" content="plaiground · AI-Driven Playful Marketing">
-<meta property="og:description" content="Marketing, analytics and growth with AI. Interactive projects by Matías Olivero.">
+<meta property="og:description" content="AI marketing lab: see what AI says about your brand, turn your data into decisions and explore interactive brand studies. Free tools by plaiground.">
 <meta name="theme-color" content="#14162E">
 <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192.png">
 <meta property="og:type" content="website">
@@ -428,6 +428,20 @@ html[data-theme="dark"] header .nav::after{opacity:.18}
 .cz-f{margin-top:12px;font-size:11.5px;color:#7F84AD}
 @keyframes abgrow{from{transform:scaleX(0)}}
 @media (prefers-reduced-motion:reduce){.cz-r li i::after{animation:none}.cz{transform:none}}
+
+/* Estrategia de la landing: formulario del hero, enlaces de servicios y nuevo orden */
+.hgo{margin-top:30px;max-width:560px}
+.hgo label{display:block;font:800 17px var(--display);margin-bottom:10px;letter-spacing:-.01em}
+.hgo-f{display:flex;gap:8px;padding:7px;border-radius:999px;background:var(--paper);border:1px solid var(--line);box-shadow:0 18px 44px rgba(28,30,80,.10)}
+.hgo-f input{flex:1;min-width:0;border:0;background:transparent;padding:0 16px;font:500 17px var(--body);color:var(--ink);outline:none}
+.hgo-f .btn{white-space:nowrap}
+.hgo small{display:block;margin-top:10px;color:var(--muted);font-size:13.5px}.hgo small a{color:var(--ind);font-weight:700}
+@media (max-width:560px){.hgo-f{flex-direction:column;border-radius:24px}.hgo-f input{padding:12px 14px}.hgo-f .btn{justify-content:center}}
+.svc-go{display:inline-flex;gap:6px;margin-top:18px;font-weight:700;color:var(--c);text-decoration:none}.svc-go:hover{text-decoration:underline}
+#ai-barometer{padding:100px 0 30px}
+#lab{border-radius:44px}
+@media (max-width:560px){.hero .stage{display:none}}
+.manifesto{padding:110px 0 40px}
 </style>
 </head>
 <body>
@@ -437,10 +451,10 @@ html[data-theme="dark"] header .nav::after{opacity:.18}
   <nav class="wrap nav">
     <a class="brand" href="#" aria-label="plaiground">pl<span class="ai">ai</span>ground</a>
     <ul>
-      <li><a href="#servicios"><span lang="es">Servicios</span><span lang="en">Services</span></a></li>
-      <li><a href="#lab"><span lang="es">Proyectos</span><span lang="en">Projects</span></a></li>
-      <li><a href="/data/">Data <span class="navnew">beta</span></a></li>
       <li><a href="/ai-barometer/">AI Barometer <span class="navnew">beta</span></a></li>
+      <li><a href="/data/">Data <span class="navnew">beta</span></a></li>
+      <li><a href="#lab"><span lang="es">Proyectos</span><span lang="en">Projects</span></a></li>
+      <li><a href="#servicios"><span lang="es">Servicios</span><span lang="en">Services</span></a></li>
       <li><a href="#sobre-mi"><span lang="es">Sobre mí</span><span lang="en">About</span></a></li>
       <li><a class="cta" href="#contacto"><span lang="es">Hablemos</span><span lang="en">Let’s talk</span></a></li>
     </ul>
@@ -453,13 +467,14 @@ html[data-theme="dark"] header .nav::after{opacity:.18}
   <section class="hero">
     <div class="wrap hero-grid">
       <div class="rv">
-        <span class="pill"><b>AI · DATA · BRAND</b><span lang="es">Estudio de marketing con IA</span><span lang="en">AI marketing studio</span></span>
+        <span class="pill"><b>AI · DATA · BRAND</b><span lang="es">Laboratorio de marketing con IA</span><span lang="en">AI marketing lab</span></span>
         <h1><span lang="es">Marketing que se <em>juega</em>, se mide y crece con IA.</span><span lang="en">Marketing you can <em>play</em>, measure and grow with AI.</span></h1>
-        <p class="lead"><span lang="es">plaiground es un estudio de marketing con IA. Ayudo a marcas y equipos a crecer con <b>estrategia, datos y experiencias interactivas</b> que la gente quiere explorar y la dirección puede medir.</span><span lang="en">plaiground is an AI-driven marketing studio. I help brands and teams grow with <b>strategy, data and interactive experiences</b> people want to explore and leadership can measure.</span></p>
-        <div class="btns">
-          <a class="btn primary" href="#lab"><span lang="es">Ver proyectos</span><span lang="en">See projects</span> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12l7 7 7-7"/></svg></a>
-          <a class="btn ghost" href="#contacto"><span lang="es">Hablemos</span><span lang="en">Let’s talk</span></a>
-        </div>
+        <p class="lead"><span lang="es">plaiground es un laboratorio de marketing con IA: <b>herramientas que puedes probar gratis</b>, estudios que revelan cómo ve la IA a las marcas y estrategia para convertirlo en crecimiento medible.</span><span lang="en">plaiground is an AI marketing lab: <b>tools you can try for free</b>, studies that reveal how AI sees brands, and strategy to turn it into measurable growth.</span></p>
+        <form class="hgo" action="/ai-barometer/" method="get" role="search">
+          <label for="hurl"><span lang="es">¿Qué dice la IA de tu marca?</span><span lang="en">What does AI say about your brand?</span></label>
+          <div class="hgo-f"><input id="hurl" name="url" type="text" inputmode="url" autocomplete="url" placeholder="tuempresa.com" required><button class="btn primary" type="submit"><span lang="es">Analizar gratis</span><span lang="en">Analyze free</span> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button></div>
+          <small><span lang="es">Gratis · sin tarjeta · con Gemini · o <a href="#lab">explora los proyectos</a></span><span lang="en">Free · no card · powered by Gemini · or <a href="#lab">explore the projects</a></span></small>
+        </form>
         <ul class="promise">
           <li><b><span lang="es">Estrategia</span><span lang="en">Strategy</span></b><small><span lang="es">con la IA en todo el funnel</span><span lang="en">with AI across the funnel</span></small></li>
           <li><b><span lang="es">Datos</span><span lang="en">Data</span></b><small><span lang="es">que se convierten en decisiones</span><span lang="en">that turn into decisions</span></small></li>
@@ -489,41 +504,15 @@ html[data-theme="dark"] header .nav::after{opacity:.18}
   </section>
 
   <div class="brands" aria-hidden="true">
-    <div class="row"><span><span lang="es">Estrategia de IA</span><span lang="en">AI strategy</span></span><i>✦</i><span><span lang="es">Dashboards para dirección</span><span lang="en">Leadership dashboards</span></span><i>✦</i><span><span lang="es">Growth B2B</span><span lang="en">B2B growth</span></span><i>✦</i><span><span lang="es">Estudios de marca interactivos</span><span lang="en">Interactive brand research</span></span><i>✦</i><span><span lang="es">Storytelling con datos</span><span lang="en">Data storytelling</span></span><i>✦</i><span><span lang="es">Prototipos en días</span><span lang="en">Prototypes in days</span></span><i>✦</i><span><span lang="es">Marketing que se juega</span><span lang="en">Playful marketing</span></span><i>✦</i><span><span lang="es">Estrategia de IA</span><span lang="en">AI strategy</span></span><i>✦</i><span><span lang="es">Dashboards para dirección</span><span lang="en">Leadership dashboards</span></span><i>✦</i><span><span lang="es">Growth B2B</span><span lang="en">B2B growth</span></span><i>✦</i><span><span lang="es">Estudios de marca interactivos</span><span lang="en">Interactive brand research</span></span><i>✦</i><span><span lang="es">Storytelling con datos</span><span lang="en">Data storytelling</span></span><i>✦</i><span><span lang="es">Prototipos en días</span><span lang="en">Prototypes in days</span></span><i>✦</i><span><span lang="es">Marketing que se juega</span><span lang="en">Playful marketing</span></span><i>✦</i></div>
+    <div class="row"><span><span lang="es">Visibilidad de marca en IA</span><span lang="en">Brand visibility in AI</span></span><i>✦</i><span><span lang="es">AI Brand Barometer</span><span lang="en">AI Brand Barometer</span></span><i>✦</i><span><span lang="es">Datos que deciden</span><span lang="en">Data that decides</span></span><i>✦</i><span><span lang="es">Data plaiground</span><span lang="en">Data plaiground</span></span><i>✦</i><span><span lang="es">Estudios de marca interactivos</span><span lang="en">Interactive brand research</span></span><i>✦</i><span><span lang="es">GEO</span><span lang="en">GEO</span></span><i>✦</i><span><span lang="es">Prototipos en días</span><span lang="en">Prototypes in days</span></span><i>✦</i><span><span lang="es">Marketing que se juega</span><span lang="en">Playful marketing</span></span><i>✦</i><span><span lang="es">Visibilidad de marca en IA</span><span lang="en">Brand visibility in AI</span></span><i>✦</i><span><span lang="es">AI Brand Barometer</span><span lang="en">AI Brand Barometer</span></span><i>✦</i><span><span lang="es">Datos que deciden</span><span lang="en">Data that decides</span></span><i>✦</i><span><span lang="es">Data plaiground</span><span lang="en">Data plaiground</span></span><i>✦</i><span><span lang="es">Estudios de marca interactivos</span><span lang="en">Interactive brand research</span></span><i>✦</i><span><span lang="es">GEO</span><span lang="en">GEO</span></span><i>✦</i><span><span lang="es">Prototipos en días</span><span lang="en">Prototypes in days</span></span><i>✦</i><span><span lang="es">Marketing que se juega</span><span lang="en">Playful marketing</span></span><i>✦</i></div>
   </div>
-
-  <section class="manifesto" id="enfoque">
-    <div class="wrap">
-      <div class="eyebrow rv"><span lang="es">Por qué plaiground</span><span lang="en">Why plaiground</span></div>
-      <p class="big rv"><span lang="es">La mayoría del marketing <span class="dim">se publica, se ojea y se olvida.</span> Yo diseño piezas que <span class="hl">se juegan</span>, se comparten y dejan <span class="hl">datos</span> para decidir mejor.</span><span lang="en">Most marketing <span class="dim">gets published, skimmed and forgotten.</span> I design work people <span class="hl">play with</span>, share, and that leaves <span class="hl">data</span> behind to make better decisions.</span></p>
-      <div class="pillars">
-        <article class="pillar rv" style="--c:var(--ind)"><span class="n">01</span><h3>Play</h3><p><span lang="es">Formatos interactivos y memorables: experiencias que se recorren en lugar de leerse.</span><span lang="en">Interactive, memorable formats: experiences you explore instead of just reading.</span></p></article>
-        <article class="pillar rv" style="--c:var(--coral)"><span class="n">02</span><h3>Analytics</h3><p><span lang="es">Métricas claras, metodologías transparentes y visualizaciones que cuentan una historia.</span><span lang="en">Clear metrics, transparent methodologies and visualizations that tell a story.</span></p></article>
-        <article class="pillar rv" style="--c:var(--teal)"><span class="n">03</span><h3>Growth</h3><p><span lang="es">Prototipos rápidos con IA para validar ideas, posicionar marcas y abrir conversaciones.</span><span lang="en">Fast AI prototypes to validate ideas, position brands and start conversations.</span></p></article>
-      </div>
-    </div>
-  </section>
-
-  <section id="servicios">
-    <div class="wrap">
-      <div class="sec-head rv">
-        <div><div class="eyebrow"><span lang="es">Servicios</span><span lang="en">Services</span></div><h2><span lang="es">Cómo puedo ayudar a tu marca</span><span lang="en">How I can help your brand</span></h2></div>
-        <p><span lang="es">Estrategia y ejecución en el mismo sitio: de la primera hipótesis al dashboard que demuestra el resultado.</span><span lang="en">Strategy and execution in one place: from the first hypothesis to the dashboard that proves the result.</span></p>
-      </div>
-      <div class="svcs"><article class="svc rv" style="--c:var(--ind)">
-          <div class="svc-top"><span class="n">01</span><span class="dot"></span></div>
-          <h3><span lang="es">Estrategia de IA para marketing</span><span lang="en">AI strategy for marketing</span></h3><p><span lang="es">Dónde aporta valor la IA en tu funnel y cómo integrarla en el día a día del equipo.</span><span lang="en">Where AI adds value across your funnel and how to build it into your team’s daily work.</span></p><ul><li><span lang="es">Mapa de casos de uso por etapa del funnel</span><span lang="en">Use-case map for every funnel stage</span></li><li><span lang="es">Flujos de trabajo con IA generativa</span><span lang="en">Generative AI workflows</span></li><li><span lang="es">Investigación e inteligencia competitiva</span><span lang="en">Research and competitive intelligence</span></li></ul></article><article class="svc rv" style="--c:var(--coral)">
-          <div class="svc-top"><span class="n">02</span><span class="dot"></span></div>
-          <h3><span lang="es">Datos y dashboards para decidir</span><span lang="en">Data and dashboards for decisions</span></h3><p><span lang="es">Convierto los datos de tu web, tus campañas y tu CRM en cuadros de mando que la dirección entiende.</span><span lang="en">I turn your website, campaign and CRM data into dashboards leadership actually reads.</span></p><ul><li><span lang="es">Dashboards interactivos de captación y contenidos</span><span lang="en">Interactive acquisition and content dashboards</span></li><li><span lang="es">Atribución y buenas prácticas de UTM</span><span lang="en">Attribution and UTM best practice</span></li><li><span lang="es">Insights rápidos y accionables</span><span lang="en">Fast, actionable insights</span></li></ul></article><article class="svc rv" style="--c:var(--teal)">
-          <div class="svc-top"><span class="n">03</span><span class="dot"></span></div>
-          <h3><span lang="es">Captación y growth B2B</span><span lang="en">B2B acquisition and growth</span></h3><p><span lang="es">Campañas segmentadas por sector y mercado, conectadas con CRM y automatización.</span><span lang="en">Campaigns segmented by sector and market, wired into CRM and automation.</span></p><ul><li><span lang="es">Campañas en buscadores, redes y LinkedIn</span><span lang="en">Search, social and LinkedIn campaigns</span></li><li><span lang="es">Email marketing y segmentación CRM</span><span lang="en">Email marketing and CRM segmentation</span></li><li><span lang="es">Gestión de presupuestos y resultados</span><span lang="en">Budget and performance management</span></li></ul></article><article class="svc rv" style="--c:var(--gold)">
-          <div class="svc-top"><span class="n">04</span><span class="dot"></span></div>
-          <h3><span lang="es">Estudios de marca interactivos</span><span lang="en">Interactive brand research</span></h3><p><span lang="es">Barómetros, rankings e índices de marca convertidos en experiencias digitales que se comparten.</span><span lang="en">Brand barometers, rankings and indices turned into digital experiences people share.</span></p><ul><li><span lang="es">Metodología e índice propio</span><span lang="en">Proprietary methodology and index</span></li><li><span lang="es">Visualización y storytelling de datos</span><span lang="en">Data visualization and storytelling</span></li><li><span lang="es">Entrega digital lista para lanzar</span><span lang="en">Launch-ready digital delivery</span></li></ul></article></div>
-    </div>
-  </section>
 
   <section id="ai-barometer">
     <div class="wrap">
+      <div class="sec-head rv">
+        <div><div class="eyebrow"><span lang="es">Pruébalo gratis</span><span lang="en">Try it free</span></div><h2><span lang="es">Herramientas del pl<span class="ai">ai</span>ground</span><span lang="en">Tools from the pl<span class="ai">ai</span>ground</span></h2></div>
+        <p><span lang="es">IA que puedes usar hoy, sin tarjeta: descubre cómo te ve la IA y convierte tus datos en decisiones.</span><span lang="en">AI you can use today, no card needed: see how AI sees you and turn your data into decisions.</span></p>
+      </div>
       <div class="ab rv">
         <div class="ab-vis" aria-hidden="true">
           <div class="ab-q"><span lang="es">“¿Cuál es el mejor software de gestión para pymes?”</span><span lang="en">“What’s the best management software for SMEs?”</span></div>
@@ -543,7 +532,7 @@ html[data-theme="dark"] header .nav::after{opacity:.18}
           <p><span lang="es">Pon tu web y descubre qué responden los asistentes de IA cuando un comprador pregunta por tu categoría: si apareces, en qué posición, qué fuentes te citan y cómo quedas frente a tu competencia. Con tu email, guardas el histórico mes a mes.</span><span lang="en">Enter your website and find out what AI assistants answer when a buyer asks about your category: whether you appear, in what position, which sources cite you and how you compare with competitors. With your email, you keep a month-by-month history.</span></p>
           <div class="btns">
             <a class="btn primary" href="/ai-barometer/"><span lang="es">Analizar mi marca</span><span lang="en">Analyze my brand</span></a>
-            <a class="btn ghost" href="/newsletter/01/#powerup"><span lang="es">Hazlo a mano en 15 min</span><span lang="en">Do it by hand in 15 min</span></a>
+            <a class="btn ghost" href="/ai-barometer/?caso=mcdonalds-es"><span lang="es">Ver un caso real</span><span lang="en">See a real case</span></a>
           </div>
         </div>
       </div>
@@ -587,16 +576,6 @@ html[data-theme="dark"] header .nav::after{opacity:.18}
     </div>
   </section>
 
-  <section id="metodo">
-    <div class="wrap">
-      <div class="sec-head rv">
-        <div><div class="eyebrow"><span lang="es">Método</span><span lang="en">Method</span></div><h2><span lang="es">De la idea al impacto, en cuatro pasos</span><span lang="en">From idea to impact, in four steps</span></h2></div>
-        <p><span lang="es">La IA acelera; el criterio de marketing decide. Así trabajo cada proyecto.</span><span lang="en">AI speeds things up; marketing judgment makes the call. This is how I run every project.</span></p>
-      </div>
-      <ol class="steps"><li class="step rv"><span class="sn">01</span><h3><span lang="es">Escuchar y medir</span><span lang="en">Listen and measure</span></h3><p><span lang="es">Objetivos, audiencia y datos de partida. Sin diagnóstico no hay estrategia.</span><span lang="en">Goals, audience and baseline data. No diagnosis, no strategy.</span></p></li><li class="step rv"><span class="sn">02</span><h3><span lang="es">Diseñar la estrategia</span><span lang="en">Design the strategy</span></h3><p><span lang="es">Prioridades, KPIs y canales. Un plan claro que el equipo puede ejecutar.</span><span lang="en">Priorities, KPIs and channels. A clear plan the team can actually run.</span></p></li><li class="step rv"><span class="sn">03</span><h3><span lang="es">Prototipar con IA</span><span lang="en">Prototype with AI</span></h3><p><span lang="es">Ideas convertidas en piezas reales en días, no meses, para validar antes de invertir.</span><span lang="en">Ideas turned into real assets in days, not months, to validate before investing.</span></p></li><li class="step rv"><span class="sn">04</span><h3><span lang="es">Lanzar, medir, iterar</span><span lang="en">Launch, measure, iterate</span></h3><p><span lang="es">Dashboards desde el día uno para aprender rápido y escalar lo que funciona.</span><span lang="en">Dashboards from day one to learn fast and scale what works.</span></p></li></ol>
-    </div>
-  </section>
-
   <section id="lab">
     <div class="wrap" style="position:relative">
       <div class="eyebrow rv" style="margin-bottom:18px"><span lang="es">Para quién trabajo</span><span lang="en">Who I work with</span></div>
@@ -631,24 +610,7 @@ html[data-theme="dark"] header .nav::after{opacity:.18}
             <span class="go"><i>→</i> <span lang="es">Explorar el ranking</span><span lang="en">Explore the ranking</span></span>
           </div>
         </a>
-        <a class="proj rev rv" href="/cv/">
-          <div class="thumb vthumb" style="--tb:#FF7A59">
-            <div class="win"><div class="wbar"><i></i><i></i><i></i><span>plaigroundmarketing.com/cv</span></div>
-            <video id="cvvid" muted loop playsinline autoplay preload="metadata" poster="/media/cv-es.jpg" data-es="/media/cv-es.mp4" data-en="/media/cv-en.mp4" aria-label="Olivero Fest CV"></video></div>
-          </div>
-
-          <div class="info">
-            <div class="tags"><span class="tag" style="--tc:#FFB8A6"><span lang="es">CV interactivo</span><span lang="en">Interactive CV</span></span><span class="tag">Storytelling</span></div>
-            <h3>Olivero Fest CV</h3>
-            <p><span lang="es">Mi trayectoria contada como un festival de música: cartel, mapa del recinto, horarios y un escenario para cada etapa. Con sonido generado en directo.</span><span lang="en">My career told as a music festival: line-up poster, site map, schedule and a stage for each chapter. With sound generated live.</span></p>
-            <div class="case">
-              <div><b><span lang="es">Reto</span><span lang="en">Challenge</span></b><span><span lang="es">Que un CV se recuerde y no se escanee en 6 segundos.</span><span lang="en">Make a CV memorable instead of skimmed in 6 seconds.</span></span></div>
-              <div><b><span lang="es">Enfoque</span><span lang="en">Approach</span></b><span><span lang="es">Gamificación: 13 rincones que se desbloquean al recorrerlos.</span><span lang="en">Gamification: 13 spots that unlock as you explore them.</span></span></div>
-            </div>
-            <span class="go"><i>→</i> <span lang="es">Entrar al festival</span><span lang="en">Enter the festival</span></span>
-          </div>
-        </a>
-        <a class="proj rv" href="/ai-barometer/?caso=mcdonalds-es">
+        <a class="proj rev rv" href="/ai-barometer/?caso=mcdonalds-es">
           <div class="thumb aibbthumb" style="--tb:#0F1230" aria-hidden="true">
             <div class="cz">
               <div class="cz-h"><span class="cz-k">AI Brand Barometer</span><span class="cz-s"><b>92</b><small>/100</small></span></div>
@@ -677,11 +639,68 @@ html[data-theme="dark"] header .nav::after{opacity:.18}
             <span class="go"><i>→</i> <span lang="es">Ver el caso completo</span><span lang="en">See the full case</span></span>
           </div>
         </a>
+        <a class="proj rv" href="/cv/">
+          <div class="thumb vthumb" style="--tb:#FF7A59">
+            <div class="win"><div class="wbar"><i></i><i></i><i></i><span>plaigroundmarketing.com/cv</span></div>
+            <video id="cvvid" muted loop playsinline autoplay preload="metadata" poster="/media/cv-es.jpg" data-es="/media/cv-es.mp4" data-en="/media/cv-en.mp4" aria-label="Olivero Fest CV"></video></div>
+          </div>
+
+          <div class="info">
+            <div class="tags"><span class="tag" style="--tc:#FFB8A6"><span lang="es">CV interactivo</span><span lang="en">Interactive CV</span></span><span class="tag">Storytelling</span></div>
+            <h3>Olivero Fest CV</h3>
+            <p><span lang="es">Mi trayectoria contada como un festival de música: cartel, mapa del recinto, horarios y un escenario para cada etapa. Con sonido generado en directo.</span><span lang="en">My career told as a music festival: line-up poster, site map, schedule and a stage for each chapter. With sound generated live.</span></p>
+            <div class="case">
+              <div><b><span lang="es">Reto</span><span lang="en">Challenge</span></b><span><span lang="es">Que un CV se recuerde y no se escanee en 6 segundos.</span><span lang="en">Make a CV memorable instead of skimmed in 6 seconds.</span></span></div>
+              <div><b><span lang="es">Enfoque</span><span lang="en">Approach</span></b><span><span lang="es">Gamificación: 13 rincones que se desbloquean al recorrerlos.</span><span lang="en">Gamification: 13 spots that unlock as you explore them.</span></span></div>
+            </div>
+            <span class="go"><i>→</i> <span lang="es">Entrar al festival</span><span lang="en">Enter the festival</span></span>
+          </div>
+        </a>
         <div class="soon rv">
           <div><strong><span lang="es">Más experimentos en camino</span><span lang="en">More experiments on the way</span></strong><br><span lang="es">El laboratorio está siempre encendido. Pronto, nuevos proyectos.</span><span lang="en">The lab is always on. New projects coming soon.</span></div>
           <a class="btn primary" href="#contacto"><span lang="es">¿Construimos algo juntos?</span><span lang="en">Shall we build something together?</span></a>
         </div>
       </div>
+    </div>
+  </section>
+
+  <section class="manifesto" id="enfoque">
+    <div class="wrap">
+      <div class="eyebrow rv"><span lang="es">Por qué plaiground</span><span lang="en">Why plaiground</span></div>
+      <p class="big rv"><span lang="es">La mayoría del marketing <span class="dim">se publica, se ojea y se olvida.</span> Yo diseño piezas que <span class="hl">se juegan</span>, se comparten y dejan <span class="hl">datos</span> para decidir mejor.</span><span lang="en">Most marketing <span class="dim">gets published, skimmed and forgotten.</span> I design work people <span class="hl">play with</span>, share, and that leaves <span class="hl">data</span> behind to make better decisions.</span></p>
+      <div class="pillars">
+        <article class="pillar rv" style="--c:var(--ind)"><span class="n">01</span><h3>Play</h3><p><span lang="es">Formatos interactivos y memorables: experiencias que se recorren en lugar de leerse.</span><span lang="en">Interactive, memorable formats: experiences you explore instead of just reading.</span></p></article>
+        <article class="pillar rv" style="--c:var(--coral)"><span class="n">02</span><h3>Analytics</h3><p><span lang="es">Métricas claras, metodologías transparentes y visualizaciones que cuentan una historia.</span><span lang="en">Clear metrics, transparent methodologies and visualizations that tell a story.</span></p></article>
+        <article class="pillar rv" style="--c:var(--teal)"><span class="n">03</span><h3>Growth</h3><p><span lang="es">Prototipos rápidos con IA para validar ideas, posicionar marcas y abrir conversaciones.</span><span lang="en">Fast AI prototypes to validate ideas, position brands and start conversations.</span></p></article>
+      </div>
+    </div>
+  </section>
+
+  <section id="servicios">
+    <div class="wrap">
+      <div class="sec-head rv">
+        <div><div class="eyebrow"><span lang="es">Servicios</span><span lang="en">Services</span></div><h2><span lang="es">Cómo puedo ayudar a tu marca</span><span lang="en">How I can help your brand</span></h2></div>
+        <p><span lang="es">Cuando quieras ir más allá de las herramientas: estrategia y ejecución en el mismo sitio, de la primera hipótesis al dashboard que demuestra el resultado.</span><span lang="en">When you want to go beyond the tools: strategy and execution in one place, from the first hypothesis to the dashboard that proves the result.</span></p>
+      </div>
+      <div class="svcs"><article class="svc rv" style="--c:var(--ind)">
+          <div class="svc-top"><span class="n">01</span><span class="dot"></span></div>
+          <h3><span lang="es">Visibilidad de marca en la IA (GEO)</span><span lang="en">Brand visibility in AI (GEO)</span></h3><p><span lang="es">Que ChatGPT, Gemini o Perplexity te recomienden cuando tu comprador pregunta. Medimos dónde estás frente a tu competencia y te ayudo a subir al podio.</span><span lang="en">Get ChatGPT, Gemini or Perplexity to recommend you when your buyer asks. We measure where you stand against competitors and I help you reach the podium.</span></p><ul><li><span lang="es">Diagnóstico con el AI Brand Barometer</span><span lang="en">Diagnosis with the AI Brand Barometer</span></li><li><span lang="es">Contenidos y fuentes que la IA cita</span><span lang="en">Content and sources AI cites</span></li><li><span lang="es">Seguimiento mensual frente a tu competencia</span><span lang="en">Monthly tracking against competitors</span></li></ul><a class="svc-go" href="/ai-barometer/"><span lang="es">Prueba el AI Brand Barometer</span><span lang="en">Try the AI Brand Barometer</span> →</a></article><article class="svc rv" style="--c:var(--coral)">
+          <div class="svc-top"><span class="n">02</span><span class="dot"></span></div>
+          <h3><span lang="es">Datos y dashboards para decidir</span><span lang="en">Data and dashboards for decisions</span></h3><p><span lang="es">Convierto los datos de tu web, tus campañas y tu CRM en cuadros de mando que la dirección entiende.</span><span lang="en">I turn your website, campaign and CRM data into dashboards leadership actually reads.</span></p><ul><li><span lang="es">Dashboards interactivos de captación y contenidos</span><span lang="en">Interactive acquisition and content dashboards</span></li><li><span lang="es">Atribución y buenas prácticas de UTM</span><span lang="en">Attribution and UTM best practice</span></li><li><span lang="es">Insights rápidos y accionables</span><span lang="en">Fast, actionable insights</span></li></ul><a class="svc-go" href="/data/"><span lang="es">Prueba Data plaiground</span><span lang="en">Try Data plaiground</span> →</a></article><article class="svc rv" style="--c:var(--gold)">
+          <div class="svc-top"><span class="n">03</span><span class="dot"></span></div>
+          <h3><span lang="es">Estudios de marca interactivos</span><span lang="en">Interactive brand research</span></h3><p><span lang="es">Barómetros, rankings e índices de marca convertidos en experiencias digitales que se comparten y posicionan a quien los publica.</span><span lang="en">Brand barometers, rankings and indices turned into digital experiences that get shared and position whoever publishes them.</span></p><ul><li><span lang="es">Metodología e índice propio</span><span lang="en">Proprietary methodology and index</span></li><li><span lang="es">Visualización y storytelling de datos</span><span lang="en">Data visualization and storytelling</span></li><li><span lang="es">Entrega digital lista para lanzar</span><span lang="en">Launch-ready digital delivery</span></li></ul><a class="svc-go" href="/barometer/"><span lang="es">Ver el Franchise Brand Barometer</span><span lang="en">See the Franchise Brand Barometer</span> →</a></article><article class="svc rv" style="--c:var(--teal)">
+          <div class="svc-top"><span class="n">04</span><span class="dot"></span></div>
+          <h3><span lang="es">Estrategia de IA y captación B2B</span><span lang="en">AI strategy and B2B acquisition</span></h3><p><span lang="es">Dónde aporta valor la IA en tu funnel y campañas B2B conectadas con tu CRM que lo demuestran en resultados.</span><span lang="en">Where AI adds value across your funnel, and B2B campaigns wired into your CRM that prove it in results.</span></p><ul><li><span lang="es">Casos de uso de IA por etapa del funnel</span><span lang="en">AI use cases for every funnel stage</span></li><li><span lang="es">Campañas en buscadores, redes y LinkedIn</span><span lang="en">Search, social and LinkedIn campaigns</span></li><li><span lang="es">Email, CRM y automatización</span><span lang="en">Email, CRM and automation</span></li></ul><a class="svc-go" href="#contacto"><span lang="es">Cuéntame tu reto</span><span lang="en">Tell me your challenge</span> →</a></article></div>
+    </div>
+  </section>
+
+  <section id="metodo">
+    <div class="wrap">
+      <div class="sec-head rv">
+        <div><div class="eyebrow"><span lang="es">Método</span><span lang="en">Method</span></div><h2><span lang="es">De la idea al impacto, en cuatro pasos</span><span lang="en">From idea to impact, in four steps</span></h2></div>
+        <p><span lang="es">La IA acelera; el criterio de marketing decide. Así trabajo cada proyecto.</span><span lang="en">AI speeds things up; marketing judgment makes the call. This is how I run every project.</span></p>
+      </div>
+      <ol class="steps"><li class="step rv"><span class="sn">01</span><h3><span lang="es">Escuchar y medir</span><span lang="en">Listen and measure</span></h3><p><span lang="es">Objetivos, audiencia y datos de partida. Sin diagnóstico no hay estrategia.</span><span lang="en">Goals, audience and baseline data. No diagnosis, no strategy.</span></p></li><li class="step rv"><span class="sn">02</span><h3><span lang="es">Diseñar la estrategia</span><span lang="en">Design the strategy</span></h3><p><span lang="es">Prioridades, KPIs y canales. Un plan claro que el equipo puede ejecutar.</span><span lang="en">Priorities, KPIs and channels. A clear plan the team can actually run.</span></p></li><li class="step rv"><span class="sn">03</span><h3><span lang="es">Prototipar con IA</span><span lang="en">Prototype with AI</span></h3><p><span lang="es">Ideas convertidas en piezas reales en días, no meses, para validar antes de invertir.</span><span lang="en">Ideas turned into real assets in days, not months, to validate before investing.</span></p></li><li class="step rv"><span class="sn">04</span><h3><span lang="es">Lanzar, medir, iterar</span><span lang="en">Launch, measure, iterate</span></h3><p><span lang="es">Dashboards desde el día uno para aprender rápido y escalar lo que funciona.</span><span lang="en">Dashboards from day one to learn fast and scale what works.</span></p></li></ol>
     </div>
   </section>
 
@@ -739,9 +758,10 @@ html[data-theme="dark"] header .nav::after{opacity:.18}
 <footer>
   <div class="wrap">
     <div class="fgrid">
-      <div><a class="brand" href="#">pl<span class="ai">ai</span>ground</a><p style="max-width:320px;margin:10px 0 0"><span lang="es">Marketing lúdico con IA: estrategia, datos y experiencias interactivas.</span><span lang="en">AI-driven playful marketing: strategy, data and interactive experiences.</span></p></div>
-      <div><h5><span lang="es">Proyectos</span><span lang="en">Projects</span></h5><a href="/barometer/">Franchise Brand Barometer</a><a href="/barometer/metodologia/"><span lang="es">Metodología del Barometer</span><span lang="en">Barometer methodology</span></a><a href="/cv/">Olivero Fest CV</a><a href="/data/">Data plaiground <span lang="es">(beta)</span><span lang="en">(beta)</span></a></div>
-      <div><h5><span lang="es">Contacto</span><span lang="en">Contact</span></h5><a href="mailto:matiasjulianolivero@gmail.com">matiasjulianolivero@gmail.com</a><a href="https://www.linkedin.com/in/oliveromatias/" target="_blank" rel="noopener">LinkedIn ↗</a></div>
+      <div><a class="brand" href="#">pl<span class="ai">ai</span>ground</a><p style="max-width:320px;margin:10px 0 0"><span lang="es">Laboratorio de marketing con IA: herramientas, estudios y estrategia que se miden.</span><span lang="en">AI marketing lab: tools, studies and strategy you can measure.</span></p></div>
+      <div><h5><span lang="es">Herramientas</span><span lang="en">Tools</span></h5><a href="/ai-barometer/">AI Brand Barometer <span lang="es">(beta)</span><span lang="en">(beta)</span></a><a href="/data/">Data plaiground <span lang="es">(beta)</span><span lang="en">(beta)</span></a></div>
+      <div><h5><span lang="es">Proyectos</span><span lang="en">Projects</span></h5><a href="/ai-barometer/?caso=mcdonalds-es"><span lang="es">Caso: la IA y McDonald’s</span><span lang="en">Case: AI and McDonald’s</span></a><a href="/barometer/">Franchise Brand Barometer</a><a href="/barometer/metodologia/"><span lang="es">Metodología del Barometer</span><span lang="en">Barometer methodology</span></a><a href="/cv/">Olivero Fest CV</a></div>
+      <div><h5><span lang="es">Contacto</span><span lang="en">Contact</span></h5><a href="mailto:matiasjulianolivero@gmail.com">matiasjulianolivero@gmail.com</a><a href="https://www.linkedin.com/in/oliveromatias/" target="_blank" rel="noopener">LinkedIn ↗</a><a href="/newsletter/"><span lang="es">Newsletter mensual</span><span lang="en">Monthly newsletter</span></a></div>
     </div>
     <div class="fbot"><span>© <span id="y"></span> Matías Olivero · plaiground</span><nav class="flegal" aria-label="Legal"><a href="/legal/aviso-legal/"><span lang="es">Aviso legal</span><span lang="en">Legal notice</span></a><a href="/legal/privacidad/"><span lang="es">Privacidad</span><span lang="en">Privacy</span></a><a href="/legal/cookies/">Cookies</a><a href="/legal/terminos/"><span lang="es">Términos</span><span lang="en">Terms</span></a><a href="/legal/ia/"><span lang="es">Transparencia IA</span><span lang="en">AI transparency</span></a><button type="button" data-cookie-settings><span lang="es">Configurar cookies</span><span lang="en">Cookie settings</span></button></nav><span>Madrid · Buenos Aires · Online</span></div>
   </div>
