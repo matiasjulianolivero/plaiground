@@ -1,4 +1,5 @@
 import { createAibb } from './aibb.js';
+import { track, metricsAdmin, METRICS_SCHEMA } from './metrics.js';
 /**
  * plaiground · Worker
  * --------------------------------------------------------------
@@ -18,6 +19,8 @@ import { createAibb } from './aibb.js';
  *   POST   /api/lead                                       → formulario de contacto (pase): guarda el lead, email de gracias y aviso al titular
  *   GET    /api/newsletter/confirm?t=                      → confirma la suscripción (doble opt-in)
  *   GET    /api/newsletter/unsubscribe?t=                  → baja de la newsletter
+ *   POST   /api/m                                          → contador anónimo y agregado de visitas (src/metrics.js)
+ *   GET    /api/metrics/admin                              → resumen semanal para el titular (src/metrics.js)
  *   GET    /api/sheets?url=                                → descarga una Google Sheet pública como .xlsx
  *   POST   /api/ai/context   { profile, lang }            → la IA propone el contexto (empresa, datos, público, objetivo)
  *   POST   /api/ai/analyze   { context, profile, facts }  → la IA propone KPIs, gráficos y el análisis escrito
@@ -76,6 +79,7 @@ async function ensureSchema(db) {
       consent_at INTEGER, confirmed_at INTEGER, unsubscribed_at INTEGER, source TEXT)`),
     db.prepare(`CREATE INDEX IF NOT EXISTS idx_subs_token ON subscribers(token)`),
     db.prepare(`CREATE TABLE IF NOT EXISTS newsletter_sends (issue TEXT NOT NULL, email TEXT NOT NULL, sent_at INTEGER NOT NULL, ok INTEGER, PRIMARY KEY (issue, email))`),
+    db.prepare(METRICS_SCHEMA),
     db.prepare(`CREATE TABLE IF NOT EXISTS newsletter_votes (issue TEXT NOT NULL, voter TEXT NOT NULL, opt TEXT NOT NULL, created_at INTEGER NOT NULL, PRIMARY KEY (issue, voter))`)
   ]);
   schemaReady = true;
@@ -683,6 +687,13 @@ async function api(req, env, url, ctx) {
     return new Response('ok', { status: 200 });
   }
   if (m !== 'GET' && !sameOrigin(req, url)) return json({ error: 'forbidden' }, 403);
+  if (pathname === '/api/m' && m === 'POST') return track(req, env, json);
+  if (pathname === '/api/metrics/admin' && m === 'GET') {
+    const u = await currentUser(req, env);
+    if (!u) return json({ error: 'unauthorized' }, 401);
+    if (!isOwner(env, u)) return json({ error: 'forbidden' }, 403);
+    return metricsAdmin(env, u, json);
+  }
   if (pathname.startsWith('/api/aibb/')) { aibb = aibb || createAibb({ json, currentUser, randomToken, sha256, notifyOwner, issueLoginLink, validEmail }); return aibb(req, env, url, pathname, m); }
 
   if (pathname === '/api/auth/request' && m === 'POST') return requestLogin(req, env, url);
