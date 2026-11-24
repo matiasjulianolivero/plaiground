@@ -77,6 +77,9 @@ export function createAibb(h) {
           if (ga !== gb && nowT - Math.max(ga, gb) < 6 * 3600e3) return gb - ga;
           return a.i - b.i;
         }).map(x => x.m);
+        // Los modelos en pausa larga (sin cupo o retirados) ni se intentan: solo hacen perder tiempo
+        const usable = models.filter(m => hs(m).bad_until - nowT < 10 * 60e3);
+        if (usable.length) models = usable;
         const mark = (m, good, cool) => env.DB.prepare('INSERT INTO aibb_models (model, good_at, bad_until) VALUES (?,?,?) ON CONFLICT(model) DO UPDATE SET ' + (good ? 'good_at = excluded.good_at, bad_until = 0' : 'bad_until = excluded.bad_until')).bind(m, good ? Date.now() : 0, good ? 0 : Date.now() + cool).run().catch(() => { });
         let last = 'engine_failed', busy = false;
         const deadline = Date.now() + 50e3; // tope total: el estudio nunca se queda colgado
@@ -103,7 +106,9 @@ export function createAibb(h) {
           // 400/404: modelo no disponible; 403/429 con cupo 0: el modelo no está en la capa gratuita → probar el siguiente
           // Modelo no disponible, sin cupo gratuito o saturado (503 'high demand'): probar el siguiente modelo
           if (r.status >= 500 || r.status === 429) busy = true;
-          await mark(mdl, false, r.status === 404 ? 864e5 : r.status >= 500 ? 3 * 60e3 : 60e3);
+          const quotaOut = r.status === 429 && /exceeded your current quota|free_tier_requests/i.test(JSON.stringify(d));
+          // Sin cupo gratuito (p. ej. 20 peticiones al día): no se vuelve a intentar en horas; 404: modelo retirado
+          await mark(mdl, false, r.status === 404 ? 864e5 : quotaOut ? 6 * 3600e3 : r.status >= 500 ? 3 * 60e3 : 60e3);
           if (r.status === 400 || r.status === 404 || r.status === 403 || r.status >= 500 || (r.status === 429 && /limit: ?0|free_tier|FreeTier/i.test(JSON.stringify(d)))) { last = r.status === 429 ? 'rate_limited' : 'engine_failed'; continue; }
           last = 'rate_limited'; continue; // 429 normal: se reintenta en la siguiente ronda
         }
