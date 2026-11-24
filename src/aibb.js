@@ -40,7 +40,8 @@ export function createAibb(h) {
       env.DB.prepare(`CREATE TABLE IF NOT EXISTS aibb_studies (id TEXT PRIMARY KEY, user_id TEXT NOT NULL, created_at INTEGER NOT NULL, domain TEXT, brand TEXT, lang TEXT, score INTEGER, visibility REAL, data TEXT NOT NULL)`),
       env.DB.prepare(`CREATE INDEX IF NOT EXISTS idx_aibb_user ON aibb_studies(user_id, created_at)`),
       env.DB.prepare(`CREATE TABLE IF NOT EXISTS aibb_shares (token TEXT PRIMARY KEY, study_id TEXT NOT NULL, user_id TEXT NOT NULL, created_at INTEGER NOT NULL, expires_at INTEGER NOT NULL, revoked_at INTEGER)`),
-      env.DB.prepare(`CREATE INDEX IF NOT EXISTS idx_aibb_shares_study ON aibb_shares(study_id)`)
+      env.DB.prepare(`CREATE INDEX IF NOT EXISTS idx_aibb_shares_study ON aibb_shares(study_id)`),
+      env.DB.prepare(`CREATE TABLE IF NOT EXISTS aibb_unlocks (token TEXT PRIMARY KEY, email TEXT NOT NULL, created_at INTEGER NOT NULL, ip TEXT, uses INTEGER DEFAULT 0)`)
     ]);
   }
   async function quota(env, user, kind) {
@@ -271,6 +272,20 @@ Devuelve: {"brand": nombre comercial de la marca, "category": categoría de prod
       return json({ mode: user ? 'live' : 'login', setup: s, engines: engineList(env), site });
     }
 
+    // Desbloqueo con email: el informe completo se muestra al momento y se envía un enlace para guardarlo en el histórico
+    if (pathname === '/api/aibb/unlock' && m === 'POST') {
+      const email = String(body.email || '').trim().toLowerCase(), lang = body.lang === 'en' ? 'en' : 'es';
+      if (!h.validEmail(email)) return json({ error: 'invalid_email' }, 400);
+      if (body.accepted !== true) return json({ error: 'terms_required' }, 400);
+      const ip = req.headers.get('cf-connecting-ip') || '', hourAgo = Date.now() - 3600e3;
+      const n = await env.DB.prepare('SELECT COUNT(*) AS n FROM aibb_unlocks WHERE (ip = ? OR email = ?) AND created_at > ?').bind(ip, email, hourAgo).first();
+      if (n.n >= 6) return json({ error: 'too_many_requests' }, 429);
+      const token = randomToken(16);
+      await env.DB.prepare('INSERT INTO aibb_unlocks (token, email, created_at, ip) VALUES (?,?,?,?)').bind(token, email, Date.now(), ip).run();
+      const base = (env.APP_URL || url.origin).replace(/\/$/, '');
+      if (env.RESEND_API_KEY) await h.issueLoginLink(env, base, email, lang, ip, true);
+      return json({ unlock: token, email });
+    }
     if (pathname === '/api/aibb/ask' && m === 'POST') {
       let who = user;
       if (!who) {
@@ -292,29 +307,37 @@ Devuelve: {"brand": nombre comercial de la marca, "category": categoría de prod
       const s = cleanSetup(body.setup);
       if (!s.domain || !s.prompts.length) return json({ error: 'bad_request' }, 400);
       const demo = body.demo === true || !liveOk;
-      const partial = !demo && !user;
+      let unlocked = null;
+      if (!user && !demo && /^[a-f0-9]{32}$/.test(String(body.unlock || ''))) {
+        unlocked = await env.DB.prepare('SELECT email, uses FROM aibb_unlocks WHERE token = ? AND created_at > ?').bind(body.unlock, Date.now() - 864e5).first();
+        if (unlocked && unlocked.uses >= 3) unlocked = null;
+      }
+      const owner = user || (unlocked ? { id: 'pending:' + unlocked.email, email: unlocked.email, pending: true } : null);
+      const partial = !demo && !owner;
       let answers, judge = null;
       if (demo) { s.competitors = ['Alfaplus', 'Betaware', 'Gammix', 'Deltio']; s.prompts = s.prompts.map(p => p); answers = demoAnswers(s, ['gemini', 'chatgpt', 'claude', 'perplexity']); }
       else {
         answers = (Array.isArray(body.answers) ? body.answers : []).slice(0, partial ? TEASER_PROMPTS : MAX_PROMPTS * ENGINES.length).map(a => ({ prompt: clip(a.prompt, 240), engine: String(a.engine || ''), text: clip(a.text, 6000) })).filter(a => a.text);
         if (!answers.length) return json({ error: 'no_answers' }, 400);
         // Un juez (Gemini) valora el tono hacia la marca en cada respuesta: -1 negativo · 0 neutro · 1 positivo · null si no aparece
-        if (!partial && env.GEMINI_API_KEY && !(await quota(env, user, 'judge'))) {
+        if (!partial && env.GEMINI_API_KEY && !(await quota(env, owner, 'judge'))) {
           const jp = `Marca: ${s.brand} (${s.domain}). Para cada respuesta numerada, valora el tono hacia la marca: 1 positivo, 0 neutro, -1 negativo, null si no se menciona. Devuelve SOLO un JSON {"scores":[...]} con ${answers.length} valores en orden.\n\n` + answers.map((a, i) => `#${i + 1}\n${clip(a.text, 1500)}`).join('\n\n');
           const r = await callEngine(env, 'gemini', jp, { json: true, temperature: 0 });
-          await logUse(env, user, 'gemini', 'judge', !r.error);
+          await logUse(env, owner, 'gemini', 'judge', !r.error);
           const j = r.error ? null : parseJson(r.text);
           if (j && Array.isArray(j.scores) && j.scores.length === answers.length) judge = j.scores.map(x => x == null ? null : Math.max(-1, Math.min(1, +x || 0)));
         }
       }
       const result = analyze(s, answers, judge);
       const study = { v: 1, demo, partial, created_at: Date.now(), setup: s, answers: answers.map(a => ({ prompt: a.prompt, engine: a.engine, text: clip(a.text, 4000) })), result, engines: engineList(env) };
-      if (!demo && user) {
+      if (!demo && owner) {
+        const user = owner;
+        if (unlocked) await env.DB.prepare('UPDATE aibb_unlocks SET uses = uses + 1 WHERE token = ?').bind(body.unlock).run();
         study.id = randomToken(8);
         await env.DB.prepare('INSERT INTO aibb_studies (id, user_id, created_at, domain, brand, lang, score, visibility, data) VALUES (?,?,?,?,?,?,?,?,?)')
           .bind(study.id, user.id, study.created_at, s.domain, s.brand, s.language, result.score, result.brands[0].visibility, JSON.stringify(study)).run();
         const tb = result.brands[0];
-        if (h.notifyOwner) await h.notifyOwner(env, `🔎 Estudio AI Barometer: ${s.brand} (${s.domain}) · score ${result.score}`, [['Email', user.email], ['Marca', s.brand], ['Web', s.domain], ['Categoría', s.category], ['Competidores', s.competitors.join(', ')], ['AI Visibility Score', String(result.score)], ['Visibilidad', Math.round(tb.visibility * 100) + '%'], ['Puesto', result.rank + ' de ' + result.brands.length], ['Asistentes', [...new Set(answers.map(a => a.engine))].join(', ')]], user.email);
+        if (h.notifyOwner) await h.notifyOwner(env, `🔎 Estudio AI Barometer: ${s.brand} (${s.domain}) · score ${result.score}`, [['Email', user.email + (user.pending ? ' (sin confirmar aún)' : '')], ['Marca', s.brand], ['Web', s.domain], ['Categoría', s.category], ['Competidores', s.competitors.join(', ')], ['AI Visibility Score', String(result.score)], ['Visibilidad', Math.round(tb.visibility * 100) + '%'], ['Puesto', result.rank + ' de ' + result.brands.length], ['Asistentes', [...new Set(answers.map(a => a.engine))].join(', ')]], user.email);
       }
       return json({ study });
     }

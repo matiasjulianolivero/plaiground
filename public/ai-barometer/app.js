@@ -101,6 +101,15 @@
       if ($('sb')) readSetup();
       try { localStorage.setItem('plg-aibb-url', $('url').value.trim() || (S.setup && S.setup.domain) || ''); if (S.setup) localStorage.setItem('plg-aibb-setup', JSON.stringify(S.setup)); localStorage.setItem('plg-aibb-autorun', '1'); } catch (x) { }
       var b = lf.querySelector('button'); b.disabled = true;
+      if (S.study && S.study.partial) {
+        api('/api/aibb/unlock', { method: 'POST', body: JSON.stringify({ email: em, accepted: true, lang: L() }) }).then(function (r) {
+          b.disabled = false;
+          if (!r.ok) { er.textContent = r.d.error === 'too_many_requests' ? tr('Demasiados intentos. Espera unos minutos.', 'Too many attempts. Wait a few minutes.') : r.d.error === 'invalid_email' ? tr('Revisa tu email.', 'Check your email.') : tr('No se pudo desbloquear. Inténtalo de nuevo.', 'Couldn’t unlock. Try again.'); return; }
+          try { localStorage.removeItem('plg-aibb-setup'); localStorage.removeItem('plg-aibb-autorun'); localStorage.removeItem('plg-aibb-url'); } catch (x) { }
+          S.unlock = r.d.unlock; S.unlockEmail = em; runLive();
+        });
+        return;
+      }
       api('/api/auth/request', { method: 'POST', body: JSON.stringify({ email: em, accepted: true, lang: L(), next: '/ai-barometer/' }) }).then(function (r) {
         b.disabled = false; er.style.color = r.ok ? 'var(--teal)' : '';
         er.textContent = r.ok ? tr('¡Listo! Te hemos enviado un enlace a ' + em + '. Ábrelo y verás aquí tu informe completo.', 'Done! We’ve sent a link to ' + em + '. Open it and your full report will be here.') : r.d.error === 'too_many_requests' ? tr('Demasiados intentos. Espera unos minutos.', 'Too many attempts. Wait a few minutes.') : r.d.error === 'email_not_configured' ? tr('El acceso por email no está disponible ahora mismo.', 'Email sign-in isn’t available right now.') : tr('No se pudo enviar. Inténtalo en unos minutos.', 'Couldn’t send it. Try again in a few minutes.');
@@ -158,7 +167,7 @@
     })();
     function finish() {
       if (!answers.length) { S.running = false; $('run').innerHTML = '<div class="card sec"><b>' + (S.limitHit === 'teaser_limit' ? tr('Ya has usado las vistas previas gratuitas de hoy. Entra con tu email para ver el informe completo:', 'You’ve used today’s free previews. Sign in with your email to see the full report:') + '</b>' + loginFormHtml() : tr('Las IA no han respondido ahora mismo (cupo gratuito saturado). Prueba en unos minutos.', 'The AIs didn’t answer right now (free quota busy). Try again in a few minutes.') + '</b>') + '</div>'; bindLogin(); return; }
-      api('/api/aibb/finish', { method: 'POST', body: JSON.stringify({ setup: S.setup, answers: answers }) }).then(function (r) {
+      api('/api/aibb/finish', { method: 'POST', body: JSON.stringify({ setup: S.setup, answers: answers, unlock: teaser ? undefined : S.unlock }) }).then(function (r) {
         S.running = false; $('run').innerHTML = '';
         if (!r.ok) { $('goErr').textContent = tr('No se pudo calcular el estudio.', 'Couldn’t compute the study.'); return; }
         S.study = r.d.study; renderResults(); loadHistory(); $('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -231,6 +240,7 @@
     $('results').innerHTML = '<div class="rhead"><div><div class="eyebrow">' + tr('Resultados', 'Results') + ' · ' + esc(s.domain) + '</div><h2 style="margin-top:10px">' + esc(s.brand) + '</h2><div class="meta">' + esc(s.category) + ' · ' + d.toLocaleDateString(L() === 'es' ? 'es-ES' : 'en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) + ' · ' + st.answers.length + tr(' respuestas analizadas', ' answers analyzed') + '</div></div>' +
       '<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">' + (st.demo ? '<span class="tag demo">🧪 ' + tr('Ejemplo · datos simulados', 'Sample · simulated data') + '</span>' : st.partial ? '<span class="tag live">👀 ' + tr('Vista previa', 'Preview') + '</span>' : '<span class="tag live">🛰️ ' + tr('Estudio real', 'Live study') + '</span>') + (S.viewer ? '<a class="btn" href="/ai-barometer/" style="padding:11px 16px;font-size:14px">' + tr('Analiza tu marca gratis', 'Analyze your brand free') + ' →</a>' : (st.id && !st.demo && !st.partial && S.cfg && S.cfg.user ? '<button class="btn" type="button" id="shareBtn" style="padding:11px 16px;font-size:14px">' + tr('Compartir', 'Share') + '</button>' : '') + '<button class="btn ghost" type="button" id="again" style="padding:11px 16px;font-size:14px">' + tr('Nuevo estudio', 'New study') + '</button>') + '</div></div><div id="sharebox"></div>' +
       (S.viewer ? '<div class="banner live" style="margin-bottom:16px"><span class="ic">📤</span><div>' + tr('<b>Informe compartido contigo.</b> Es una copia de solo lectura' + (S.viewerExp ? ', disponible hasta el ' + new Date(S.viewerExp).toLocaleDateString('es-ES', { day: 'numeric', month: 'long' }) : '') + '. ¿Quieres ver cómo sale tu marca? <a href="/ai-barometer/">Haz tu estudio gratis</a>.', '<b>Report shared with you.</b> It’s a read-only copy' + (S.viewerExp ? ', available until ' + new Date(S.viewerExp).toLocaleDateString('en-GB', { day: 'numeric', month: 'long' }) : '') + '. Want to see how your brand does? <a href="/ai-barometer/">Run your free study</a>.') + '</div></div>' : '') +
+      (S.unlockEmail && !st.partial && !S.viewer && !(S.cfg && S.cfg.user) ? '<div class="banner live" style="margin-bottom:16px"><span class="ic">📩</span><div>' + tr('<b>¡Informe desbloqueado!</b> Te hemos enviado un email a <b>' + esc(S.unlockEmail) + '</b>: ábrelo para guardar este informe en tu histórico, compararlo cada mes y compartirlo.', '<b>Report unlocked!</b> We’ve emailed <b>' + esc(S.unlockEmail) + '</b>: open it to save this report to your history, compare it monthly and share it.') + '</div></div>' : '') +
       (st.partial ? '<div class="banner live" style="margin-bottom:16px"><span class="ic">👀</span><div>' + tr('<b>Vista previa:</b> resultados con ' + st.answers.length + ' de ' + s.prompts.length + ' preguntas. Desbloquea abajo el informe completo, gratis.', '<b>Preview:</b> results from ' + st.answers.length + ' of ' + s.prompts.length + ' questions. Unlock the full report below, for free.') + '</div></div>' : '') +
       (st.demo ? '<div class="banner" style="margin-bottom:16px"><span class="ic">🧪</span><div>' + tr('Estas cifras salen de <b>respuestas inventadas</b> para enseñarte el informe. No describen la visibilidad real de ninguna marca.', 'These figures come from <b>made-up answers</b> to show you the report. They don’t describe any brand’s real visibility.') + '</div></div>' : '') +
       kpis +
@@ -330,7 +340,11 @@
   /* ---------- histórico ---------- */
   function loadHistory() {
     if (!(S.cfg && S.cfg.user)) { S.hist = []; renderHistory(); return; }
-    api('/api/aibb/studies').then(function (r) { S.hist = r.ok ? r.d.studies : []; renderHistory(); });
+    api('/api/aibb/studies').then(function (r) {
+      S.hist = r.ok ? r.d.studies : [];
+      if (S.openLatest && S.hist.length && !S.study && !S.running) { S.openLatest = false; return api('/api/aibb/studies/' + S.hist[0].id).then(function (x) { if (x.ok) { S.study = x.d.study; S.exSel = 0; renderResults(); renderHistory(); setTimeout(function () { $('results').scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 200); } else renderHistory(); }); }
+      renderHistory();
+    });
   }
   function renderHistory() {
     var el = $('history'); if (!S.hist.length) { el.innerHTML = ''; return; }
@@ -363,7 +377,7 @@
     return;
   }
   var tok = new URLSearchParams(location.search).get('login');
-  var boot = tok && /^[a-f0-9]{64}$/.test(tok) ? (history.replaceState(null, '', location.pathname), api('/api/auth/verify', { method: 'POST', body: JSON.stringify({ token: tok, src: 'aibb' }) }).then(function (r) { if (!r.ok) $('goErr').textContent = tr('Ese enlace ha caducado o ya se usó. Vuelve a pedirlo desde tu estudio.', 'That link has expired or was already used. Request a new one from your study.'); })) : Promise.resolve();
+  var boot = tok && /^[a-f0-9]{64}$/.test(tok) ? (history.replaceState(null, '', location.pathname), api('/api/auth/verify', { method: 'POST', body: JSON.stringify({ token: tok, src: 'aibb' }) }).then(function (r) { if (r.ok) S.openLatest = true; if (!r.ok) $('goErr').textContent = tr('Ese enlace ha caducado o ya se usó. Vuelve a pedirlo desde tu estudio.', 'That link has expired or was already used. Request a new one from your study.'); })) : Promise.resolve();
   boot.then(function () { return api('/api/aibb/config'); }).then(function (r) {
     S.cfg = r.ok ? r.d : { engines: [], live: false, user: null, limits: { competitors: 5, prompts: 8 } };
     renderWho(); loadHistory();
