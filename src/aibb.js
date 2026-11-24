@@ -42,6 +42,7 @@ export function createAibb(h) {
       env.DB.prepare(`CREATE TABLE IF NOT EXISTS aibb_shares (token TEXT PRIMARY KEY, study_id TEXT NOT NULL, user_id TEXT NOT NULL, created_at INTEGER NOT NULL, expires_at INTEGER NOT NULL, revoked_at INTEGER)`),
       env.DB.prepare(`CREATE INDEX IF NOT EXISTS idx_aibb_shares_study ON aibb_shares(study_id)`),
       env.DB.prepare(`CREATE TABLE IF NOT EXISTS aibb_log (ts INTEGER NOT NULL, msg TEXT)`),
+      env.DB.prepare(`CREATE TABLE IF NOT EXISTS aibb_models (model TEXT PRIMARY KEY, good_at INTEGER DEFAULT 0, bad_until INTEGER DEFAULT 0)`),
       env.DB.prepare(`CREATE TABLE IF NOT EXISTS aibb_unlocks (token TEXT PRIMARY KEY, email TEXT NOT NULL, created_at INTEGER NOT NULL, ip TEXT, uses INTEGER DEFAULT 0)`)
     ]);
   }
@@ -64,7 +65,19 @@ export function createAibb(h) {
     try {
       if (id === 'gemini') {
         // Los modelos Gemini 3.5+ no admiten temperature/top_p: no se envían. Si un modelo no existe, se prueba el siguiente.
-        const models = [model].concat(env[e.model] ? [] : (e.alt || []));
+        let models = [model].concat(env[e.model] ? [] : (e.alt || []));
+        // Se recuerda qué modelo funcionó por última vez y cuáles están saturados, para ir directo al que responde.
+        const health = {};
+        try { (await env.DB.prepare('SELECT model, good_at, bad_until FROM aibb_models').all()).results.forEach(x => { health[x.model] = x; }); } catch (err) { }
+        const nowT = Date.now(), hs = m => health[m] || { good_at: 0, bad_until: 0 };
+        models = models.map((m, i) => ({ m, i })).sort((a, b) => {
+          const ca = hs(a.m).bad_until > nowT ? 1 : 0, cb = hs(b.m).bad_until > nowT ? 1 : 0;
+          if (ca !== cb) return ca - cb;
+          const ga = hs(a.m).good_at, gb = hs(b.m).good_at;
+          if (ga !== gb && nowT - Math.max(ga, gb) < 6 * 3600e3) return gb - ga;
+          return a.i - b.i;
+        }).map(x => x.m);
+        const mark = (m, good, cool) => env.DB.prepare('INSERT INTO aibb_models (model, good_at, bad_until) VALUES (?,?,?) ON CONFLICT(model) DO UPDATE SET ' + (good ? 'good_at = excluded.good_at, bad_until = 0' : 'bad_until = excluded.bad_until')).bind(m, good ? Date.now() : 0, good ? 0 : Date.now() + cool).run().catch(() => { });
         let last = 'engine_failed', busy = false;
         const deadline = Date.now() + 50e3; // tope total: el estudio nunca se queda colgado
         // Si todos los modelos están saturados (503 'high demand'), se espera y se repite la cadena hasta 2 veces más.
@@ -79,17 +92,18 @@ export function createAibb(h) {
             method: 'POST', headers: { 'content-type': 'application/json', 'x-goog-api-key': env[e.key] },
             body: JSON.stringify(Object.assign({ contents: [{ role: 'user', parts: [{ text: prompt }] }], generationConfig: Object.assign({ maxOutputTokens: 4096 }, wantJson ? { responseMimeType: 'application/json' } : {}) }, system ? { systemInstruction: { parts: [{ text: system }] } } : {}))
           });
-          } catch (err) { await logErr(env, `gemini ${mdl} timeout/red: ${String(err && err.name || err).slice(0, 80)}`); busy = true; continue; }
+          } catch (err) { await logErr(env, `gemini ${mdl} timeout/red: ${String(err && err.name || err).slice(0, 80)}`); await mark(mdl, false, 3 * 60e3); busy = true; continue; }
           const d = await r.json().catch(() => ({}));
           if (r.ok) {
             const text = ((d.candidates || [])[0]?.content?.parts || []).filter(p => !p.thought).map(p => p.text || '').join('');
-            if (text) return { text };
+            if (text) { await mark(mdl, true); return { text }; }
             await logErr(env, `gemini ${mdl} empty: ${JSON.stringify(d).slice(0, 300)}`); last = 'engine_failed'; continue;
           }
           await logErr(env, `gemini ${mdl} ${r.status}: ${JSON.stringify(d).slice(0, 400)}`);
           // 400/404: modelo no disponible; 403/429 con cupo 0: el modelo no está en la capa gratuita → probar el siguiente
           // Modelo no disponible, sin cupo gratuito o saturado (503 'high demand'): probar el siguiente modelo
           if (r.status >= 500 || r.status === 429) busy = true;
+          await mark(mdl, false, r.status === 404 ? 864e5 : r.status >= 500 ? 3 * 60e3 : 60e3);
           if (r.status === 400 || r.status === 404 || r.status === 403 || r.status >= 500 || (r.status === 429 && /limit: ?0|free_tier|FreeTier/i.test(JSON.stringify(d)))) { last = r.status === 429 ? 'rate_limited' : 'engine_failed'; continue; }
           last = 'rate_limited'; continue; // 429 normal: se reintenta en la siguiente ronda
         }
