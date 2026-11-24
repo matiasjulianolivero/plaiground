@@ -637,7 +637,7 @@ async function api(req, env, url, ctx) {
     return new Response('ok', { status: 200 });
   }
   if (m !== 'GET' && !sameOrigin(req, url)) return json({ error: 'forbidden' }, 403);
-  if (pathname.startsWith('/api/aibb/')) { aibb = aibb || createAibb({ json, currentUser, randomToken }); return aibb(req, env, url, pathname, m); }
+  if (pathname.startsWith('/api/aibb/')) { aibb = aibb || createAibb({ json, currentUser, randomToken, sha256 }); return aibb(req, env, url, pathname, m); }
 
   if (pathname === '/api/auth/request' && m === 'POST') return requestLogin(req, env, url);
   if (pathname === '/api/auth/verify' && m === 'POST') return verifyLogin(req, env);
