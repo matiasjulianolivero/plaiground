@@ -458,6 +458,7 @@ Devuelve SOLO un JSON {"tone":[[...${names.length} valores...], ...una fila por 
       if (n.n >= 6) return json({ error: 'too_many_requests' }, 429);
       const token = randomToken(16);
       await env.DB.prepare('INSERT INTO aibb_unlocks (token, email, created_at, ip) VALUES (?,?,?,?)').bind(token, email, Date.now(), ip).run();
+      if (h.linkVisitor) await h.linkVisitor(req, env, email);
       const base = (env.APP_URL || url.origin).replace(/\/$/, '');
       if (env.RESEND_API_KEY) await h.issueLoginLink(env, base, email, lang, ip, true);
       return json({ unlock: token, email });
