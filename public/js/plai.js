@@ -40,7 +40,7 @@
   ];
   // Historia de la home: cada sección suma una idea nueva hasta entender qué es plaiground
   var STORY = HOME ? {
-    hero: { es: '¡Hola! Soy Plai y te acompaño por el plaiground. Empieza por lo fácil: escribe tu web arriba y te cuento qué dice la IA de tu marca.', en: 'Hi! I’m Plai and I’ll walk you through the plaiground. Start with the easy part: type your website above and I’ll tell you what AI says about your brand.' },
+    hero: { es: '¡Hola! Soy Plai y te acompaño por el plaiground. Empieza por lo fácil: escribe tu web en el recuadro de la izquierda y te cuento qué dice la IA de tu marca.', en: 'Hi! I’m Plai and I’ll walk you through the plaiground. Start with the easy part: type your website in the box on the left and I’ll tell you what AI says about your brand.' },
     'ai-barometer': { es: 'Cada vez más compradores preguntan a ChatGPT o Gemini antes de elegir. Si la IA no te nombra, para ellos no existes. Esto lo mide gratis.', en: 'More and more buyers ask ChatGPT or Gemini before choosing. If AI doesn’t name you, you don’t exist for them. This measures it, free.', a: { es: 'Medir mi marca →', en: 'Measure my brand →', go: 'aibb' } },
     data: { es: 'La otra herramienta: subes un Excel de campañas y no te devuelvo gráficos, te digo qué hacer y por qué.', en: 'The other tool: upload a campaign spreadsheet and I don’t give you charts, I tell you what to do and why.', a: { es: 'Subir mis datos →', en: 'Upload my data →', href: '/data/' } },
     lab: { es: '¿Funciona de verdad? McDonald’s lidera en la IA, pero Goiko le gana cuando se pregunta por precio. Eso no lo ve un informe de SEO.', en: 'Does it really work? McDonald’s leads in AI, but Goiko beats it when people ask about price. No SEO report shows that.', a: { es: 'Ver el caso →', en: 'See the case →', href: '/ai-barometer/?caso=mcdonalds-es' } },
@@ -69,7 +69,7 @@
   ];
   // AI Brand Barometer: lo que está pasando y cada parte del informe
   var AIBB_T = {
-    idle: { es: 'Pon tu web arriba: la leo, detecto a tus competidores y pregunto a la IA lo que preguntaría un comprador.', en: 'Enter your website above: I read it, spot your competitors and ask AI what a buyer would ask.' },
+    idle: { es: 'Pon tu web en el recuadro de la izquierda: la leo, detecto a tus competidores y pregunto a la IA lo que preguntaría un comprador.', en: 'Enter your website in the box on the left: I read it, spot your competitors and ask AI what a buyer would ask.' },
     setup: { es: 'Leyendo tu web y buscando a tus competidores…', en: 'Reading your website and finding your competitors…' },
     run: { es: 'Investigando: 10 preguntas de compradores, de «¿qué opciones hay?» a «¿qué problemas tiene?». Si no quieres esperar, déjame tu email arriba y te aviso.', en: 'Investigating: 10 buyer questions, from “what are my options?” to “what problems does it have?”. If you don’t want to wait, leave your email above and I’ll let you know.' },
     top: { es: '¡Listo! Tu puntuación de 0 a 100 mezcla tres cosas: si apareces, en qué puesto y cuánto se habla de ti.', en: 'Done! Your 0–100 score blends three things: whether you appear, in what position and how much you’re talked about.' },
