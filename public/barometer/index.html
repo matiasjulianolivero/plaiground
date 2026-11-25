@@ -1482,7 +1482,7 @@ function flower(r,size){const c=size/2,Rd=size/2-74;let g='';const petal=(len,w)
   return `<svg viewBox="0 0 ${size} ${size}" width="100%" style="max-width:${size}px" role="img" aria-label="${esc(nm(r.name))}">${g}</svg>`;}
 function openFicha(k){S.sel=k;location.hash='ficha-'+slug(D[k][0]);}
 function renderFicha(){const r=R[S.sel],d=r.d,b=best(r),e=E[r.k],m=motor(r);drawerMode='ficha';
-  const note=d[14]?(LANG==='en'?NOTE_EN[d[14]]||d[14]:d[14]).replace(/Promise/g,L('Engancha','Buzz')):'';
+  const note=d[14]?(LANG==='en'?NOTE_EN[d[14]]||d[14]:d[14]):'';
   $('drawer').innerHTML=`<div class="bar"><div style="display:flex;gap:6px"><button type="button" class="btn" data-f="prev" aria-label="${L('Puesto anterior','Previous rank')}">←</button><button type="button" class="btn" data-f="next" aria-label="${L('Puesto siguiente','Next rank')}">→</button></div>
     <div style="display:flex;gap:6px;flex-wrap:wrap"><button type="button" class="btn" data-f="cmp">${L('Añadir al comparador','Add to comparison')}</button><button type="button" class="btn" data-f="uni">${L('Ver su universo','See its universe')}</button><button type="button" class="btn" data-f="close" aria-label="${L('Cerrar ficha','Close profile')}">✕</button></div></div>
     <div class="kicker" style="color:var(--muted)"><i class="dot" style="background:${OCOL[r.o]};margin-right:6px"></i>${orig(r.o)} · ${r.films} ${r.films===1?L('película','film'):L('películas','films')} ${L('con nota','rated')} · ${L('desde','since')} ${YEAR[r.name]}</div>
@@ -1558,7 +1558,7 @@ function chatContext(){
       'negocios sí: '+CATS.map((c,j)=>isY(e.codes[j])?tx(CN[c.id]):'').filter(Boolean).join(', '),
       'parciales: '+CATS.map((c,j)=>isP(e.codes[j])?tx(CN[c.id])+' ('+stn(e.codes[j])+')':'').filter(Boolean).join(', '),
       'parque: '+(parkTxt(e)||'no')+(citiesOf(r.name).length?' ['+citiesOf(r.name).join(', ')+']':''),
-      r.d[14]?'nota: '+r.d[14].replace(/Promise/g,'Engancha'):''].filter(Boolean).join(' | ');});
+      r.d[14]?'nota: '+r.d[14]:''].filter(Boolean).join(' | ');});
   const tlx=(typeof TLD==='undefined')?'':'\n\nLÍNEA DE TIEMPO (piloto, taquilla mundial M$ The Numbers):\n'+Object.keys(TLD).map(k=>{const d=TLD[k];return D[k][0]+': películas '+d.films.map(f=>f[0]+' '+f[1]+(f[3]!=null?' '+Math.round(f[3]):'')+(f[4]==='a'?' (anunciada)':'')).join('; ')+' || hitos '+d.ev.map(e=>e[0]+' '+e[4]).join('; ');}).join('\n');
   return lines.join('\n')+tlx;}
 function chatSystem(){return `${L('Eres el asistente de datos de matIAs plAIground para el Franchise Brand Barometer 2026. Responde en español.','You are the matIAs plAIground data assistant for the Franchise Brand Barometer 2026. Answer in English.')}
