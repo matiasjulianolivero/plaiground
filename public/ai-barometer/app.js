@@ -16,7 +16,38 @@
   var pct = function (x) { return x == null ? '—' : Math.round(x * 100) + '%'; };
   var num = function (x, d) { return x == null ? '—' : (L() === 'es' ? x.toFixed(d).replace('.', ',') : x.toFixed(d)); };
   var ENG_NAME = { gemini: 'Gemini', chatgpt: 'ChatGPT', claude: 'Claude', perplexity: 'Perplexity' };
-  var S = { cfg: null, setup: null, mode: 'demo', reason: '', engines: [], sel: {}, study: null, hist: [], exSel: 0 };
+  var S = { cfg: null, setup: null, mode: 'demo', reason: '', engines: [], sel: {}, study: null, hist: [], exSel: 0, xl: null, xlBusy: {} };
+  // Traducción del informe al idioma elegido, sea cual sea el idioma en que se hizo el análisis.
+  // Los textos originales siguen siendo las claves (preguntas, respuestas…); solo cambia lo que se muestra.
+  var X = function (t) { return (t && S.xl && S.xl[t]) || t; };
+  var srcLang = function (st) { return st && st.setup && st.setup.language === 'en' ? 'en' : 'es'; };
+  function shortTexts(st) { var s = st.setup, R = st.result || {}; return [s.category, s.country].concat(s.prompts || [], R.pros || [], R.cons || []).filter(Boolean); }
+  function prepXl(st) {
+    var want = L();
+    if (srcLang(st) === want) { S.xl = null; return; }
+    var have = (st.i18n && st.i18n[want]) || {};
+    S.xl = have;
+    if (shortTexts(st).some(function (t) { return !have[t]; })) requestXl(st, want, null);
+  }
+  function requestXl(st, lang, ans) {
+    var key = (st.id || S.shareTok || 'case') + '|' + lang + '|' + (ans == null ? 's' : ans);
+    if (S.xlBusy[key] || (!st.id && !S.shareTok)) return;
+    S.xlBusy[key] = 'busy';
+    api('/api/aibb/translate', { method: 'POST', body: JSON.stringify({ lang: lang, id: st.id || undefined, s: S.shareTok || undefined, answer: ans == null ? undefined : ans }) }).then(function (r) {
+      if (!r.ok || !r.d.map) { S.xlBusy[key] = 'fail'; if (ans == null && S.study === st && L() === lang) renderResults(); return; }
+      S.xlBusy[key] = 'ok';
+      st.i18n = st.i18n || {}; st.i18n[lang] = Object.assign(st.i18n[lang] || {}, r.d.map);
+      if (S.study !== st || L() !== lang) return;
+      S.xl = st.i18n[lang];
+      if (ans == null) { var y = window.scrollY; renderResults(); window.scrollTo(0, y); } else if (S.exSel === ans) showAnswer(ans);
+    });
+  }
+  function xlNote(st) {
+    if (srcLang(st) === L()) return '';
+    var key = (st.id || S.shareTok || 'case') + '|' + L() + '|s', busy = S.xlBusy[key] === 'busy', fail = S.xlBusy[key] === 'fail';
+    var from = srcLang(st) === 'es' ? tr('español', 'Spanish') : tr('inglés', 'English');
+    return '<span class="tag">🌐 ' + (busy ? tr('Traduciendo el informe…', 'Translating the report…') : fail ? tr('Se muestra en su idioma original (' + from + ')', 'Shown in its original language (' + from + ')') : tr('Traducido del ' + from, 'Translated from ' + from)) + '</span>';
+  }
 
   function api(path, opt) {
     opt = opt || {}; opt.credentials = 'same-origin'; opt.headers = Object.assign({ 'content-type': 'application/json' }, opt.headers || {});
@@ -303,11 +334,11 @@
     else out.push(['📉', tr('<b>' + esc(leader.name) + ' te supera</b>: aparece en el ' + pct(leader.visibility) + ' de las respuestas frente a tu ' + pct(me.visibility) + '.', '<b>' + esc(leader.name) + ' beats you</b>: it appears in ' + pct(leader.visibility) + ' of answers vs. your ' + pct(me.visibility) + '.')]);
     if (me.avgPos) out.push(['🎯', tr('Cuando apareces, lo haces de media en la <b>posición ' + num(me.avgPos, 1) + '</b>' + (me.top1 > 0 ? ' y eres la primera opción en el ' + pct(me.top1) + ' de las respuestas.' : ', pero nunca como primera opción.'), 'When you appear, you’re on average in <b>position ' + num(me.avgPos, 1) + '</b>' + (me.top1 > 0 ? ' and the first option in ' + pct(me.top1) + ' of answers.' : ', but never as the first option.'))]);
     var miss = R.rows.filter(function (r) { return r.pos[0] == null; }).map(function (r) { return r.prompt; }).filter(function (v, i, a) { return a.indexOf(v) === i; });
-    if (miss.length && me.visibility > 0) out.push(['🕳️', tr('Huecos: no sales en <b>' + miss.length + ' pregunta' + (miss.length > 1 ? 's' : '') + '</b>, por ejemplo «' + esc(miss[0]) + '».', 'Gaps: you don’t show up in <b>' + miss.length + ' question' + (miss.length > 1 ? 's' : '') + '</b>, e.g. “' + esc(miss[0]) + '”.')]);
+    if (miss.length && me.visibility > 0) out.push(['🕳️', tr('Huecos: no sales en <b>' + miss.length + ' pregunta' + (miss.length > 1 ? 's' : '') + '</b>, por ejemplo «' + esc(X(miss[0])) + '».', 'Gaps: you don’t show up in <b>' + miss.length + ' question' + (miss.length > 1 ? 's' : '') + '</b>, e.g. “' + esc(X(miss[0])) + '”.')]);
     out.push(R.ownCited > 0 ? ['🔗', tr('Tu web aparece como fuente en el <b>' + pct(R.ownCited) + '</b> de las respuestas.', 'Your website appears as a source in <b>' + pct(R.ownCited) + '</b> of answers.')] : ['🔗', tr('<b>Tu web no aparece como fuente.</b> ' + (R.sources[0] ? 'La más citada es ' + esc(R.sources[0].domain) + ': ahí es donde conviene estar.' : ''), '<b>Your website isn’t cited as a source.</b> ' + (R.sources[0] ? 'The most cited is ' + esc(R.sources[0].domain) + ': that’s where you want to be.' : ''))]);
     var F = !st.partial && funnelInfo(st);
     if (F && F.worst.vis[0] < F.best.vis[0]) out.push(['🧭', tr('En el recorrido del comprador <b>flojeas en ' + stgName(F.worst.stage).toLowerCase() + '</b> (' + pct(F.worst.vis[0]) + ' de presencia).', 'In the buyer journey <b>you’re weakest at ' + stgName(F.worst.stage).toLowerCase() + '</b> (' + pct(F.worst.vis[0]) + ' presence).')]);
-    if (!st.partial && (R.cons || []).length) out.push(['🗣️', tr('Crítica que más repite la IA: <b>«' + esc(R.cons[0]) + '»</b>.', 'Criticism AI repeats most: <b>“' + esc(R.cons[0]) + '”</b>.')]);
+    if (!st.partial && (R.cons || []).length) out.push(['🗣️', tr('Crítica que más repite la IA: <b>«' + esc(X(R.cons[0])) + '»</b>.', 'Criticism AI repeats most: <b>“' + esc(X(R.cons[0])) + '”</b>.')]);
     if (R.sentiment != null && !st.partial) out.push([R.sentiment > .2 ? '💚' : R.sentiment < -.2 ? '⚠️' : '😐', tr('Tono hacia tu marca: <b>' + (R.sentiment > .2 ? 'positivo' : R.sentiment < -.2 ? 'negativo' : 'neutro') + '</b>.', 'Tone towards your brand: <b>' + (R.sentiment > .2 ? 'positive' : R.sentiment < -.2 ? 'negative' : 'neutral') + '</b>.')]);
     return out;
   }
@@ -318,6 +349,7 @@
   function renderResults() {
     var hw0 = $('how'); if (hw0) hw0.hidden = true;
     var st = S.study; if (!st) return;
+    prepXl(st);
     var R = st.result, B = R.brands, s = st.setup, me = B[0];
     var engs = (R.byEngine || []).map(function (e) { return e.engine; });
     var d = new Date(st.created_at);
@@ -336,7 +368,7 @@
       prompts.map(function (p) {
         var rows = R.rows.filter(function (r) { return r.prompt === p; });
         var sg = (s.stages && s.stages[prompts.indexOf(p)]) || (rows[0] && rows[0].stage) || '';
-        return '<tr data-q="' + esc(p) + '" class="click"><th class="p" scope="row">' + (sg ? '<span class="stg s-' + sg + '">' + stgName(sg) + '</span>' : '') + esc(p) + '</th>' + B.map(function (b, k) {
+        return '<tr data-q="' + esc(p) + '" class="click"><th class="p" scope="row">' + (sg ? '<span class="stg s-' + sg + '">' + stgName(sg) + '</span>' : '') + esc(X(p)) + '</th>' + B.map(function (b, k) {
           var ps = rows.map(function (r) { return r.pos[k]; }).filter(function (x) { return x != null; });
           if (!ps.length) return '<td class="na" data-tip="' + esc(b.name) + ': ' + tr('no aparece', 'not mentioned') + '">—</td>';
           var best = Math.min.apply(null, ps), t = 1 - (best - 1) / Math.max(1, B.length - 1) * .85;
@@ -354,9 +386,9 @@
     var mx = R.sources.length ? R.sources[0].n : 1;
     var src = R.sources.length ? '<div class="src">' + R.sources.map(function (x) { return '<div class="sr' + (x.own ? ' own' : '') + '"><span class="d">' + esc(x.domain) + (x.own ? ' ★' : '') + '</span><span class="tr"><i style="width:' + (x.n / mx * 100) + '%"></i></span><span class="c">' + x.n + '</span></div>'; }).join('') + '</div><div class="legend"><span>★ ' + tr('tu web', 'your website') + '</span></div>' : '<p class="sub">' + tr('Las respuestas no citaron fuentes.', 'The answers didn’t cite sources.') + '</p>';
     var ins = '<ul class="ins">' + insights(st).map(function (x) { return '<li><span class="em">' + x[0] + '</span><span>' + x[1] + '</span></li>'; }).join('') + '</ul>';
-    var exl = st.answers.map(function (a, i) { return '<button type="button" data-x="' + i + '" aria-pressed="' + (i === S.exSel) + '"><span class="e">' + ENG_NAME[a.engine] + '</span><span>' + esc(a.prompt) + '</span></button>'; }).join('');
-    $('results').innerHTML = '<div class="rhead"><div><div class="eyebrow">' + tr('Resultados', 'Results') + ' · ' + esc(s.domain) + '</div><h2 style="margin-top:10px">' + esc(s.brand) + '</h2><div class="meta">' + esc(s.category) + ' · ' + d.toLocaleDateString(L() === 'es' ? 'es-ES' : 'en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) + ' · ' + st.answers.length + tr(' respuestas analizadas', ' answers analyzed') + '</div></div>' +
-      '<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">' + (st.demo ? '<span class="tag demo">🧪 ' + tr('Ejemplo · datos simulados', 'Sample · simulated data') + '</span>' : st.partial ? '<span class="tag live">👀 ' + tr('Vista previa', 'Preview') + '</span>' : '<span class="tag live">🛰️ ' + tr('Estudio real', 'Live study') + '</span>') + (S.viewer ? (S.viewerCase && hasTone(st) ? '<button class="btn ghost" type="button" id="ceoBtn" style="padding:11px 16px;font-size:14px">📋 ' + tr('Resumen para tu CEO', 'Summary for your CEO') + '</button>' : '') + '<a class="btn" href="/ai-barometer/" style="padding:11px 16px;font-size:14px">' + tr('Analiza tu marca gratis', 'Analyze your brand free') + ' →</a>' : (!st.partial && hasTone(st) ? '<button class="btn ghost" type="button" id="ceoBtn" style="padding:11px 16px;font-size:14px">📋 ' + tr('Resumen para tu CEO', 'Summary for your CEO') + '</button>' : '') + (st.id && !st.demo && !st.partial && S.cfg && S.cfg.user ? '<button class="btn" type="button" id="shareBtn" style="padding:11px 16px;font-size:14px">' + tr('Compartir', 'Share') + '</button>' : '') + '<button class="btn ghost" type="button" id="editStudy" style="padding:11px 16px;font-size:14px">' + tr('Editar y repetir', 'Edit and rerun') + '</button><button class="btn ghost" type="button" id="again" style="padding:11px 16px;font-size:14px">' + tr('Nuevo estudio', 'New study') + '</button>') + '</div></div><div id="sharebox"></div>' +
+    var exl = st.answers.map(function (a, i) { return '<button type="button" data-x="' + i + '" aria-pressed="' + (i === S.exSel) + '"><span class="e">' + ENG_NAME[a.engine] + '</span><span>' + esc(X(a.prompt)) + '</span></button>'; }).join('');
+    $('results').innerHTML = '<div class="rhead"><div><div class="eyebrow">' + tr('Resultados', 'Results') + ' · ' + esc(s.domain) + '</div><h2 style="margin-top:10px">' + esc(s.brand) + '</h2><div class="meta">' + esc(X(s.category)) + ' · ' + d.toLocaleDateString(L() === 'es' ? 'es-ES' : 'en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) + ' · ' + st.answers.length + tr(' respuestas analizadas', ' answers analyzed') + '</div></div>' +
+      '<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">' + xlNote(st) + (st.demo ? '<span class="tag demo">🧪 ' + tr('Ejemplo · datos simulados', 'Sample · simulated data') + '</span>' : st.partial ? '<span class="tag live">👀 ' + tr('Vista previa', 'Preview') + '</span>' : '<span class="tag live">🛰️ ' + tr('Estudio real', 'Live study') + '</span>') + (S.viewer ? (S.viewerCase && hasTone(st) ? '<button class="btn ghost" type="button" id="ceoBtn" style="padding:11px 16px;font-size:14px">📋 ' + tr('Resumen para tu CEO', 'Summary for your CEO') + '</button>' : '') + '<a class="btn" href="/ai-barometer/" style="padding:11px 16px;font-size:14px">' + tr('Analiza tu marca gratis', 'Analyze your brand free') + ' →</a>' : (!st.partial && hasTone(st) ? '<button class="btn ghost" type="button" id="ceoBtn" style="padding:11px 16px;font-size:14px">📋 ' + tr('Resumen para tu CEO', 'Summary for your CEO') + '</button>' : '') + (st.id && !st.demo && !st.partial && S.cfg && S.cfg.user ? '<button class="btn" type="button" id="shareBtn" style="padding:11px 16px;font-size:14px">' + tr('Compartir', 'Share') + '</button>' : '') + '<button class="btn ghost" type="button" id="editStudy" style="padding:11px 16px;font-size:14px">' + tr('Editar y repetir', 'Edit and rerun') + '</button><button class="btn ghost" type="button" id="again" style="padding:11px 16px;font-size:14px">' + tr('Nuevo estudio', 'New study') + '</button>') + '</div></div><div id="sharebox"></div>' +
       (S.viewerCase ? '<div class="banner live" style="margin-bottom:16px"><span class="ic">🔬</span><div>' + tr('<b>Caso de estudio de plaiground.</b> Estudio independiente hecho con el AI Brand Barometer el ' + new Date(st.created_at).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' }) + ', con las respuestas reales de ' + [...new Set(st.answers.map(function (a) { return ENG_NAME[a.engine]; }))].join(', ') + '. plaiground no tiene relación con las marcas analizadas; las respuestas de la IA pueden contener errores. <a href="/ai-barometer/">Analiza tu marca gratis →</a>', '<b>plaiground case study.</b> Independent study made with the AI Brand Barometer on ' + new Date(st.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) + ', using real answers from ' + [...new Set(st.answers.map(function (a) { return ENG_NAME[a.engine]; }))].join(', ') + '. plaiground has no relationship with the brands analysed; AI answers may contain errors. <a href="/ai-barometer/">Analyze your brand free →</a>') + '</div></div>' : '') +
       (S.viewer && !S.viewerCase ? '<div class="banner live" style="margin-bottom:16px"><span class="ic">📤</span><div>' + tr('<b>Informe compartido contigo.</b> Es una copia de solo lectura' + (S.viewerExp ? ', disponible hasta el ' + new Date(S.viewerExp).toLocaleDateString('es-ES', { day: 'numeric', month: 'long' }) : '') + '. ¿Quieres ver cómo sale tu marca? <a href="/ai-barometer/">Haz tu estudio gratis</a>.', '<b>Report shared with you.</b> It’s a read-only copy' + (S.viewerExp ? ', available until ' + new Date(S.viewerExp).toLocaleDateString('en-GB', { day: 'numeric', month: 'long' }) : '') + '. Want to see how your brand does? <a href="/ai-barometer/">Run your free study</a>.') + '</div></div>' : '') +
       (S.unlockEmail && !st.partial && !S.viewer && !(S.cfg && S.cfg.user) ? '<div class="banner live" style="margin-bottom:16px"><span class="ic">📩</span><div>' + tr('<b>¡Informe desbloqueado!</b> Te hemos enviado un email a <b>' + esc(S.unlockEmail) + '</b>: ábrelo para guardar este informe en tu histórico, compararlo cada mes y compartirlo.', '<b>Report unlocked!</b> We’ve emailed <b>' + esc(S.unlockEmail) + '</b>: open it to save this report to your history, compare it monthly and share it.') + '</div></div>' : '') +
@@ -463,8 +495,8 @@
   function repHtml(st) {
     var R = st.result; if (!R.risk && !(R.cons || []).length && !(R.pros || []).length) return '';
     var rt = R.risk ? R.risk.tone : null, cls = rt == null ? '' : rt > .2 ? 'good' : rt < -.2 ? 'bad' : 'mid';
-    var li = function (a, ic) { return (a || []).length ? '<ul class="rl">' + a.map(function (x) { return '<li><span>' + ic + '</span>' + esc(x) + '</li>'; }).join('') + '</ul>' : '<p class="small">' + tr('La IA no destaca nada concreto.', 'AI doesn’t point out anything specific.') + '</p>'; };
-    var qs = R.risk ? R.risk.prompts.map(function (p) { var i = -1; st.answers.forEach(function (a, k) { if (i < 0 && a.prompt === p) i = k; }); return i < 0 ? '' : '<button type="button" class="rq" data-goto="' + i + '">«' + esc(p) + '» →</button>'; }).join('') : '';
+    var li = function (a, ic) { return (a || []).length ? '<ul class="rl">' + a.map(function (x) { return '<li><span>' + ic + '</span>' + esc(X(x)) + '</li>'; }).join('') + '</ul>' : '<p class="small">' + tr('La IA no destaca nada concreto.', 'AI doesn’t point out anything specific.') + '</p>'; };
+    var qs = R.risk ? R.risk.prompts.map(function (p) { var i = -1; st.answers.forEach(function (a, k) { if (i < 0 && a.prompt === p) i = k; }); return i < 0 ? '' : '<button type="button" class="rq" data-goto="' + i + '">' + (L() === 'es' ? '«' + esc(X(p)) + '»' : '“' + esc(X(p)) + '”') + ' →</button>'; }).join('') : '';
     return '<section class="panel sec rep"><div class="qhead"><div><h3>' + (R.risk ? tr('Reputación: lo que la IA dice cuando preguntan por tus puntos débiles', 'Reputation: what AI says when asked about your weak spots') : tr('Reputación: lo que la IA dice de ti', 'Reputation: what AI says about you')) + '</h3><p class="sub">' + (R.risk ? tr('Preguntamos a la IA por problemas, quejas y motivos para no elegirte. Es lo que leerá un comprador que duda.', 'We asked AI about problems, complaints and reasons not to choose you. It’s what a hesitant buyer will read.') : tr('Lo que la IA destaca y critica de tu marca cuando le preguntan por ella.', 'What AI highlights and criticises about your brand when asked about it.')) + '</p></div>' +
       (R.risk ? '<div class="qbadge ' + cls + '"><span>' + tr('Tono en esas respuestas', 'Tone in those answers') + '</span><b>' + toneWord(rt) + '</b></div>' : '') + '</div>' +
       '<div class="g2" style="margin-top:6px"><div><h4>' + tr('Críticas y riesgos que repite', 'Criticisms and risks it repeats') + '</h4>' + li(R.cons, '⚠️') + '</div><div><h4>' + tr('Puntos fuertes que destaca', 'Strengths it highlights') + '</h4>' + li(R.pros, '✓') + '</div></div>' +
@@ -475,7 +507,7 @@
     var leader = B.slice(1).sort(function (x, y) { return y.visibility - x.visibility; })[0];
     if (leader && leader.visibility > me.visibility) out.push(tr(esc(leader.name) + ' aparece en el ' + pct(leader.visibility) + ' de las respuestas; nosotros, en el ' + pct(me.visibility) + '.', esc(leader.name) + ' appears in ' + pct(leader.visibility) + ' of answers; we do in ' + pct(me.visibility) + '.'));
     if (F && F.worst.vis[0] < F.best.vis[0]) out.push(tr('Desaparecemos en la fase de ' + stgName(F.worst.stage).toLowerCase() + ' (' + pct(F.worst.vis[0]) + ' de presencia).', 'We disappear at the ' + stgName(F.worst.stage).toLowerCase() + ' stage (' + pct(F.worst.vis[0]) + ' presence).'));
-    (R.cons || []).slice(0, 2).forEach(function (c) { out.push(tr('La IA repite: «' + esc(c) + '».', 'AI repeats: “' + esc(c) + '”.')); });
+    (R.cons || []).slice(0, 2).forEach(function (c) { out.push(tr('La IA repite: «' + esc(X(c)) + '».', 'AI repeats: “' + esc(X(c)) + '”.')); });
     if (R.ownCited < .3) out.push(tr('Nuestra web casi no se usa como fuente (' + pct(R.ownCited) + ').', 'Our website is barely used as a source (' + pct(R.ownCited) + ').'));
     if (me.visibility === 0) out.unshift(tr('No aparecemos en ninguna respuesta de nuestra categoría.', 'We don’t appear in any answer for our category.'));
     return out.slice(0, 3);
@@ -485,7 +517,7 @@
     var acts = P[0].slice(0, 2).concat(P[1].slice(0, 1)).map(function (it) { return '<li><b>' + it.t + '</b><span>' + it.why + '</span></li>'; }).join('');
     var d = new Date(st.created_at).toLocaleDateString(L() === 'es' ? 'es-ES' : 'en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
     return '<div class="ceo-card" role="dialog" aria-modal="true" aria-label="' + tr('Resumen para tu CEO', 'Summary for your CEO') + '"><div class="ceo-bar"><span class="eyebrow">' + tr('Resumen ejecutivo', 'Executive summary') + '</span><div class="ceo-act"><button class="btn ghost" type="button" id="ceoPrint">' + tr('Imprimir o guardar PDF', 'Print or save PDF') + '</button>' + (st.id && !st.demo && S.cfg && S.cfg.user ? '<button class="btn ghost" type="button" id="ceoShare">' + tr('Compartir enlace', 'Share link') + '</button>' : '') + '<button class="btn ghost" type="button" id="ceoClose" aria-label="' + tr('Cerrar', 'Close') + '">✕</button></div></div>' +
-      '<div class="ceo-body"><div class="ceo-top"><div><div class="small">' + tr('Visibilidad de marca en asistentes de IA', 'Brand visibility in AI assistants') + ' · ' + d + '</div><h2>' + esc(me.name) + '</h2><div class="small">' + esc(s.category) + (s.country ? ' · ' + esc(s.country) : '') + ' · ' + tr('frente a ', 'vs ') + (B.length - 1) + tr(' competidores', ' competitors') + '</div></div>' +
+      '<div class="ceo-body"><div class="ceo-top"><div><div class="small">' + tr('Visibilidad de marca en asistentes de IA', 'Brand visibility in AI assistants') + ' · ' + d + '</div><h2>' + esc(me.name) + '</h2><div class="small">' + esc(X(s.category)) + (s.country ? ' · ' + esc(X(s.country)) : '') + ' · ' + tr('frente a ', 'vs ') + (B.length - 1) + tr(' competidores', ' competitors') + '</div></div>' +
       '<div class="ceo-k"><div><b>' + R.score + '</b><span>AI Visibility Score</span></div><div><b>' + R.rank + '/' + B.length + '</b><span>' + tr('Puesto', 'Rank') + '</span></div><div><b>' + pct(me.visibility) + '</b><span>' + tr('Visibilidad', 'Visibility') + '</span></div><div><b>' + (qi ? quadName(qi.q) : toneWord(R.sentiment)) + '</b><span>' + (qi ? tr('Cuadrante', 'Quadrant') : tr('Tono', 'Tone')) + '</span></div></div></div>' +
       (qi ? '<div class="ceo-map">' + quadSvg(st, true) + '</div>' : '') +
       '<div class="ceo-cols"><div><h4>' + tr('3 riesgos', '3 risks') + '</h4><ol>' + ceoRisks(st).map(function (x) { return '<li>' + x + '</li>'; }).join('') + '</ol></div><div><h4>' + tr('3 acciones', '3 actions') + '</h4><ol class="acts">' + acts + '</ol></div></div>' +
@@ -552,7 +584,7 @@
     var lowPos = me.avgPos && me.avgPos > 2;
     var noOwn = R.ownCited < 0.3;
     var neg = R.sentiment != null && R.sentiment < -0.1;
-    var q = function (t) { return '«' + esc(t) + '»'; };
+    var q = function (t) { return L() === 'es' ? '«' + esc(X(t)) + '»' : '“' + esc(X(t)) + '”'; };
     var short = [], mid = [], long = [];
     short.push({ hi: noOwn, t: tr('Haz tu web fácil de leer para la IA', 'Make your website easy for AI to read'), why: noOwn ? tr('Tu web solo aparece como fuente en el ' + pct(R.ownCited) + ' de las respuestas.', 'Your website is only cited in ' + pct(R.ownCited) + ' of answers.') : tr('Tu web ya se cita; asegúrate de que lo que la IA lee es correcto.', 'Your site is already cited; make sure what AI reads is right.'),
       s: [tr('Abre tu home con un párrafo claro: qué es ' + esc(s.brand) + ', para quién y en qué se diferencia.', 'Open your homepage with a clear paragraph: what ' + esc(s.brand) + ' is, who it’s for and how it’s different.'), tr('Añade datos estructurados (schema.org: Organization, Product/Service, FAQPage).', 'Add structured data (schema.org: Organization, Product/Service, FAQPage).'), tr('Revisa tu robots.txt para no bloquear a los rastreadores de IA (GPTBot, Google-Extended, ClaudeBot, PerplexityBot) si quieres que te lean.', 'Check your robots.txt doesn’t block AI crawlers (GPTBot, Google-Extended, ClaudeBot, PerplexityBot) if you want them to read you.')] });
@@ -609,12 +641,14 @@
   function kpi(l, v, d) { return '<div class="kpi"><div class="l">' + l + '</div><div class="v">' + v + '</div><div class="d">' + d + '</div></div>'; }
   function showAnswer(i) {
     var st = S.study, a = st.answers[i]; if (!a) { $('ans').textContent = ''; return; }
-    var h = esc(a.text).replace(/\*\*([^*\n]+)\*\*/g, '<b>$1</b>').replace(/^#{1,4} (.+)$/gm, '<b>$1</b>').replace(/^\s*[-*] /gm, '• ');
+    if (srcLang(st) !== L() && !(S.xl && S.xl[a.text])) requestXl(st, L(), i);
+    var h = esc(X(a.text)).replace(/\*\*([^*\n]+)\*\*/g, '<b>$1</b>').replace(/^#{1,4} (.+)$/gm, '<b>$1</b>').replace(/^\s*[-*] /gm, '• ');
     st.result.brands.forEach(function (b, k) {
       var re = new RegExp('(' + esc(b.name).replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
       h = h.replace(re, '<mark style="background:' + col(k) + '">$1</mark>');
     });
-    $('ans').innerHTML = h;
+    var pend = srcLang(st) !== L() && !(S.xl && S.xl[a.text]) && S.xlBusy[(st.id || S.shareTok || 'case') + '|' + L() + '|' + i] === 'busy';
+    $('ans').innerHTML = (pend ? '<div class="small" style="margin-bottom:8px">🌐 ' + tr('Traduciendo esta respuesta…', 'Translating this answer…') + '</div>' : '') + h;
   }
   function tips(root) {
     var tip = $('tip');
@@ -665,6 +699,7 @@
   }
   var shareTok = new URLSearchParams(location.search).get('s');
   if (shareTok && /^[a-f0-9]{36}$/.test(shareTok)) {
+    S.shareTok = shareTok;
     var mr = document.createElement('meta'); mr.name = 'robots'; mr.content = 'noindex'; document.head.appendChild(mr);
     document.body.classList.add('viewing');
     api('/api/aibb/share/' + shareTok).then(function (r) {

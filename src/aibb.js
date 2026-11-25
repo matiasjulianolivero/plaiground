@@ -560,6 +560,35 @@ Devuelve SOLO un JSON {"tone":[[...${names.length} valores...], ...una fila por 
       }
       if (m === 'DELETE') { await env.DB.prepare('UPDATE aibb_shares SET revoked_at = ? WHERE study_id = ? AND user_id = ? AND revoked_at IS NULL').bind(now, shm[1], user.id).run(); return json({ ok: true }); }
     }
+    // Traduce un estudio guardado al idioma de la web (una sola vez por idioma; queda guardado en el propio estudio)
+    if (pathname === '/api/aibb/translate' && m === 'POST') {
+      const lang = body.lang === 'en' ? 'en' : 'es';
+      let row = null;
+      if (/^[a-f0-9]{36}$/.test(String(body.s || ''))) row = await env.DB.prepare('SELECT st.id AS id, st.data AS data FROM aibb_shares sh JOIN aibb_studies st ON st.id = sh.study_id WHERE sh.token = ? AND sh.revoked_at IS NULL AND sh.expires_at > ?').bind(body.s, Date.now()).first();
+      else if (user && /^[a-f0-9]{16}$/.test(String(body.id || ''))) row = await env.DB.prepare('SELECT id, data FROM aibb_studies WHERE id = ? AND user_id = ?').bind(body.id, user.id).first();
+      if (!row) return json({ error: 'not_found' }, 404);
+      const st = JSON.parse(row.data), s = st.setup || {}, R = st.result || {};
+      if ((s.language === 'en' ? 'en' : 'es') === lang) return json({ map: {} });
+      st.i18n = st.i18n || {}; const have = st.i18n[lang] || {};
+      let strings;
+      if (body.answer !== undefined) { const a = (st.answers || [])[+body.answer]; if (!a || !Number.isInteger(+body.answer)) return json({ error: 'not_found' }, 404); strings = [a.text]; }
+      else strings = [...new Set([s.category, s.country].concat(s.prompts || [], R.pros || [], R.cons || []).filter(x => typeof x === 'string' && x.trim()))];
+      const pick = () => Object.fromEntries(strings.filter(x => have[x]).map(x => [x, have[x]]));
+      const todo = strings.filter(x => !have[x]);
+      if (!todo.length) return json({ map: pick() });
+      if (!env.GEMINI_API_KEY) return json({ error: 'engine_off' }, 503);
+      const from = lang === 'en' ? 'Spanish' : 'English', to = lang === 'en' ? 'English' : 'Spanish (Spain)';
+      const prompt = `Translate each string in this JSON array from ${from} into ${to}. Keep brand names, product names, URLs, domains, numbers and Markdown formatting (**bold**, numbered lists, line breaks) exactly as they are, and translate a closing "Fuentes:" / "Sources:" label too. Reply with only a JSON array of strings, with the same length and order.\n\n` + JSON.stringify(todo);
+      const r = await callEngine(env, 'gemini', prompt, { json: true });
+      let arr = null;
+      try { arr = JSON.parse(String(r.text || '').replace(/^```(?:json)?\s*|\s*```$/g, '')); } catch (e) { }
+      await logUse(env, user, 'gemini', 'translate', !!(Array.isArray(arr) && arr.length === todo.length));
+      if (!Array.isArray(arr) || arr.length !== todo.length || arr.some(x => typeof x !== 'string' || !x.trim())) return json({ error: r.error || 'translate_failed' }, 502);
+      todo.forEach((x, i) => { have[x] = arr[i].slice(0, x.length * 3 + 300); });
+      st.i18n[lang] = have;
+      await env.DB.prepare('UPDATE aibb_studies SET data = ? WHERE id = ?').bind(JSON.stringify(st), row.id).run();
+      return json({ map: pick() });
+    }
     const pub = pathname.match(/^\/api\/aibb\/share\/([a-f0-9]{36})$/);
     if (pub && m === 'GET') {
       const r = await env.DB.prepare('SELECT st.data AS data, sh.expires_at AS exp FROM aibb_shares sh JOIN aibb_studies st ON st.id = sh.study_id WHERE sh.token = ? AND sh.revoked_at IS NULL AND sh.expires_at > ?').bind(pub[1], Date.now()).first();
