@@ -14,14 +14,14 @@
 (function () {
   'use strict';
   var KEY = 'plg-consent';
-  var CONSENT_VERSION = 1;
+  var CONSENT_VERSION = 2; // 2: se añade la cookie analítica propia (plg_vid)
   var MAX_AGE_MS = 365 * 24 * 60 * 60 * 1000; // 12 meses
   var CATEGORIES = ['analytics', 'marketing'];
 
   var T = {
     es: {
       title: 'Tu privacidad',
-      text: 'Usamos solo almacenamiento técnico imprescindible (idioma, tema y tu elección de cookies). Si en el futuro añadimos analítica o marketing, solo se activarán si los aceptas. Puedes cambiar tu decisión cuando quieras.',
+      text: 'Usamos almacenamiento técnico imprescindible y, solo si la aceptas, una cookie analítica propia para saber qué páginas visitas y cuánto tiempo. Si además nos dejas tu email, lo unimos para atenderte mejor. Puedes cambiar tu decisión cuando quieras.',
       policy: 'Política de cookies',
       accept: 'Aceptar todo',
       reject: 'Rechazar todo',
@@ -32,14 +32,14 @@
       necD: 'Permiten que la web funcione y recuerdan tu idioma, tema y elección de cookies. No se pueden desactivar.',
       always: 'Siempre activas',
       analytics: 'Analíticas',
-      analyticsD: 'Nos ayudarían a entender de forma agregada cómo se usa la web. Ahora mismo no usamos ninguna.',
+      analyticsD: 'Cookie propia (plg_vid, 12 meses) que recuerda qué páginas visitas, cuántas veces y cuánto tiempo. Si nos dejas tu email en un formulario, se une a tu ficha de contacto. No se comparte con terceros.',
       marketing: 'Marketing',
       marketingD: 'Servirían para medir campañas o mostrar publicidad. Ahora mismo no usamos ninguna.',
       close: 'Cerrar'
     },
     en: {
       title: 'Your privacy',
-      text: 'We only use essential technical storage (language, theme and your cookie choice). If we ever add analytics or marketing tools, they will only run if you accept them. You can change your choice at any time.',
+      text: 'We use essential technical storage and, only if you accept it, a first-party analytics cookie to see which pages you visit and for how long. If you also leave us your email, we link them to help you better. You can change your choice at any time.',
       policy: 'Cookie policy',
       accept: 'Accept all',
       reject: 'Reject all',
@@ -50,7 +50,7 @@
       necD: 'They make the site work and remember your language, theme and cookie choice. They cannot be turned off.',
       always: 'Always on',
       analytics: 'Analytics',
-      analyticsD: 'Would help us understand, in aggregate, how the site is used. We do not use any right now.',
+      analyticsD: 'First-party cookie (plg_vid, 12 months) that remembers which pages you visit, how often and for how long. If you leave your email in a form, it is linked to your contact record. Not shared with third parties.',
       marketing: 'Marketing',
       marketingD: 'Would be used to measure campaigns or show ads. We do not use any right now.',
       close: 'Close'

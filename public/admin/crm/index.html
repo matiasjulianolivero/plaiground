@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><meta name="referrer" content="no-referrer">
+<title>CRM · plaiground</title><link rel="icon" href="/favicon.ico" sizes="any">
+<style>
+*{box-sizing:border-box}body{margin:0;background:#0B0D1F;color:#ECEEFF;font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+.w{max-width:1320px;margin:0 auto;padding:28px 18px 60px}h1{font-size:30px;letter-spacing:-.03em;margin:0}.m{color:#A3A8CC}
+a{color:#B8B9FF}.top{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap}
+.tabs{display:flex;gap:8px}.tabs button,.btn{border:1px solid rgba(236,238,255,.2);background:transparent;color:#ECEEFF;border-radius:999px;padding:8px 14px;font:600 13px system-ui;cursor:pointer}
+.tabs button[aria-pressed=true],.btn.pri{background:#ECEEFF;color:#14162E;border-color:#ECEEFF}.btn:disabled{opacity:.4;cursor:not-allowed}
+.card{background:#15183A;border:1px solid rgba(236,238,255,.12);border-radius:18px;padding:18px;margin-top:16px}
+.k{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px}.k div{background:#1C1F47;border-radius:12px;padding:12px}.k b{display:block;font-size:24px}.k small{color:#A3A8CC}
+.bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:16px}
+input,select,textarea{background:#0F1230;color:#ECEEFF;border:1px solid rgba(236,238,255,.18);border-radius:10px;padding:9px 11px;font:14px system-ui}
+input[type=search]{min-width:260px}textarea{width:100%;min-height:150px;resize:vertical;line-height:1.5}
+.grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:16px;align-items:start}
+@media(max-width:1000px){.grid{grid-template-columns:1fr}}
+table{width:100%;border-collapse:collapse;font-size:13.5px}th,td{padding:9px 8px;border-bottom:1px solid rgba(236,238,255,.08);text-align:left;vertical-align:top}th{color:#A3A8CC;font-weight:600;font-size:12.5px}
+tr.row{cursor:pointer}tr.row:hover td{background:rgba(236,238,255,.04)}tr.row.sel td{background:rgba(139,140,248,.14)}
+.chip{display:inline-block;font-size:11.5px;font-weight:700;padding:2px 8px;border-radius:999px;margin:0 4px 3px 0;background:#262A5C;color:#C9CCEA}
+.c-contacto{background:#3B2A55;color:#F4C4FF}.c-newsletter{background:#1E4740;color:#9FF0DC}.c-barometro{background:#2E2E6E;color:#C3C2FF}.c-data{background:#4A3A1C;color:#FFD99A}.c-cuenta{background:#2A2E44;color:#C9CCEA}
+.ok{color:#5FE0CF}.warn{color:#FFB38E}.small{font-size:12.5px;color:#A3A8CC}
+.det h2{margin:0;font-size:22px}.sec{margin-top:18px}.sec h3{font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:#A3A8CC;margin:0 0 8px}
+.tl div{padding:7px 0;border-bottom:1px solid rgba(236,238,255,.06);font-size:13.5px}.tl span{color:#A3A8CC;font-size:12px;display:inline-block;min-width:118px}
+.row2{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.full{width:100%}
+.preview{background:#F4F5FB;color:#14162E;border-radius:12px;padding:16px;font:14px/1.6 Arial,sans-serif;white-space:pre-wrap}
+.msg{min-height:20px;margin-top:8px}.empty{color:#A3A8CC;padding:20px 0}
+</style></head><body><div class="w">
+<div class="top"><div><h1>CRM</h1><p class="m" style="margin:4px 0 0">Tus contactos de la web en un solo sitio. La navegación solo aparece de quien aceptó las cookies analíticas.</p></div>
+<div class="tabs"><button type="button" data-t="contacts" aria-pressed="true">Contactos</button><button type="button" data-t="templates" aria-pressed="false">Plantillas</button><a class="btn" href="/admin/metricas/">Métricas</a></div></div>
+<div id="app"><div class="card">Cargando…</div></div></div>
+<script>
+(function(){
+'use strict';
+var $=function(i){return document.getElementById(i)},app=$('app');
+var esc=function(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})};
+var D=function(ts){return ts?new Date(ts).toLocaleDateString('es-ES',{day:'numeric',month:'short',year:'2-digit'}):'—'};
+var DT=function(ts){return ts?new Date(ts).toLocaleString('es-ES',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'—'};
+var dur=function(s){s=s||0;if(s<60)return s+' s';var m=Math.round(s/60);return m<60?m+' min':Math.floor(m/60)+' h '+(m%60)+' min'};
+var PG={'/':'Inicio','/data/':'Data plaiground','/data/app/':'Data plaiground (app)','/ai-barometer/':'AI Brand Barometer','/barometer/':'Franchise Brand Barometer','/barometer/metodologia/':'Metodología del barómetro','/cv/':'CV','/newsletter/':'Newsletter'};
+var pg=function(p){var m=/^\/ai-barometer\/\?caso=(.+)$/.exec(p);return m?'Caso '+m[1]:(PG[p]||p)};
+var SRC={contacto:'Contacto',newsletter:'Newsletter',barometro:'Barómetro',data:'Data',cuenta:'Cuenta'};
+var ST={nuevo:'Nuevo',contactado:'Contactado',en_conversacion:'En conversación',cliente:'Cliente',descartado:'Descartado'};
+var KIND={gracias_contacto:'Gracias por contactar (auto)',acceso:'Enlace de acceso (auto)',acceso_barometro:'Enlace del barómetro (auto)',data_listo:'Informe de Data listo (auto)',newsletter:'Newsletter',manual_respuesta:'Respuesta manual',manual_comercial:'Comercial manual',auto:'Automático'};
+var S={tab:'contacts',list:[],q:'',src:'',sel:null,det:null,tpl:[],anon:0};
+function api(u,o){return fetch(u,Object.assign({credentials:'same-origin',headers:{'content-type':'application/json'}},o||{})).then(function(r){return r.json().then(function(d){return{s:r.status,d:d}},function(){return{s:r.status,d:{}}})})}
+document.querySelectorAll('.tabs [data-t]').forEach(function(b){b.onclick=function(){S.tab=b.dataset.t;document.querySelectorAll('.tabs [data-t]').forEach(function(x){x.setAttribute('aria-pressed',x===b)});render()}});
+function load(){return Promise.all([api('/api/crm/contacts'),api('/api/crm/templates')]).then(function(r){
+ if(r[0].s===401){app.innerHTML='<div class="card"><p>Para entrar, inicia sesión en Data plaiground con <b>tu email de titular</b> y vuelve a esta página.</p><a class="btn pri" href="/data/app/">Iniciar sesión</a></div>';return false}
+ if(r[0].s===403){app.innerHTML='<div class="card warn">Esta cuenta no es la del titular.</div>';return false}
+ if(r[0].s!==200){app.innerHTML='<div class="card warn">No se pudo cargar ('+esc(r[0].d.error||r[0].s)+').</div>';return false}
+ S.list=r[0].d.contacts||[];S.anon=r[0].d.anonymous_visitors||0;S.tpl=(r[1].d&&r[1].d.templates)||[];return true})}
+function render(){if(S.tab==='templates')return renderTpl();
+ var L=S.list.filter(function(c){var q=S.q.toLowerCase();return(!S.src||c.sources.indexOf(S.src)>=0)&&(!q||(c.email+' '+c.name+' '+c.company+' '+c.web).toLowerCase().indexOf(q)>=0)});
+ var wk=Date.now()-7*864e5;
+ var h='<div class="card"><div class="k"><div><small>Contactos</small><b>'+S.list.length+'</b></div><div><small>Nuevos esta semana</small><b>'+S.list.filter(function(c){return c.first>wk}).length+'</b></div><div><small>Aceptan correos comerciales</small><b>'+S.list.filter(function(c){return c.consent}).length+'</b></div><div><small>Con navegación registrada</small><b>'+S.list.filter(function(c){return c.pages>0}).length+'</b></div><div><small>Visitantes con consentimiento aún sin email</small><b>'+S.anon+'</b></div></div>'+
+ '<div class="bar"><input type="search" id="q" placeholder="Buscar por nombre, email, empresa o web" value="'+esc(S.q)+'"><select id="src"><option value="">Todos los orígenes</option>'+Object.keys(SRC).map(function(k){return'<option value="'+k+'"'+(S.src===k?' selected':'')+'>'+SRC[k]+'</option>'}).join('')+'</select><span class="small">'+L.length+' resultados</span></div></div>';
+ h+='<div class="grid"><div class="card" style="overflow-x:auto">'+(L.length?'<table><thead><tr><th>Contacto</th><th>Origen</th><th>Estado</th><th>Navegación</th><th>Correos</th><th>Última actividad</th></tr></thead><tbody>'+L.map(function(c){
+  return '<tr class="row'+(S.sel===c.email?' sel':'')+'" data-e="'+esc(c.email)+'"><td><b>'+esc(c.name||c.email)+'</b><div class="small">'+esc(c.name?c.email:'')+(c.company||c.web?(c.name?' · ':'')+esc(c.company||c.web):'')+'</div></td><td>'+c.sources.map(function(s){return'<span class="chip c-'+s+'">'+SRC[s]+'</span>'}).join('')+'</td><td>'+(c.no_contact?'<span class="warn">No contactar</span>':esc(ST[c.status]||c.status))+'</td><td>'+(c.pages?c.visits+' visitas · '+c.pages+' pág. · '+dur(c.seconds):'<span class="small">—</span>')+'</td><td>'+(c.mails?c.mails+'<div class="small">último '+D(c.lastMail)+'</div>':'<span class="small">0</span>')+'</td><td>'+D(c.last)+'</td></tr>'}).join('')+'</tbody></table>':'<p class="empty">Todavía no hay contactos'+(S.q||S.src?' con ese filtro':'')+'.</p>')+'</div><div class="card det" id="det">'+(S.det?detHtml():'<p class="empty">Elige un contacto para ver su ficha, su actividad y escribirle.</p>')+'</div></div>';
+ app.innerHTML=h;
+ $('q').oninput=function(){S.q=this.value;var p=this.selectionStart;render();var n=$('q');n.focus();n.setSelectionRange(p,p)};
+ $('src').onchange=function(){S.src=this.value;render()};
+ app.querySelectorAll('tr.row').forEach(function(tr){tr.onclick=function(){open(tr.dataset.e)}});
+ if(S.det)bindDet();
+}
+function open(email){S.sel=email;S.det={loading:true};render();api('/api/crm/contact?email='+encodeURIComponent(email)).then(function(r){if(r.s!==200){S.det=null;render();return}S.det=r.d;S.det.compose={kind:'reply',subject:'',body:'',tpl:''};render();var d=$('det');if(d&&window.innerWidth<1000)d.scrollIntoView({behavior:'smooth'})})}
+function fill(t,c){var first=(c.name||'').split(' ')[0];return String(t||'').replace(/\{\{\s*nombre\s*\}\}/gi,first||'').replace(/\{\{\s*empresa\s*\}\}/gi,c.company||'').replace(/\{\{\s*web\s*\}\}/gi,c.web||'')}
+function detHtml(){var d=S.det;if(d.loading)return'<p class="empty">Cargando ficha…</p>';var c=d.contact,cp=d.compose;
+ var ev=[];(d.leads||[]).forEach(function(l){ev.push([l.created_at,'📨 Formulario de contacto'+(l.interests?' · '+esc(l.interests):'')+(l.message?'<div class="small">«'+esc(l.message)+'»</div>':'')])});
+ (d.studies||[]).forEach(function(s){ev.push([s.created_at,'📡 Estudio AI Brand Barometer: <b>'+esc(s.domain)+'</b> · score '+(s.score==null?'—':s.score)])});
+ (d.dashboards||[]).forEach(function(x){ev.push([x.created_at,'📊 Informe de Data: '+esc(x.title||x.id)])});
+ (d.mails||[]).forEach(function(m){ev.push([m.ts,'✉️ '+esc(KIND[m.kind]||m.kind)+': '+esc(m.subject)+(m.ok?'':' <span class="warn">(falló)</span>')])});
+ ev.sort(function(a,b){return b[0]-a[0]});
+ var lead=(d.leads||[])[0];
+ return '<h2>'+esc(c.name||c.email)+'</h2><div class="small">'+esc(c.email)+(c.company?' · '+esc(c.company):'')+(c.web?' · <a href="https://'+esc(c.web)+'" target="_blank" rel="noopener">'+esc(c.web)+'</a>':'')+(c.lang?' · '+esc(c.lang.toUpperCase()):'')+'</div>'+
+ '<div style="margin-top:8px">'+c.sources.map(function(s){return'<span class="chip c-'+s+'">'+SRC[s]+'</span>'}).join('')+' <span class="chip">'+(c.consent?'✓ Acepta comerciales':'Sin permiso comercial')+'</span>'+(c.sub&&c.sub!=='confirmed'?' <span class="chip">Newsletter: '+esc(c.sub)+'</span>':'')+'</div>'+
+ (lead?'<div class="small" style="margin-top:8px">'+(lead.role?'Rol: '+esc(lead.role)+' · ':'')+'Urgencia '+(lead.urgency||0)+'/100 · código '+esc(lead.code||'')+'</div>':'')+
+ '<div class="sec"><h3>Seguimiento</h3><div class="row2"><select id="st">'+Object.keys(ST).map(function(k){return'<option value="'+k+'"'+(c.status===k?' selected':'')+'>'+ST[k]+'</option>'}).join('')+'</select><label class="small"><input type="checkbox" id="nc"'+(c.no_contact?' checked':'')+'> No contactar</label><button class="btn" id="sv">Guardar</button></div><textarea id="nt" style="min-height:70px;margin-top:8px" placeholder="Notas internas">'+esc(c.notes||'')+'</textarea><div class="msg small" id="svm"></div></div>'+
+ '<div class="sec"><h3>Navegación'+(c.pages?' · '+c.visits+' visitas · '+c.pages+' páginas · '+dur(c.seconds):'')+'</h3>'+((d.topPages||[]).length?'<table><thead><tr><th>Página</th><th>Vistas</th><th>Tiempo</th></tr></thead><tbody>'+d.topPages.map(function(p){return'<tr><td>'+esc(pg(p.path))+'</td><td>'+p.views+'</td><td>'+dur(p.seconds)+'</td></tr>'}).join('')+'</tbody></table><details style="margin-top:8px"><summary class="small">Ver las '+d.pages.length+' visitas una a una</summary><div class="tl">'+d.pages.map(function(p){return'<div><span>'+DT(p.ts)+'</span>'+esc(pg(p.path))+' · '+dur(p.seconds)+(p.ref?' <span class="small">desde '+esc(p.ref)+'</span>':'')+'</div>'}).join('')+'</div></details>':'<p class="small">Sin navegación registrada: no aceptó las cookies analíticas o aún no ha vuelto desde que dejó su email.</p>')+'</div>'+
+ '<div class="sec"><h3>Actividad y correos</h3><div class="tl">'+(ev.length?ev.map(function(e){return'<div><span>'+DT(e[0])+'</span>'+e[1]+'</div>'}).join(''):'<p class="small">Sin actividad.</p>')+'</div></div>'+
+ '<div class="sec"><h3>Escribir un correo</h3>'+(c.no_contact?'<p class="warn">Marcado como «No contactar».</p>':
+ '<div class="row2"><select id="tp"><option value="">Plantilla…</option>'+S.tpl.map(function(t){return'<option value="'+t.id+'"'+(cp.tpl===t.id?' selected':'')+'>'+esc(t.name)+(t.kind==='commercial'?' (comercial)':'')+'</option>'}).join('')+'</select><select id="kd"><option value="reply"'+(cp.kind==='reply'?' selected':'')+'>Respuesta</option><option value="commercial"'+(cp.kind==='commercial'?' selected':'')+(c.consent?'':' disabled')+'>Comercial'+(c.consent?'':' (sin permiso)')+'</option></select></div>'+
+ '<input class="full" id="sj" style="margin-top:8px" placeholder="Asunto" value="'+esc(cp.subject)+'"><textarea id="bd" style="margin-top:8px" placeholder="Escribe el mensaje. Puedes usar {{nombre}}, {{empresa}} y {{web}}.">'+esc(cp.body)+'</textarea>'+
+ '<p class="small" style="margin:6px 0">'+(cp.kind==='commercial'?'Comercial: se añade un enlace para darse de baja.':'Respuesta: para contestar o dar seguimiento a lo que te pidió. Para promociones usa «Comercial» (solo con permiso).')+' Sale desde tu dirección de plaiground y las respuestas te llegan a tu correo.</p>'+
+ '<div class="row2"><button class="btn" id="pv">Vista previa</button><button class="btn pri" id="sd">Enviar</button><button class="btn" id="st2">Guardar como plantilla</button></div><div id="pvb"></div><div class="msg" id="sdm"></div>')+'</div>';
+}
+function bindDet(){var d=S.det;if(!d||d.loading)return;var c=d.contact,cp=d.compose;
+ $('sv').onclick=function(){api('/api/crm/contact',{method:'POST',body:JSON.stringify({email:c.email,status:$('st').value,notes:$('nt').value,no_contact:$('nc').checked})}).then(function(r){if(r.s===200){c.status=$('st').value;c.notes=$('nt').value;c.no_contact=$('nc').checked;var it=S.list.filter(function(x){return x.email===c.email})[0];if(it){it.status=c.status;it.notes=c.notes;it.no_contact=c.no_contact}render();$('svm').textContent='Guardado.'}else $('svm').textContent='No se pudo guardar.'})};
+ if(!$('sj'))return;
+ var sync=function(){cp.subject=$('sj').value;cp.body=$('bd').value;cp.kind=$('kd').value};
+ $('sj').oninput=sync;$('bd').oninput=sync;$('kd').onchange=function(){sync();render()};
+ $('tp').onchange=function(){var t=S.tpl.filter(function(x){return x.id===$('tp').value})[0];cp.tpl=$('tp').value;if(t){cp.subject=t.subject;cp.body=t.body;cp.kind=t.kind==='commercial'&&c.consent?'commercial':'reply'}render()};
+ $('pv').onclick=function(){sync();$('pvb').innerHTML='<div class="small" style="margin:10px 0 6px">Asunto: <b>'+esc(fill(cp.subject,c))+'</b></div><div class="preview">'+esc(fill(cp.body,c))+'</div>'};
+ $('st2').onclick=function(){sync();var n=prompt('Nombre de la plantilla:');if(!n)return;api('/api/crm/templates',{method:'POST',body:JSON.stringify({name:n,subject:cp.subject,body:cp.body,kind:cp.kind})}).then(function(r){if(r.s===200){api('/api/crm/templates').then(function(t){S.tpl=t.d.templates||[];cp.tpl=r.d.id;render();$('sdm').textContent='Plantilla guardada.'})}else $('sdm').textContent='Rellena asunto y mensaje para guardar la plantilla.'})};
+ $('sd').onclick=function(){sync();var b=this;if(!cp.subject.trim()||!cp.body.trim()){$('sdm').innerHTML='<span class="warn">Falta el asunto o el mensaje.</span>';return}
+  if(!b.dataset.sure){b.dataset.sure=1;b.textContent='¿Enviar a '+c.email+'?';$('sdm').innerHTML='<span class="small">Pulsa otra vez para confirmar.</span>';return}
+  b.disabled=true;b.textContent='Enviando…';
+  api('/api/crm/send',{method:'POST',body:JSON.stringify({email:c.email,subject:fill(cp.subject,c),body:fill(cp.body,c),kind:cp.kind})}).then(function(r){
+   if(r.s===200){cp.subject='';cp.body='';cp.tpl='';load().then(function(){open(c.email)})}
+   else{b.disabled=false;delete b.dataset.sure;b.textContent='Enviar';$('sdm').innerHTML='<span class="warn">'+({no_consent:'Este contacto no ha aceptado correos comerciales.',no_contact:'Marcado como «No contactar».',email_not_configured:'El envío de correo no está configurado.',send_failed:'No se pudo enviar. Inténtalo de nuevo.'}[r.d.error]||'No se pudo enviar.')+'</span>'}})};
+}
+function renderTpl(){
+ var h='<div class="card"><p class="m" style="margin-top:0">Plantillas para escribir más rápido. Usa {{nombre}}, {{empresa}} y {{web}}: se rellenan con los datos de cada contacto. Las comerciales solo se pueden enviar a quien aceptó recibirlas.</p><div id="tl">'+(S.tpl.length?S.tpl.map(function(t){return'<div class="card" style="margin-top:10px"><div class="row2" style="justify-content:space-between"><div><b>'+esc(t.name)+'</b> <span class="chip">'+(t.kind==='commercial'?'Comercial':'Respuesta')+'</span><div class="small">'+esc(t.subject)+'</div></div><div class="row2"><button class="btn" data-ed="'+t.id+'">Editar</button><button class="btn" data-del="'+t.id+'">Borrar</button></div></div></div>'}).join(''):'<p class="empty">Aún no hay plantillas.</p>')+'</div></div>'+
+ '<div class="card" id="ef"><h3 style="margin:0 0 10px">Nueva plantilla</h3><input type="hidden" id="tid"><div class="row2"><input id="tn" placeholder="Nombre (p. ej. Seguimiento del barómetro)" style="flex:1"><select id="tk"><option value="reply">Respuesta</option><option value="commercial">Comercial</option></select></div><input class="full" id="ts" style="margin-top:8px" placeholder="Asunto"><textarea id="tb" style="margin-top:8px" placeholder="Hola {{nombre}}, …"></textarea><div class="row2" style="margin-top:8px"><button class="btn pri" id="tsv">Guardar plantilla</button></div><div class="msg small" id="tm"></div></div>';
+ app.innerHTML=h;
+ app.querySelectorAll('[data-ed]').forEach(function(b){b.onclick=function(){var t=S.tpl.filter(function(x){return x.id===b.dataset.ed})[0];$('tid').value=t.id;$('tn').value=t.name;$('tk').value=t.kind;$('ts').value=t.subject;$('tb').value=t.body;$('ef').querySelector('h3').textContent='Editar plantilla';$('ef').scrollIntoView({behavior:'smooth'})}});
+ app.querySelectorAll('[data-del]').forEach(function(b){b.onclick=function(){if(!b.dataset.sure){b.dataset.sure=1;b.textContent='¿Seguro?';return}api('/api/crm/templates/'+b.dataset.del,{method:'DELETE'}).then(function(){S.tpl=S.tpl.filter(function(x){return x.id!==b.dataset.del});renderTpl()})}});
+ $('tsv').onclick=function(){api('/api/crm/templates',{method:'POST',body:JSON.stringify({id:$('tid').value||undefined,name:$('tn').value,subject:$('ts').value,body:$('tb').value,kind:$('tk').value})}).then(function(r){if(r.s===200){api('/api/crm/templates').then(function(t){S.tpl=t.d.templates||[];renderTpl();$('tm').textContent='Plantilla guardada.'})}else $('tm').textContent='Rellena nombre, asunto y mensaje.'})};
+}
+load().then(function(ok){if(ok)render()});
+})();
+</script></body></html>

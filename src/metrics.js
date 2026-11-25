@@ -32,13 +32,15 @@ function source(host, self) {
   return 'otra';
 }
 
-export async function track(req, env, json) {
+export async function track(req, env, json, onCrm) {
   const ok = () => new Response(null, { status: 204 });
   if (BOT.test(req.headers.get('user-agent') || '')) return ok();
   const len = +(req.headers.get('content-length') || 0);
   if (len > 600) return ok();
   let b = {};
   try { b = JSON.parse((await req.text()).slice(0, 600) || '{}'); } catch (e) { return ok(); }
+  if (onCrm && (b.e === 'pv' || b.e === 'pv2' || b.e === 'pt')) { try { await onCrm(b); } catch (e) { console.error('crm', e); } }
+  if (b.e === 'pv2' || b.e === 'pt') return ok();
   const day = dayOf(Date.now()), keys = [];
   if (b.e === 'pv') {
     const page = PAGES.includes(b.p) ? b.p : 'otra';

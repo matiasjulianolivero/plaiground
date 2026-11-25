@@ -1,5 +1,6 @@
 import { createAibb } from './aibb.js';
 import { track, metricsAdmin, METRICS_SCHEMA } from './metrics.js';
+import { crmTrack, linkVisitor, logEmail, crmApi, CRM_SCHEMA } from './crm.js';
 /**
  * plaiground · Worker
  * --------------------------------------------------------------
@@ -80,6 +81,7 @@ async function ensureSchema(db) {
     db.prepare(`CREATE INDEX IF NOT EXISTS idx_subs_token ON subscribers(token)`),
     db.prepare(`CREATE TABLE IF NOT EXISTS newsletter_sends (issue TEXT NOT NULL, email TEXT NOT NULL, sent_at INTEGER NOT NULL, ok INTEGER, PRIMARY KEY (issue, email))`),
     db.prepare(METRICS_SCHEMA),
+    ...CRM_SCHEMA.map(q => db.prepare(q)),
     db.prepare(`CREATE TABLE IF NOT EXISTS newsletter_votes (issue TEXT NOT NULL, voter TEXT NOT NULL, opt TEXT NOT NULL, created_at INTEGER NOT NULL, PRIMARY KEY (issue, voter))`)
   ]);
   schemaReady = true;
@@ -167,17 +169,16 @@ function loginEmail(link, lang, product, save) {
   return { subject, html, text };
 }
 
-async function sendEmail(env, to, { subject, html, text, replyTo, from }) {
+async function sendEmail(env, to, { subject, html, text, replyTo, from, kind, manual, body }) {
   const r = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
     body: JSON.stringify(Object.assign({ from: from || env.EMAIL_FROM || 'Data plaiground <onboarding@resend.dev>', to: [to], subject, html, text }, replyTo ? { reply_to: replyTo } : {}))
   });
-  if (!r.ok) {
-    console.error('Resend error', r.status, await r.text());
-    return false;
-  }
-  return true;
+  const ok = r.ok;
+  if (!ok) console.error('Resend error', r.status, await r.text());
+  await logEmail(env, to, kind, subject, ok, manual, body); // registro para el CRM (no guarda los avisos al titular)
+  return ok;
 }
 
 function readyEmail(d, link, lang) {
@@ -210,7 +211,7 @@ async function sendReadyEmail(env, user, d, url) {
   const n = await env.DB.prepare("SELECT COUNT(*) AS n FROM email_log WHERE user_id = ? AND ts > ? AND kind = 'ready'").bind(user.id, since).first();
   if (n.n >= MAX_READY_EMAILS_PER_DAY) return;
   const base = (env.APP_URL || url.origin).replace(/\/$/, '');
-  const ok = await sendEmail(env, user.email, readyEmail(d, `${base}/data/app/?open=${d.id}`, d.lang || user.lang));
+  const ok = await sendEmail(env, user.email, Object.assign(readyEmail(d, `${base}/data/app/?open=${d.id}`, d.lang || user.lang), { kind: 'data_listo' }));
   if (ok) await env.DB.prepare("INSERT INTO email_log (user_id, ts, kind) VALUES (?,?, 'ready')").bind(user.id, Date.now()).run();
 }
 
@@ -294,6 +295,7 @@ async function createLead(req, env, url, ctx) {
   const l = { id: crypto.randomUUID(), code, created_at: now, name, email, company: clean(b.company, 100), role, roleText: role ? ROLES[role].es : '',
     interests: interests.join(','), interestsText: interests.map(k => INTERESTS[k][lang]).join(', '), interestsEs: interests.map(k => INTERESTS[k].es).join(', '), urgency, urgencyText: urgencyLabel(urgency, 'es'),
     message: clean(b.message, 1000), newsletter: b.newsletter === true ? 1 : 0, lang };
+  await linkVisitor(req, env, email);
   await env.DB.prepare('INSERT INTO leads (id, code, created_at, name, email, company, role, interests, urgency, message, newsletter, lang, ip, privacy_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)')
     .bind(l.id, code, now, name, email, l.company, role, l.interests, urgency, l.message, l.newsletter, lang, ip, now).run();
   const base = (env.APP_URL || url.origin).replace(/\/$/, '');
@@ -309,7 +311,7 @@ async function createLead(req, env, url, ctx) {
     }
   }
   const owner = env.LEAD_NOTIFY_EMAIL || 'matiasjulianolivero@gmail.com';
-  const jobs = Promise.all([sendEmail(env, email, Object.assign(thanksEmail(l, base, confirmLink), { from: env.LEAD_FROM, replyTo: owner })), sendEmail(env, owner, Object.assign(notifyEmail(l), { from: env.LEAD_FROM }))]).catch(e => console.error('lead emails', e));
+  const jobs = Promise.all([sendEmail(env, email, Object.assign(thanksEmail(l, base, confirmLink), { kind: 'gracias_contacto', from: env.LEAD_FROM, replyTo: owner })), sendEmail(env, owner, Object.assign(notifyEmail(l), { from: env.LEAD_FROM }))]).catch(e => console.error('lead emails', e));
   if (ctx && ctx.waitUntil) ctx.waitUntil(jobs); else await jobs;
   return json({ ok: true, code });
 }
@@ -444,7 +446,7 @@ async function issueLoginLink(env, base, email, lang, ip, aibb) {
   await env.DB.prepare('INSERT INTO login_tokens (token_hash, email, created_at, expires_at, ip, accepted, lang) VALUES (?,?,?,?,?,?,?)')
     .bind(await sha256(token), email, now, now + ttl * 60e3, ip, 1, lang).run();
   const link = aibb ? `${base}/ai-barometer/?login=${token}` : `${base}/data/app/?login=${token}`;
-  return sendEmail(env, email, loginEmail(link, lang, aibb ? 'AI Brand Barometer' : '', !!aibb));
+  return sendEmail(env, email, Object.assign(loginEmail(link, lang, aibb ? 'AI Brand Barometer' : '', !!aibb), { kind: aibb ? 'acceso_barometro' : 'acceso' }));
 }
 async function requestLogin(req, env, url) {
   if (!env.RESEND_API_KEY) return json({ error: 'email_not_configured' }, 503);
@@ -469,7 +471,8 @@ async function requestLogin(req, env, url) {
   const base = (env.APP_URL || url.origin).replace(/\/$/, '');
   const aibb = body.next === '/ai-barometer/';
   const link = aibb ? `${base}/ai-barometer/?login=${token}` : `${base}/data/app/?login=${token}`;
-  const ok = await sendEmail(env, email, loginEmail(link, lang, aibb ? 'AI Brand Barometer' : ''));
+  const ok = await sendEmail(env, email, Object.assign(loginEmail(link, lang, aibb ? 'AI Brand Barometer' : ''), { kind: 'acceso' }));
+  await linkVisitor(req, env, email);
   if (!ok) return json({ error: 'email_failed' }, 502);
   return json({ ok: true });
 }
@@ -687,14 +690,24 @@ async function api(req, env, url, ctx) {
     return new Response('ok', { status: 200 });
   }
   if (m !== 'GET' && !sameOrigin(req, url)) return json({ error: 'forbidden' }, 403);
-  if (pathname === '/api/m' && m === 'POST') return track(req, env, json);
+  if (pathname === '/api/m' && m === 'POST') return track(req, env, json, async (b) => {
+    await crmTrack(req, env, b);
+    // Con consentimiento y sesión iniciada, la actividad se une a la cuenta
+    if (b.e === 'pv' && /(?:^|;\s*)plg_vid=/.test(req.headers.get('cookie') || '') && /plg_session=/.test(req.headers.get('cookie') || '')) { const u = await currentUser(req, env); if (u) await linkVisitor(req, env, u.email); }
+  });
+  if (pathname.startsWith('/api/crm/')) {
+    const u = await currentUser(req, env);
+    if (!u) return json({ error: 'unauthorized' }, 401);
+    if (!isOwner(env, u)) return json({ error: 'forbidden' }, 403);
+    return crmApi(req, env, url, pathname, m, u, { json, validEmail, randomToken, sendEmail });
+  }
   if (pathname === '/api/metrics/admin' && m === 'GET') {
     const u = await currentUser(req, env);
     if (!u) return json({ error: 'unauthorized' }, 401);
     if (!isOwner(env, u)) return json({ error: 'forbidden' }, 403);
     return metricsAdmin(env, u, json);
   }
-  if (pathname.startsWith('/api/aibb/')) { aibb = aibb || createAibb({ json, currentUser, randomToken, sha256, notifyOwner, issueLoginLink, validEmail }); return aibb(req, env, url, pathname, m); }
+  if (pathname.startsWith('/api/aibb/')) { aibb = aibb || createAibb({ json, currentUser, randomToken, sha256, notifyOwner, issueLoginLink, validEmail, linkVisitor }); return aibb(req, env, url, pathname, m); }
 
   if (pathname === '/api/auth/request' && m === 'POST') return requestLogin(req, env, url);
   if (pathname === '/api/auth/verify' && m === 'POST') return verifyLogin(req, env);
@@ -820,7 +833,7 @@ export default {
   async scheduled(event, env, ctx) {
     // Cada minuto: estudios del barómetro que siguen en segundo plano. A las 09:00: newsletter de bienvenida
     if (event.cron === '* * * * *') {
-      aibb = aibb || createAibb({ json, currentUser, randomToken, sha256, notifyOwner, issueLoginLink, validEmail });
+      aibb = aibb || createAibb({ json, currentUser, randomToken, sha256, notifyOwner, issueLoginLink, validEmail, linkVisitor });
       ctx.waitUntil(aibb.runJobs(env).catch(e => console.error('aibb jobs', e)));
       return;
     }
