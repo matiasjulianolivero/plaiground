@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><meta name="referrer" content="no-referrer">
+<title>Métricas · plaiground</title><link rel="icon" href="/favicon.ico" sizes="any">
+<style>
+*{box-sizing:border-box}body{margin:0;background:#0B0D1F;color:#ECEEFF;font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;padding:32px 18px}
+.w{max-width:1180px;margin:0 auto}h1{font-size:30px;letter-spacing:-.03em;margin:0 0 4px}.m{color:#A3A8CC}
+.card{background:#15183A;border:1px solid rgba(236,238,255,.12);border-radius:20px;padding:20px;margin-top:18px}
+.k{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}.k div{background:#1C1F47;border-radius:14px;padding:14px}.k b{display:block;font-size:28px}.k small{color:#A3A8CC}
+.ok{color:#5FE0CF}.warn{color:#FFB38E}
+table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:8px 8px;border-bottom:1px solid rgba(236,238,255,.1);text-align:right;white-space:nowrap}th:first-child,td:first-child{text-align:left}th{color:#A3A8CC;font-weight:600;position:sticky;top:0;background:#15183A}
+.scroll{overflow-x:auto}.det{color:#A3A8CC;font-size:12.5px;text-align:left;white-space:normal}
+button,a.b{border:0;border-radius:999px;padding:7px 12px;font:700 12.5px system-ui;cursor:pointer;text-decoration:none;display:inline-block;background:#ECEEFF;color:#14162E}
+a{color:#B8B9FF}.msg{min-height:20px;color:#5FE0CF;margin-top:8px}
+</style></head><body><div class="w">
+<h1>Métricas</h1><p class="m">Solo para el titular. Semanas de lunes a domingo (hora de Madrid). Las visitas se cuentan sin cookies ni datos personales; no incluyen tus propios estudios, cuentas ni informes.</p>
+<div id="app"><div class="card">Cargando…</div></div></div>
+<script>
+(function(){
+var app=document.getElementById('app'),esc=function(s){return String(s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})};
+var fmt=function(d){var p=d.split('-');return p[2]+'/'+p[1]+'/'+p[0]};
+var top=function(o){return Object.keys(o).sort(function(a,b){return o[b]-o[a]}).map(function(k){return esc(k)+' '+o[k]}).join(' · ')||'—'};
+fetch('/api/metrics/admin',{credentials:'same-origin'}).then(function(r){return r.json().then(function(d){return{s:r.status,d:d}})}).then(function(x){
+ if(x.s===401){app.innerHTML='<div class="card"><p>Para entrar, inicia sesión en Data plaiground con <b>tu email de titular</b> y vuelve a esta página.</p><a class="b" href="/data/app/">Iniciar sesión</a></div>';return}
+ if(x.s===403){app.innerHTML='<div class="card warn">Esta cuenta no es la del titular.</div>';return}
+ if(x.s!==200){app.innerHTML='<div class="card warn">No se pudo cargar ('+esc(x.d.error||x.s)+').</div>';return}
+ var W=x.d.weeks.slice(), last=W[W.length-2]||W[W.length-1], cur=W[W.length-1];
+ var four=W.slice(-5,-1), avg=four.reduce(function(a,w){return a+w.estudios_con_email},0)/Math.max(1,four.length);
+ var h='<div class="card"><div class="m" style="margin-bottom:10px">Última semana completa: '+fmt(last.week)+'</div><div class="k">'+
+  '<div><small>Visitas</small><b>'+last.visitas+'</b></div>'+
+  '<div><small>Estudios AIBB iniciados</small><b>'+last.estudios_iniciados+'</b></div>'+
+  '<div><small>Estudios con email</small><b>'+last.estudios_con_email+'</b></div>'+
+  '<div><small>Media 4 semanas con email (E1: ≥ 15)</small><b class="'+(avg>=15?'ok':'warn')+'">'+avg.toFixed(1)+'</b></div>'+
+  '<div><small>Contactos web</small><b>'+last.contactos+'</b></div>'+
+  '<div><small>Suscriptores confirmados (total)</small><b>'+x.d.totals.subscribers+'</b></div></div>'+
+  '<p class="m" style="margin:12px 0 0">Semana en curso ('+fmt(cur.week)+'): '+cur.visitas+' visitas · '+cur.estudios_iniciados+' estudios · '+cur.estudios_con_email+' con email.</p></div>';
+ h+='<div class="card"><div class="m" style="margin-bottom:8px">Para el tablero de experimentos: «Copiar B–D» copia visitas, estudios y estudios con email; «Copiar G–I» copia contactos, suscriptores e informes Data. Pégalo en la fila de esa semana de la hoja Semanal.</div><div class="scroll"><table><thead><tr><th>Semana</th><th>Visitas</th><th>Estudios</th><th>Con email</th><th>Contactos</th><th>Suscriptores</th><th>Informes Data</th><th>Emails AIBB</th><th>Dominios</th><th>Cuentas</th><th>Plai menú / clic</th><th>Hero</th><th></th></tr></thead><tbody>';
+ W.reverse().forEach(function(w,i){var ev=w.eventos||{};
+  h+='<tr><td>'+fmt(w.week)+'</td><td>'+w.visitas+'</td><td>'+w.estudios_iniciados+'</td><td>'+w.estudios_con_email+'</td><td>'+w.contactos+'</td><td>'+w.suscriptores+'</td><td>'+w.informes_data+'</td><td>'+w.emails_aibb+'</td><td>'+w.dominios+'</td><td>'+w.cuentas_nuevas+'</td><td>'+(ev.plai_menu||0)+' / '+(ev.plai_go||0)+'</td><td>'+(ev.hero||0)+'</td><td><button data-c="'+[w.visitas,w.estudios_iniciados,w.estudios_con_email].join('\t')+'">Copiar B–D</button> <button data-c="'+[w.contactos,w.suscriptores,w.informes_data].join('\t')+'">Copiar G–I</button></td></tr>'+
+   '<tr><td></td><td class="det" colspan="12">Origen: '+top(w.origen)+'<br>Páginas: '+top(w.paginas)+'</td></tr>';
+ });
+ h+='</tbody></table></div><div class="msg" id="msg"></div></div>';
+ app.innerHTML=h;
+ app.querySelectorAll('[data-c]').forEach(function(b){b.onclick=function(){var t=b.getAttribute('data-c');(navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(function(){document.getElementById('msg').textContent='Copiado: '+t.replace(/\t/g,' · ')},function(){prompt('Copia esto:',t)})}});
+}).catch(function(){app.innerHTML='<div class="card warn">No se pudo cargar.</div>'});
+})();
+</script></body></html>

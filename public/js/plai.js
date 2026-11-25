@@ -199,7 +199,7 @@
   function anchor() { var c = corner(); return [c[0] + 10, c[1] - 52 * c[2] - 8]; }
   function mini(text) { var c = anchor(); bubble(text, c[0], c[1], 'mini'); mode = 'mini'; }
   function act(a) {
-    hideBubble();
+    hideBubble(); if (window.plgTrack) plgTrack('plai_go');
     if (a.go === 'aibb') {
       var f = document.getElementById('hurl') || document.getElementById('url');
       if (f) { f.scrollIntoView({ behavior: 'smooth', block: 'center' }); setTimeout(function () { f.focus({ preventScroll: true }); }, 450); }
@@ -232,7 +232,7 @@
     var list = (t && t.a ? [t.a] : []).concat(ACTIONS.filter(function (a) { return !(t && t.a && ((a.go && a.go === t.a.go) || (a.href && t.a.href && a.href.replace('/#', '#') === t.a.href.replace('/#', '#')))); }));
     var lab = function (a) { return X(a).replace(/\s*→$/, ''); };
     bubble(closeBtn() + '<b>' + X(T.menu) + '</b>' + (t ? '<div class="pm-tip">' + X(t) + '</div>' : '') + '<div class="pm">' + list.map(function (a, k) { return '<a href="#" data-a="' + k + '">' + lab(a) + ' →</a>'; }).join('') + '</div><button class="pm-mute" type="button">' + X(muted ? T.unmute : T.mute) + '</button>', c[0], c[1]);
-    wire(list, true); mode = 'menu'; clearTimeout(hideTimer);
+    wire(list, true); mode = 'menu'; clearTimeout(hideTimer); if (window.plgTrack) plgTrack('plai_menu');
     face('wow'); setTimeout(function () { if (faceNow === 'wow') face('ok'); }, 700);
   }
 
