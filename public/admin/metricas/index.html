@@ -9,10 +9,11 @@
 .ok{color:#5FE0CF}.warn{color:#FFB38E}
 table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:8px 8px;border-bottom:1px solid rgba(236,238,255,.1);text-align:right;white-space:nowrap}th:first-child,td:first-child{text-align:left}th{color:#A3A8CC;font-weight:600;position:sticky;top:0;background:#15183A}
 .scroll{overflow-x:auto}.det{color:#A3A8CC;font-size:12.5px;text-align:left;white-space:normal}
+button.danger{background:#FFB38E}button:disabled{opacity:.5;cursor:default}
 button,a.b{border:0;border-radius:999px;padding:7px 12px;font:700 12.5px system-ui;cursor:pointer;text-decoration:none;display:inline-block;background:#ECEEFF;color:#14162E}
 a{color:#B8B9FF}.msg{min-height:20px;color:#5FE0CF;margin-top:8px}
 </style></head><body><div class="w">
-<h1>Métricas</h1><p style="margin:0 0 6px"><a href="/admin/crm/">Abrir el CRM →</a></p><p class="m">Solo para el titular. Semanas de lunes a domingo (hora de Madrid). Las visitas se cuentan sin cookies ni datos personales; no incluyen tus propios estudios, cuentas ni informes.</p>
+<h1>Métricas</h1><p style="margin:0 0 6px"><a href="/admin/crm/">Abrir el CRM →</a></p><p class="m">Solo para el titular. Semanas de lunes a domingo (hora de Madrid). Las visitas se cuentan sin cookies ni datos personales. No incluyen tus propias visitas, estudios, cuentas ni informes.</p>
 <div id="app"><div class="card">Cargando…</div></div></div>
 <script>
 (function(){
@@ -39,7 +40,20 @@ fetch('/api/metrics/admin',{credentials:'same-origin'}).then(function(r){return 
    '<tr><td></td><td class="det" colspan="12">Origen: '+top(w.origen)+'<br>Páginas: '+top(w.paginas)+'</td></tr>';
  });
  h+='</tbody></table></div><div class="msg" id="msg"></div></div>';
+ var ex=x.d.excluded||{};
+ h+='<div class="card"><b>Tus visitas no cuentan</b><p class="m" style="margin:6px 0 10px">Este navegador queda excluido <span class="ok">✓</span>. También se excluyen las visitas mientras tengas la sesión iniciada y las que lleguen desde '+(ex.ips===1?'la IP':'las '+(ex.ips||0)+' IP')+' desde la que has entrado como titular en los últimos 30 días (solo se guarda un hash, nunca la IP). En el móvil u otro navegador, abre esta página una vez con tu sesión para excluirlo también.</p>'+
+  '<p class="m" style="margin:0 0 10px">Lo contado antes de hoy no se puede separar, porque es anónimo. '+(x.d.counted_since?'Se cuenta desde el '+fmt(x.d.counted_since)+'. ':'')+'Si quieres, pon a cero los recuentos de visitas, orígenes y clics anteriores a hoy (no toca contactos, estudios, suscriptores ni el CRM).</p>'+
+  '<button class="danger" id="rst">Poner a cero lo anterior a hoy</button> <span class="m" id="rstm"></span></div>';
  app.innerHTML=h;
+ var rst=document.getElementById('rst'),rstm=document.getElementById('rstm'),armed=0;
+ rst.onclick=function(){
+  if(!armed){armed=1;rst.textContent='Confirmar: borrar recuentos anteriores a hoy';rstm.textContent='No se puede deshacer.';setTimeout(function(){if(armed===1){armed=0;rst.textContent='Poner a cero lo anterior a hoy';rstm.textContent=''}},8000);return}
+  armed=2;rst.disabled=true;rstm.textContent='Borrando…';
+  fetch('/api/metrics/reset',{method:'POST',credentials:'same-origin',headers:{'content-type':'application/json'},body:JSON.stringify({confirm:'borrar'})}).then(function(r){return r.json()}).then(function(d){
+   if(!d.ok){rstm.textContent='No se pudo ('+esc(d.error||'error')+').';rst.disabled=false;armed=0;return}
+   rstm.textContent='Hecho. Recargando…';setTimeout(function(){location.reload()},900);
+  }).catch(function(){rstm.textContent='No se pudo.';rst.disabled=false;armed=0});
+ };
  app.querySelectorAll('[data-c]').forEach(function(b){b.onclick=function(){var t=b.getAttribute('data-c');(navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(function(){document.getElementById('msg').textContent='Copiado: '+t.replace(/\t/g,' · ')},function(){prompt('Copia esto:',t)})}});
 }).catch(function(){app.innerHTML='<div class="card warn">No se pudo cargar.</div>'});
 })();
