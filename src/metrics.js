@@ -95,6 +95,8 @@ export async function metricsAdmin(env, owner, json) {
   for (const r of await q('SELECT created_at FROM users WHERE created_at >= ? AND id != ?', since, ownerId)) { const w = wk(r.created_at); if (w) w.cuentas_nuevas++; }
   for (const r of await q('SELECT created_at FROM dashboards WHERE created_at >= ? AND user_id != ?', since, ownerId)) { const w = wk(r.created_at); if (w) w.informes_data++; }
 
+  const since0 = ((await q('SELECT MIN(day) AS d FROM metrics_daily'))[0] || {}).d || null;
+  const excl = { ips: ((await q('SELECT COUNT(*) AS n FROM owner_ips WHERE last_seen > ?', now - 30 * 864e5))[0] || {}).n || 0 };
   const totals = { subscribers: ((await q("SELECT COUNT(*) AS n FROM subscribers WHERE status = 'confirmed'"))[0] || {}).n || 0 };
-  return json({ tz: TZ, generated_at: now, weeks: weeks.map(w => ({ week: w, ...W[w] })), totals });
+  return json({ tz: TZ, generated_at: now, weeks: weeks.map(w => ({ week: w, ...W[w] })), totals, counted_since: since0, excluded: excl });
 }

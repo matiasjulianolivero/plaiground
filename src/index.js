@@ -22,6 +22,7 @@ import { crmTrack, linkVisitor, logEmail, crmApi, CRM_SCHEMA } from './crm.js';
  *   GET    /api/newsletter/unsubscribe?t=                  → baja de la newsletter
  *   POST   /api/m                                          → contador anónimo y agregado de visitas (src/metrics.js)
  *   GET    /api/metrics/admin                              → resumen semanal para el titular (src/metrics.js)
+ *   POST   /api/metrics/reset   { confirm: 'borrar' }      → (titular) pone a cero los recuentos anónimos anteriores a hoy
  *   GET    /api/sheets?url=                                → descarga una Google Sheet pública como .xlsx
  *   POST   /api/ai/context   { profile, lang }            → la IA propone el contexto (empresa, datos, público, objetivo)
  *   POST   /api/ai/analyze   { context, profile, facts }  → la IA propone KPIs, gráficos y el análisis escrito
@@ -82,6 +83,7 @@ async function ensureSchema(db) {
     db.prepare(`CREATE TABLE IF NOT EXISTS newsletter_sends (issue TEXT NOT NULL, email TEXT NOT NULL, sent_at INTEGER NOT NULL, ok INTEGER, PRIMARY KEY (issue, email))`),
     db.prepare(METRICS_SCHEMA),
     ...CRM_SCHEMA.map(q => db.prepare(q)),
+    db.prepare('CREATE TABLE IF NOT EXISTS owner_ips (h TEXT PRIMARY KEY, last_seen INTEGER NOT NULL)'),
     db.prepare(`CREATE TABLE IF NOT EXISTS newsletter_votes (issue TEXT NOT NULL, voter TEXT NOT NULL, opt TEXT NOT NULL, created_at INTEGER NOT NULL, PRIMARY KEY (issue, voter))`)
   ]);
   schemaReady = true;
@@ -331,6 +333,36 @@ async function newsletterAction(env, url, action) {
 /* ---------- envío de la newsletter (solo el titular) ---------- */
 const NL_BATCH = 90; // Resend gratis: 100 emails/día
 const isOwner = (env, user) => !!user && !!env.LEAD_NOTIFY_EMAIL && user.email.toLowerCase() === env.LEAD_NOTIFY_EMAIL.toLowerCase();
+
+/* ---------- tus propias visitas no cuentan ----------
+   Se reconoce al titular de tres formas: sesión iniciada con su email, la cookie plg_me (se pone en su navegador
+   cuando entra con su sesión) o una IP desde la que ha entrado con su sesión en los últimos 30 días
+   (solo se guarda el hash de esa IP, nunca la IP). La cookie solo se pone con sesión confirmada, nunca por IP. */
+const OWNER_COOKIE = 'plg_me', OWNER_IP_DAYS = 30;
+const ownerCookie = () => `${OWNER_COOKIE}=1; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${5 * 365 * 86400}`;
+const ownerIpHash = async req => { const ip = req.headers.get('cf-connecting-ip') || ''; return ip ? (await sha256(ip + ':owner')).slice(0, 32) : ''; };
+// Recuerda el navegador y la IP del titular y borra del CRM su propia navegación
+async function rememberOwner(req, env, user) {
+  const now = Date.now(), h = await ownerIpHash(req), vid = getCookie(req, 'plg_vid'), email = user.email.toLowerCase(), st = [];
+  if (h) st.push(env.DB.prepare('INSERT INTO owner_ips (h, last_seen) VALUES (?, ?) ON CONFLICT(h) DO UPDATE SET last_seen = excluded.last_seen').bind(h, now));
+  st.push(env.DB.prepare('DELETE FROM owner_ips WHERE last_seen < ?').bind(now - OWNER_IP_DAYS * 864e5));
+  if (vid && /^[a-f0-9]{32}$/.test(vid)) st.push(env.DB.prepare('DELETE FROM crm_pageviews WHERE vid = ?').bind(vid), env.DB.prepare('DELETE FROM crm_visitors WHERE vid = ?').bind(vid));
+  st.push(env.DB.prepare('DELETE FROM crm_pageviews WHERE vid IN (SELECT vid FROM crm_visitors WHERE lower(email) = ?)').bind(email), env.DB.prepare('DELETE FROM crm_visitors WHERE lower(email) = ?').bind(email));
+  try { await env.DB.batch(st); } catch (e) { console.error('owner', e); }
+}
+const withOwnerCookie = res => { try { res.headers.append('set-cookie', ownerCookie()); } catch (e) {} return res; };
+// ¿Esta visita es del titular? 'session' = confirmado por sesión; 'mark' = por cookie o IP
+async function ownerTraffic(req, env) {
+  if (getCookie(req, SESSION_COOKIE)) { const u = await currentUser(req, env); if (isOwner(env, u)) return { by: 'session', user: u }; }
+  if (getCookie(req, OWNER_COOKIE) === '1') {
+    const vid = getCookie(req, 'plg_vid'); // navegador del titular: su navegación tampoco va al CRM
+    if (vid && /^[a-f0-9]{32}$/.test(vid)) await env.DB.batch([env.DB.prepare('DELETE FROM crm_pageviews WHERE vid = ?').bind(vid), env.DB.prepare('DELETE FROM crm_visitors WHERE vid = ?').bind(vid)]).catch(() => {});
+    return { by: 'mark' };
+  }
+  const h = await ownerIpHash(req);
+  if (h && await env.DB.prepare('SELECT 1 FROM owner_ips WHERE h = ? AND last_seen > ?').bind(h, Date.now() - OWNER_IP_DAYS * 864e5).first().catch(() => null)) return { by: 'mark' };
+  return null;
+}
 async function nlIssues(env, base) {
   const r = await env.ASSETS.fetch(new Request(`${base}/newsletter/issues.json`));
   return r.ok ? r.json() : [];
@@ -508,7 +540,9 @@ async function verifyLogin(req, env) {
     env.DB.prepare('DELETE FROM login_tokens WHERE expires_at < ?').bind(now - 864e5),
     env.DB.prepare('DELETE FROM sessions WHERE expires_at < ?').bind(now)
   ]);
-  return json({ ok: true, email: used.email }, 200, { 'set-cookie': sessionCookie(session, SESSION_TTL_DAYS * 86400) });
+  const res = json({ ok: true, email: used.email }, 200, { 'set-cookie': sessionCookie(session, SESSION_TTL_DAYS * 86400) });
+  if (isOwner(env, { email: used.email })) { await rememberOwner(req, env, { email: used.email }); withOwnerCookie(res); }
+  return res;
 }
 
 async function logout(req, env) {
@@ -690,22 +724,43 @@ async function api(req, env, url, ctx) {
     return new Response('ok', { status: 200 });
   }
   if (m !== 'GET' && !sameOrigin(req, url)) return json({ error: 'forbidden' }, 403);
-  if (pathname === '/api/m' && m === 'POST') return track(req, env, json, async (b) => {
+  if (pathname === '/api/m' && m === 'POST') {
+    const me = await ownerTraffic(req, env);
+    if (me) {
+      if (me.by !== 'session') return new Response(null, { status: 204 });
+      await rememberOwner(req, env, me.user);
+      return withOwnerCookie(new Response(null, { status: 204 }));
+    }
+    return track(req, env, json, async (b) => {
     await crmTrack(req, env, b);
     // Con consentimiento y sesión iniciada, la actividad se une a la cuenta
     if (b.e === 'pv' && /(?:^|;\s*)plg_vid=/.test(req.headers.get('cookie') || '') && /plg_session=/.test(req.headers.get('cookie') || '')) { const u = await currentUser(req, env); if (u) await linkVisitor(req, env, u.email); }
-  });
+    });
+  }
   if (pathname.startsWith('/api/crm/')) {
     const u = await currentUser(req, env);
     if (!u) return json({ error: 'unauthorized' }, 401);
     if (!isOwner(env, u)) return json({ error: 'forbidden' }, 403);
+    await rememberOwner(req, env, u);
     return crmApi(req, env, url, pathname, m, u, { json, validEmail, randomToken, sendEmail });
   }
   if (pathname === '/api/metrics/admin' && m === 'GET') {
     const u = await currentUser(req, env);
     if (!u) return json({ error: 'unauthorized' }, 401);
     if (!isOwner(env, u)) return json({ error: 'forbidden' }, 403);
-    return metricsAdmin(env, u, json);
+    await rememberOwner(req, env, u);
+    return withOwnerCookie(await metricsAdmin(env, u, json));
+  }
+  // Poner a cero los recuentos anónimos anteriores a hoy (no toca contactos, estudios ni suscriptores)
+  if (pathname === '/api/metrics/reset' && m === 'POST') {
+    const u = await currentUser(req, env);
+    if (!u) return json({ error: 'unauthorized' }, 401);
+    if (!isOwner(env, u)) return json({ error: 'forbidden' }, 403);
+    const b = await readJson(req);
+    if (b.confirm !== 'borrar') return json({ error: 'confirm' }, 400);
+    const today = new Intl.DateTimeFormat('sv-SE', { timeZone: 'Europe/Madrid' }).format(new Date());
+    const r = await env.DB.prepare('DELETE FROM metrics_daily WHERE day < ?').bind(today).run();
+    return json({ ok: true, from: today, deleted: (r.meta && r.meta.changes) || 0 });
   }
   if (pathname.startsWith('/api/aibb/')) { aibb = aibb || createAibb({ json, currentUser, randomToken, sha256, notifyOwner, issueLoginLink, validEmail, linkVisitor }); return aibb(req, env, url, pathname, m); }
 
